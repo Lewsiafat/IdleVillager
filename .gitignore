@@ -4,3 +4,4 @@ temp/
 .swiftpm/
 *.xcodeproj
 DerivedData/
+.claude/worktrees/
