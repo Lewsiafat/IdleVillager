@@ -60,26 +60,3 @@ struct MenuBarLabel: View {
         }
     }
 }
-
-/// Popover 內容。本票只放標題與 Agent 總數，清單由後續票實作。
-struct SessionPopoverView: View {
-    let snapshot: StoreSnapshot
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("IdleVillager")
-                    .font(.headline)
-                Spacer()
-                Text("\(snapshot.counts.total) 個 Agent")
-                    .foregroundStyle(.secondary)
-            }
-            Divider()
-            Button("結束 IdleVillager") {
-                NSApplication.shared.terminate(nil)
-            }
-        }
-        .padding(12)
-        .frame(width: 360)
-    }
-}
