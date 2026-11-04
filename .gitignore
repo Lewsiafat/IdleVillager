@@ -1,2 +1,6 @@
 .DS_Store
 temp/
+.build/
+.swiftpm/
+*.xcodeproj
+DerivedData/
