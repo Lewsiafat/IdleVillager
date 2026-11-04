@@ -12,6 +12,7 @@ struct SettingsView: View {
                 Toggle("固定顯示數量為 0 的類別", isOn: $settings.alwaysShowZeroCounts)
                 Toggle("顯示已完成小計數（✓）", isOn: $settings.showDoneCount)
             }
+            BehaviorSettingsSection(settings: settings)
         }
         .formStyle(.grouped)
         .frame(width: 380)

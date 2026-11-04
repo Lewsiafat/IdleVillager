@@ -12,7 +12,7 @@ struct CharacterView: View {
     let state: NormalizedState
     var agentKind: AgentKind = .generic
     var size: CGFloat = 28
-    /// 使用者是否開啟動畫（`AppSettings.animationsEnabled`），之後由設定頁接上。
+    /// 使用者是否開啟動畫（`AppSettings.animationsEnabled`），由 Popover 列從設定傳入。
     var animationsEnabled: Bool = true
 
     static let sizeRange: ClosedRange<CGFloat> = 16...36

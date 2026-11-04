@@ -155,10 +155,20 @@ public struct SessionListModel: Hashable, Sendable {
         return footer.connectionState == .connected ? "目前沒有 Agent Session" : "未連線，沒有可顯示的 Session 資料"
     }
 
+    /// 依優先度排序（`SortRule.priority`）建立清單。
     public init(snapshot: StoreSnapshot) {
+        self.init(snapshot: snapshot, sortRule: .priority)
+    }
+
+    /// 依指定的排序規則建立清單。
+    ///
+    /// - `priority`：列、Tab、Workspace 都依清單優先度排序，急件所在的群組浮到最上方。
+    /// - `workspaceName`：Workspace 與 Tab 依名稱（數字以數值比較）排序，列仍依優先度。
+    /// - `fixed`：Workspace、Tab、列都依穩定 ID 的字串順序排序，不因狀態改變而移動。
+    public init(snapshot: StoreSnapshot, sortRule: SortRule) {
         title = "IdleVillager"
         agentCount = snapshot.counts.total
-        workspaces = Self.group(snapshot.sessions)
+        workspaces = Self.group(snapshot.sessions, sortRule: sortRule)
         footer = Footer(
             sourceName: "Herdr",
             connectionState: snapshot.connectionState,
@@ -167,7 +177,7 @@ public struct SessionListModel: Hashable, Sendable {
         )
     }
 
-    private static func group(_ sessions: [StoreSession]) -> [WorkspaceGroup] {
+    private static func group(_ sessions: [StoreSession], sortRule: SortRule) -> [WorkspaceGroup] {
         var workspaces: [WorkspaceGroup] = []
         for entry in sessions {
             let session = entry.session
@@ -188,14 +198,19 @@ public struct SessionListModel: Hashable, Sendable {
         }
         for w in workspaces.indices {
             for t in workspaces[w].tabs.indices {
-                workspaces[w].tabs[t].rows.sort(by: rowPrecedes)
+                switch sortRule {
+                case .priority, .workspaceName:
+                    workspaces[w].tabs[t].rows.sort(by: rowPrecedes)
+                case .fixed:
+                    workspaces[w].tabs[t].rows.sort { $0.id.rawValue < $1.id.rawValue }
+                }
             }
             workspaces[w].tabs.sort { lhs, rhs in
-                groupPrecedes(lhs.topState, lhs.name, lhs.id.rawValue, rhs.topState, rhs.name, rhs.id.rawValue)
+                groupPrecedes(sortRule, lhs.topState, lhs.name, lhs.id.rawValue, rhs.topState, rhs.name, rhs.id.rawValue)
             }
         }
         workspaces.sort { lhs, rhs in
-            groupPrecedes(lhs.topState, lhs.name, lhs.id.rawValue, rhs.topState, rhs.name, rhs.id.rawValue)
+            groupPrecedes(sortRule, lhs.topState, lhs.name, lhs.id.rawValue, rhs.topState, rhs.name, rhs.id.rawValue)
         }
         return workspaces
     }
@@ -205,13 +220,15 @@ public struct SessionListModel: Hashable, Sendable {
         states.min { rank($0) < rank($1) } ?? .unknown
     }
 
-    /// 群組排序：先比內含的最高優先度，同優先度依名稱，再依 ID，確保順序穩定。
+    /// 群組排序。`priority` 先比內含的最高優先度；`priority` 與 `workspaceName` 接著依名稱，再依 ID；
+    /// `fixed` 只依 ID 的字串順序。最後一律以 ID 決定，確保順序穩定。
     private static func groupPrecedes(
+        _ sortRule: SortRule,
         _ lhsState: NormalizedState, _ lhsName: String, _ lhsID: String,
         _ rhsState: NormalizedState, _ rhsName: String, _ rhsID: String
     ) -> Bool {
-        if rank(lhsState) != rank(rhsState) { return rank(lhsState) < rank(rhsState) }
-        if let order = nameOrder(lhsName, rhsName) { return order }
+        if sortRule == .priority, rank(lhsState) != rank(rhsState) { return rank(lhsState) < rank(rhsState) }
+        if sortRule != .fixed, let order = nameOrder(lhsName, rhsName) { return order }
         return lhsID < rhsID
     }
 
@@ -272,5 +289,13 @@ public struct SessionListModel: Hashable, Sendable {
         case .disconnected: "已斷線"
         case .reconnecting: "重新連線中"
         }
+    }
+}
+
+extension SessionListModel {
+    /// 依使用者設定的排序規則（`AppSettings.sortRule`）建立清單。設定值由呼叫端傳入，清單模型本身不讀取偏好儲存。
+    @MainActor
+    public init(snapshot: StoreSnapshot, settings: AppSettings) {
+        self.init(snapshot: snapshot, sortRule: settings.sortRule)
     }
 }
