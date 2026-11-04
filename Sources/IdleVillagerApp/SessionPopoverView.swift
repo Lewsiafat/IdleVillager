@@ -26,6 +26,7 @@ final class SessionPopoverViewModel {
 struct SessionPopoverView: View {
     let snapshot: StoreSnapshot
     @State private var viewModel = SessionPopoverViewModel()
+    @Environment(FocusCoordinator.self) private var focusCoordinator
 
     static let width: CGFloat = 360
     static let rowHeight: CGFloat = 36
@@ -35,11 +36,40 @@ struct SessionPopoverView: View {
         VStack(alignment: .leading, spacing: 0) {
             header(model)
             Divider()
+            focusFailureBanner
             content(model)
             Divider()
             footer(model.footer)
         }
         .frame(width: Self.width)
+        // 重新打開 Popover 時不再顯示上一次的失敗訊息。
+        .onDisappear { focusCoordinator.clearFailure() }
+    }
+
+    /// Focus 失敗時顯示在 Popover 頂部的原因；Popover 保持開啟。
+    @ViewBuilder
+    private var focusFailureBanner: some View {
+        if let failure = focusCoordinator.lastFailure {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .accessibilityHidden(true)
+                Text("無法切回：\(failure.message)")
+                    .font(.callout)
+                Spacer()
+                Button {
+                    focusCoordinator.clearFailure()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("關閉提示")
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .accessibilityElement(children: .combine)
+            Divider()
+        }
     }
 
     private func header(_ model: SessionListModel) -> some View {
@@ -175,10 +205,12 @@ private struct TabSection: View {
     }
 }
 
-/// 一列 Agent Session：狀態圖示、顯示名稱、Pane 識別與狀態文字。點擊行為由後續的 Focus 票實作。
+/// 一列 Agent Session：狀態圖示、顯示名稱、Pane 識別與狀態文字。整列可點擊，直接以穩定 ID 觸發 Focus，不需確認。
 private struct SessionRowView: View {
     let row: SessionListModel.Row
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(FocusCoordinator.self) private var focusCoordinator
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         HStack(spacing: 8) {
@@ -205,8 +237,23 @@ private struct SessionRowView: View {
         .padding(.trailing, 12)
         .frame(height: SessionPopoverView.rowHeight)
         .contentShape(Rectangle())
+        .onTapGesture { focus() }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint("切回這個 Pane")
+        .accessibilityAction { focus() }
+    }
+
+    /// 成功就關閉 Popover；失敗時原因由 Popover 頂部顯示，不關閉。
+    private func focus() {
+        let sessionID = row.id
+        let paneID = row.paneID
+        Task {
+            if await focusCoordinator.focus(sessionID: sessionID, paneID: paneID) == .success {
+                dismiss()
+            }
+        }
     }
 
     /// 顏色只是輔助；狀態一定同時有圖示與文字。高對比時一律使用主要前景色。

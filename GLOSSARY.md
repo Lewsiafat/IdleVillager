@@ -47,5 +47,6 @@
 
 - **isStale**：表示某個 Session 的資料已經不新鮮的旗標；自上次成功更新超過門檻，或 Adapter 回報斷線時為 true。
 - **Focus**：使用者點擊一列後，把 Herdr 對應視窗帶到前景並聚焦到指定 Pane 的動作；結果是成功，或帶明確原因的失敗。
+- **Focus Coordinator**：處理 Focus 流程的可觀察物件（`FocusCoordinator`）。以列的 `AgentSessionID` 與 `PaneID`（不用清單索引）先向 Session Store 的 snapshot 確認目標仍存在且 Pane 相符；不存在就不呼叫 Adapter，直接回傳「目標已不存在」；存在才呼叫 Adapter 的 focus。結果為 `FocusOutcome`（成功，或帶 `FocusFailure` 的失敗，`FocusFailure.message` 是使用者可讀原因）。最近一次失敗公開在 `lastFailure` 供 Popover 頂部顯示，成功時清空。
 - **Adapter**：把外部資料來源（目前是 Herdr）轉成本專案資料模型的元件，介面為 `HerdrAdapter` protocol；`FakeHerdrAdapter` 是記憶體內的實作。
 - **Seam**：可以在不改動呼叫端的情況下替換實作的介面接縫。本專案的測試 seam 是 `HerdrAdapter`（所有 Session 資料都透過 Fake Adapter 餵入）與 `SettingsStore`（偏好儲存以記憶體內實作替換）。
