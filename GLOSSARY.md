@@ -55,7 +55,9 @@
 - **品牌本體（Brand Body）**：角色本體要畫成品牌標誌還是 Generic 小村民（`BrandBody`）。`.asset(name:)` 指向 App resource bundle 內的素材名稱（`claude-logo`、`codex-logo`、`gemini-logo`，對應只定義在 `BrandBody.assetName(for:)`），`.generic` 是圓形的 Generic 本體。由純函式 `BrandBody.resolve(agentKind:isAssetAvailable:)` 決定，結果放在 `CharacterPresentation.brandBody`。品牌本體只辨識 Agent 種類：以原色繪製，不隨狀態改色、不拉伸、不旋轉、不疊表情；狀態只由手、腳、道具與特效表現。素材放置規範見 `Sources/IdleVillagerApp/Resources/Brands/README.md`。
 - **備援（Fallback）**：品牌素材不存在或無法載入時，角色本體自動改用 Generic 小村民，不顯示破圖。generic 種類一律是 Generic 本體。專案不附第三方品牌素材，因此目前所有角色都走備援。
 - **角色細節（Character Detail）**：依角色尺寸決定要畫多少圖層（`CharacterDetail`）。18 pt 以下為 `bodyOnly`，只畫主標誌（本體）；更大為 `full`，畫全部圖層。
-- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現）或系統 Reduce Motion 開啟時沒有過渡。過渡只是描述，動畫由 App 層實作。
+- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現）或系統 Reduce Motion 開啟時沒有過渡。過渡只是描述，動畫由 App 層實作。過渡的動畫參數為 `CharacterTransitionParameters`：`celebrateOnce` 約 0.5 秒跳起再落下一次；`slowToIdle` 約 0.8 秒從半透明淡入躺平姿勢，不跳。
+- **循環動作（Loop）**：姿勢持續播放的低干擾動作（`CharacterLoop`），只描述節奏與幅度（`CharacterLoopParameters`：週期、實際在動的時間、位移比例、擺動角度）。幹活為 `workingBob`（每 1.2 秒平穩上下跳動並擺動）；舉手為 `raisedHandSway`（每 4 秒晃一次，其餘時間靜止；週期不小於 3 秒是「不閃爍」的量化定義）；躺平為 `idleZzz`（每 6 秒浮出一個 Zzz）。交工、警示、疑惑沒有循環：交工只在過渡時跳一次，Error 是靜態警示，Unknown 不需動畫。
+- **Character Motion**：輸入姿勢、過渡、系統 Reduce Motion 與使用者動畫開關（`animationsEnabled`），輸出循環動作與過渡的純值（`CharacterMotion`）。Reduce Motion 開啟或動畫關閉時兩者一律為 nil，畫面只畫靜態姿勢。動畫只在 Popover 的角色上播放，選單列不播放。
 
 ## 其他
 

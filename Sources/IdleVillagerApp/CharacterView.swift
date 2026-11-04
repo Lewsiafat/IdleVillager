@@ -4,12 +4,16 @@ import IdleVillagerCore
 /// Generic 小村民的靜態姿勢，完全依 `CharacterPresentation` 的圖層描述繪製。
 ///
 /// 本體、手、腳、道具、表情、特效各自是一層，用 SF Symbols 與 SwiftUI Shapes 畫出，不使用任何圖片素材。
-/// 尺寸限制在 16 到 36 pt；18 pt 以下只畫本體（見 `CharacterDetail`）。這裡只畫靜態姿勢，過渡動畫由後續實作。
+/// 尺寸限制在 16 到 36 pt；18 pt 以下只畫本體（見 `CharacterDetail`）。
 /// 品牌素材存在時，本體換成該 Agent 種類的品牌標誌（見 `BrandBodyView`），否則為 Generic 小村民。
+/// 循環動作與一次性過渡照 `CharacterMotion` 的純值套用；
+/// 系統 Reduce Motion 開啟或 `animationsEnabled` 為 false 時只畫靜態姿勢。
 struct CharacterView: View {
     let state: NormalizedState
     var agentKind: AgentKind = .generic
     var size: CGFloat = 28
+    /// 使用者是否開啟動畫（`AppSettings.animationsEnabled`），之後由設定頁接上。
+    var animationsEnabled: Bool = true
 
     static let sizeRange: ClosedRange<CGFloat> = 16...36
 
@@ -25,6 +29,13 @@ struct CharacterView: View {
         let side = min(max(size, Self.sizeRange.lowerBound), Self.sizeRange.upperBound)
         CharacterCanvas(presentation: presentation, side: side, highContrast: contrast == .increased,
                         detail: CharacterDetail(size: Double(side)))
+            .characterMotion(
+                CharacterMotion(pose: presentation.pose, transition: presentation.transition,
+                                reduceMotion: reduceMotion, animationsEnabled: animationsEnabled),
+                side: side,
+                // previousState 只在狀態轉換當下改變，因此過渡只播一次，其他原因的重繪不會重播。
+                transitionTrigger: previousState
+            )
             .frame(width: side, height: side)
             .onChange(of: state) { oldValue, _ in
                 previousState = oldValue
