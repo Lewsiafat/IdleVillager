@@ -30,10 +30,12 @@ public struct SessionListModel: Hashable, Sendable {
         public var state: NormalizedState
         /// 狀態圖示：⚒ ✋ ✓ 💤 ! ?。
         public var icon: String
-        /// 狀態短文字，例如「幹活中」「等核准」「訊號不足」。
+        /// 狀態短文字，例如「幹活中」「等核准」「訊號不足」；資料過期時加上後綴「（過期）」，例如「幹活中（過期）」。
         public var stateText: String
         /// 可選的補充說明：等待原因或衝突描述。沒有時為 nil。
         public var detail: String?
+        /// 這列的資料是否已過期（來自 Store 的 `isStale`）。
+        public var isStale: Bool
 
         public init(
             id: AgentSessionID,
@@ -44,7 +46,8 @@ public struct SessionListModel: Hashable, Sendable {
             state: NormalizedState,
             icon: String,
             stateText: String,
-            detail: String?
+            detail: String?,
+            isStale: Bool = false
         ) {
             self.id = id
             self.paneID = paneID
@@ -55,6 +58,7 @@ public struct SessionListModel: Hashable, Sendable {
             self.icon = icon
             self.stateText = stateText
             self.detail = detail
+            self.isStale = isStale
         }
 
         init(_ entry: StoreSession) {
@@ -67,8 +71,10 @@ public struct SessionListModel: Hashable, Sendable {
                 paneLabel: session.paneLabel,
                 state: entry.normalizedState,
                 icon: SessionListModel.icon(for: entry.normalizedState),
-                stateText: SessionListModel.stateText(for: entry.normalizedState),
-                detail: entry.conflictNote
+                stateText: SessionListModel.stateText(for: entry.normalizedState)
+                    + (entry.isStale ? SessionListModel.staleSuffix : ""),
+                detail: entry.conflictNote,
+                isStale: entry.isStale
             )
         }
     }
@@ -224,6 +230,9 @@ public struct SessionListModel: Hashable, Sendable {
         case .unknown: "訊號不足"
         }
     }
+
+    /// 資料過期的列在狀態短文字後加上的標示。
+    public static let staleSuffix = "（過期）"
 
     private static func connectionText(_ state: ConnectionState) -> String {
         switch state {

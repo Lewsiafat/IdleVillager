@@ -15,6 +15,13 @@ struct IdleVillagerMenuBarApp: App {
         let store = SessionStore(adapter: FakeHerdrAdapter(snapshot: .demo))
         _store = State(initialValue: store)
         Task { await store.start() }
+        // 沒有事件時也要讓久未更新的 Session 轉為過期，定期重新評估。
+        Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(10))
+                store.refreshStaleness()
+            }
+        }
     }
 
     var body: some Scene {

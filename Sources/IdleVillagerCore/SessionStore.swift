@@ -55,11 +55,20 @@ public struct StoreSession: Hashable, Sendable, Identifiable {
     public var normalizedState: NormalizedState
     /// 訊號互相衝突時的非敏感描述（只含正規化狀態名稱），供清單顯示；沒有衝突時為 nil。
     public var conflictNote: String?
+    /// 資料是否已不新鮮：自 `session.updatedAt` 與上次成功快照時間兩者較晚者起超過 Store 的 `staleThreshold`，
+    /// 或與 Herdr 斷線、重連中時為 true。
+    public var isStale: Bool
 
-    public init(session: AgentSession, normalizedState: NormalizedState, conflictNote: String? = nil) {
+    public init(
+        session: AgentSession,
+        normalizedState: NormalizedState,
+        conflictNote: String? = nil,
+        isStale: Bool = false
+    ) {
         self.session = session
         self.normalizedState = normalizedState
         self.conflictNote = conflictNote
+        self.isStale = isStale
     }
 
     public var id: AgentSessionID { session.agentSessionID }
@@ -93,13 +102,26 @@ public final class SessionStore {
 
     @ObservationIgnored private let adapter: any HerdrAdapter
     @ObservationIgnored private let now: @Sendable () -> Date
+    /// 過期門檻（秒）。
+    public let staleThreshold: TimeInterval
+    /// 上次成功讀取 Adapter 快照的時間；過期判定的基準之一。
+    @ObservationIgnored private var lastSnapshotAt: Date?
+
+    /// 預設過期門檻：60 秒。
+    public nonisolated static let defaultStaleThreshold: TimeInterval = 60
 
     /// - Parameters:
     ///   - adapter: 資料來源。
-    ///   - now: 時鐘，用於 `lastUpdatedAt`；測試可注入固定時間。
-    public init(adapter: any HerdrAdapter, now: @escaping @Sendable () -> Date = { Date() }) {
+    ///   - now: 時鐘，用於 `lastUpdatedAt` 與過期判定；測試可注入固定時間。
+    ///   - staleThreshold: 超過這個秒數沒有更新的 Session 標記為過期。
+    public init(
+        adapter: any HerdrAdapter,
+        now: @escaping @Sendable () -> Date = { Date() },
+        staleThreshold: TimeInterval = SessionStore.defaultStaleThreshold
+    ) {
         self.adapter = adapter
         self.now = now
+        self.staleThreshold = staleThreshold
         self.snapshot = StoreSnapshot(
             connectionState: .disconnected,
             lastUpdatedAt: nil,
@@ -114,9 +136,11 @@ public final class SessionStore {
     public func start() async {
         do {
             let source = try await adapter.snapshot()
-            replaceSessions(with: source.sessions)
+            let time = now()
+            lastSnapshotAt = time
             snapshot.connectionState = .connected
-            snapshot.lastUpdatedAt = now()
+            snapshot.lastUpdatedAt = time
+            replaceSessions(with: source.sessions, at: time)
         } catch {
             snapshot.connectionState = .disconnected
         }
@@ -126,17 +150,25 @@ public final class SessionStore {
         }
     }
 
+    /// 依目前時鐘重新評估每個 Session 的 `isStale`。
+    ///
+    /// 每次處理事件時 Store 會自動重算；沒有事件時由 App 以 Timer 定期呼叫，讓久未更新的 Session 轉為過期。
+    public func refreshStaleness() {
+        refreshStaleness(at: now())
+    }
+
     private func handle(_ event: AdapterEvent) {
+        let time = now()
         switch event {
         case .sessionAdded(let session):
             var sessions = snapshot.sessions.map(\.session)
             sessions.removeAll { $0.agentSessionID == session.agentSessionID }
             sessions.append(session)
-            replaceSessions(with: sessions)
-            snapshot.lastUpdatedAt = now()
+            snapshot.lastUpdatedAt = time
+            replaceSessions(with: sessions, at: time)
         case .sessionRemoved(let id):
-            replaceSessions(with: snapshot.sessions.map(\.session).filter { $0.agentSessionID != id })
-            snapshot.lastUpdatedAt = now()
+            snapshot.lastUpdatedAt = time
+            replaceSessions(with: snapshot.sessions.map(\.session).filter { $0.agentSessionID != id }, at: time)
         case .sessionStateChanged(let id, let rawState, let stateSource, let updatedAt):
             let sessions = snapshot.sessions.map { entry -> AgentSession in
                 var session = entry.session
@@ -147,18 +179,39 @@ public final class SessionStore {
                 }
                 return session
             }
-            replaceSessions(with: sessions)
-            snapshot.lastUpdatedAt = now()
+            snapshot.lastUpdatedAt = time
+            replaceSessions(with: sessions, at: time)
         case .connectionChanged(let state):
             // lastUpdatedAt 代表最後一次成功取得資料的時間，連線狀態變更不更新它。
             snapshot.connectionState = state
+            refreshStaleness(at: time)
         }
     }
 
-    private func replaceSessions(with sessions: [AgentSession]) {
+    private func refreshStaleness(at time: Date) {
+        snapshot.sessions = snapshot.sessions.map { entry in
+            var entry = entry
+            entry.isStale = isStale(entry.session, at: time)
+            return entry
+        }
+    }
+
+    /// 斷線或重連中一律過期；否則以 `updatedAt` 與上次成功快照時間兩者較晚者為基準，超過門檻才算過期。
+    private func isStale(_ session: AgentSession, at time: Date) -> Bool {
+        guard snapshot.connectionState == .connected else { return true }
+        let reference = max(session.updatedAt, lastSnapshotAt ?? session.updatedAt)
+        return time.timeIntervalSince(reference) > staleThreshold
+    }
+
+    private func replaceSessions(with sessions: [AgentSession], at time: Date) {
         let entries = sessions.map { session in
             let result = StateNormalizer.normalize(session)
-            return StoreSession(session: session, normalizedState: result.state, conflictNote: result.conflictNote)
+            return StoreSession(
+                session: session,
+                normalizedState: result.state,
+                conflictNote: result.conflictNote,
+                isStale: isStale(session, at: time)
+            )
         }
         var counts = StateCounts()
         for entry in entries { counts[entry.normalizedState] += 1 }
