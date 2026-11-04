@@ -9,6 +9,10 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("選單列") {
+                Picker("選單列模式", selection: $settings.menuBarMode) {
+                    Text("數量模式").tag(MenuBarMode.counts)
+                    Text("少量角色模式").tag(MenuBarMode.fewCharacters)
+                }
                 Toggle("固定顯示數量為 0 的類別", isOn: $settings.alwaysShowZeroCounts)
                 Toggle("顯示已完成小計數（✓）", isOn: $settings.showDoneCount)
             }

@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 
-/// 選單列的呈現模式。本票只定義與持久化，尚未接上行為。
+/// 選單列的呈現模式。實際呈現由 `MenuBarCharacterMode` 依模式、連線狀態與 Session 數量決定。
 public enum MenuBarMode: String, CaseIterable, Hashable, Sendable {
     /// 顯示各類別數量，例如 `⚒ 3  ✋ 2  💤 1`。
     case counts
@@ -68,7 +68,7 @@ public final class AppSettings {
         didSet { store.set(showDoneCount, forKey: Key.showDoneCount) }
     }
 
-    /// 預留：選單列呈現模式。預設 `counts`；本票尚未接上行為。
+    /// 選單列呈現模式。預設 `counts`；選 `fewCharacters` 時由 `MenuBarCharacterMode` 決定是否顯示角色。
     public var menuBarMode: MenuBarMode {
         didSet { store.set(menuBarMode.rawValue, forKey: Key.menuBarMode) }
     }
