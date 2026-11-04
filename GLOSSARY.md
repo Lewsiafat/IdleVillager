@@ -49,7 +49,9 @@
 - **Character Presentation**：輸入正規化狀態、前一狀態與 Reduce Motion 開關，輸出角色呈現的純值（`CharacterPresentation`），包含姿勢、圖層與可選的過渡。畫面只依它繪製，不自行推論狀態。
 - **姿勢（Pose）**：每種正規化狀態恰好對應一種靜態姿勢（`CharacterPose`）：Working 幹活（`working`）、Needs Approval 舉手（`raisingHand`）、Done 交工（`delivering`）、Idle 躺平（`lyingDown`）、Error 警示（`alert`）、Unknown 疑惑（`puzzled`）。每種姿勢都有不依賴動畫的完整靜態版本。
 - **圖層（Layers）**：角色分成本體（body）、手（hands）、腳（feet）、道具（prop）、表情（face）、特效（effect）六層（`CharacterLayers`）。每層以 SF Symbol 名稱或 SwiftUI Shape 描述（`CharacterLayer`），本體一定存在，其他層為 nil 表示該姿勢不畫。Error 與 Unknown 不使用旗子、星光等成功類圖像。
-- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現）或系統 Reduce Motion 開啟時沒有過渡。過渡只是描述，動畫由 App 層實作。
+- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現）或系統 Reduce Motion 開啟時沒有過渡。過渡只是描述，動畫由 App 層實作。過渡的動畫參數為 `CharacterTransitionParameters`：`celebrateOnce` 約 0.5 秒跳起再落下一次；`slowToIdle` 約 0.8 秒從半透明淡入躺平姿勢，不跳。
+- **循環動作（Loop）**：姿勢持續播放的低干擾動作（`CharacterLoop`），只描述節奏與幅度（`CharacterLoopParameters`：週期、實際在動的時間、位移比例、擺動角度）。幹活為 `workingBob`（每 1.2 秒平穩上下跳動並擺動）；舉手為 `raisedHandSway`（每 4 秒晃一次，其餘時間靜止；週期不小於 3 秒是「不閃爍」的量化定義）；躺平為 `idleZzz`（每 6 秒浮出一個 Zzz）。交工、警示、疑惑沒有循環：交工只在過渡時跳一次，Error 是靜態警示，Unknown 不需動畫。
+- **Character Motion**：輸入姿勢、過渡、系統 Reduce Motion 與使用者動畫開關（`animationsEnabled`），輸出循環動作與過渡的純值（`CharacterMotion`）。Reduce Motion 開啟或動畫關閉時兩者一律為 nil，畫面只畫靜態姿勢。動畫只在 Popover 的角色上播放，選單列不播放。
 
 ## 其他
 
