@@ -5,6 +5,7 @@ import IdleVillagerCore
 @main
 struct IdleVillagerMenuBarApp: App {
     @State private var store: SessionStore
+    @State private var focusCoordinator: FocusCoordinator
     @State private var settings = AppSettings(store: UserDefaultsSettingsStore())
 
     init() {
@@ -12,14 +13,18 @@ struct IdleVillagerMenuBarApp: App {
         NSApplication.shared.setActivationPolicy(.accessory)
 
         // 真實 Herdr Adapter 尚未驗證，先以 Fake Adapter 的示範快照啟動。
-        let store = SessionStore(adapter: FakeHerdrAdapter(snapshot: .demo))
+        // 示範用 Fake Adapter 的 focus 預設回傳成功。
+        let adapter = FakeHerdrAdapter(snapshot: .demo)
+        let store = SessionStore(adapter: adapter)
         _store = State(initialValue: store)
+        _focusCoordinator = State(initialValue: FocusCoordinator(store: store, adapter: adapter))
         Task { await store.start() }
     }
 
     var body: some Scene {
         MenuBarExtra {
             SessionPopoverView(snapshot: store.snapshot)
+                .environment(focusCoordinator)
             SettingsEntryButton()
         } label: {
             MenuBarLabel(snapshot: store.snapshot, settings: settings)
