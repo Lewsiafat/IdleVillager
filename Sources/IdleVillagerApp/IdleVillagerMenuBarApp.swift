@@ -51,14 +51,21 @@ struct MenuBarLabel: View {
 
     var body: some View {
         let summary = MenuBarSummary(snapshot: snapshot, settings: settings)
-        Text(MenuBarSummaryFormatter.text(for: summary))
-            .accessibilityLabel(accessibilityText(for: summary))
+        Group {
+            // 斷線或重連中只顯示斷線圖示，不顯示任何數字。
+            if let symbolName = MenuBarSummaryFormatter.symbolName(for: summary) {
+                Image(systemName: symbolName)
+            } else {
+                Text(MenuBarSummaryFormatter.text(for: summary))
+            }
+        }
+        .accessibilityLabel(accessibilityText(for: summary))
     }
 
     private func accessibilityText(for summary: MenuBarSummary) -> String {
         switch summary.mode {
         case .disconnected:
-            return "Herdr 未連線"
+            return snapshot.connectionState == .reconnecting ? "正在重新連線 Herdr" : "Herdr 未連線"
         case .zeroAgents:
             return "沒有 Agent"
         case .normal:

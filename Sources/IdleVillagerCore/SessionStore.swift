@@ -132,8 +132,24 @@ public final class SessionStore {
 
     /// 讀取 Adapter 快照，然後持續處理事件，直到事件串流結束或呼叫端的 Task 被取消才返回。
     ///
+    /// Adapter 回報重新連上（`connectionChanged(.connected)`）時，Store 會重新讀取一次完整快照，
+    /// 以同步斷線期間錯過的變更；讀取成功才轉為 connected，失敗則維持 disconnected 並保留上次的清單。
+    ///
     /// App 端在啟動時以 `Task { await store.start() }` 呼叫；測試可先讓 Fake Adapter `finish()`，`start()` 會在處理完已推送的事件後返回。
     public func start() async {
+        await loadSnapshot()
+
+        for await event in adapter.events {
+            if case .connectionChanged(.connected) = event {
+                await loadSnapshot()
+            } else {
+                handle(event)
+            }
+        }
+    }
+
+    /// 讀取 Adapter 的完整快照並取代目前清單；讀取失敗時標記為斷線，保留上次的清單與最後成功更新時間。
+    private func loadSnapshot() async {
         do {
             let source = try await adapter.snapshot()
             let time = now()
@@ -143,10 +159,7 @@ public final class SessionStore {
             replaceSessions(with: source.sessions, at: time)
         } catch {
             snapshot.connectionState = .disconnected
-        }
-
-        for await event in adapter.events {
-            handle(event)
+            refreshStaleness(at: now())
         }
     }
 
@@ -182,6 +195,7 @@ public final class SessionStore {
             snapshot.lastUpdatedAt = time
             replaceSessions(with: sessions, at: time)
         case .connectionChanged(let state):
+            // 重新連上由 start() 改走 loadSnapshot()；這裡只處理斷線與重連中。
             // lastUpdatedAt 代表最後一次成功取得資料的時間，連線狀態變更不更新它。
             snapshot.connectionState = state
             refreshStaleness(at: time)

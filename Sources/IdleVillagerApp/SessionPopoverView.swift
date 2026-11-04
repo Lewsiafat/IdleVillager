@@ -86,8 +86,8 @@ struct SessionPopoverView: View {
 
     @ViewBuilder
     private func content(_ model: SessionListModel) -> some View {
-        if model.workspaces.isEmpty {
-            Text(model.footer.connectionState == .connected ? "目前沒有 Agent Session" : "尚未取得 Session 資料")
+        if let emptyStateText = model.emptyStateText {
+            Text(emptyStateText)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.vertical, 24)
@@ -111,15 +111,17 @@ struct SessionPopoverView: View {
                     .accessibilityHidden(true)
                 Text("來源：\(footer.sourceName) · \(footer.connectionText)")
                 Spacer()
-                if let lastUpdatedAt = footer.lastUpdatedAt {
-                    Text("更新於 \(lastUpdatedAt.formatted(date: .omitted, time: .standard))")
+                // 相對時間由 Core 依當下時間產生，定期重繪讓「N 分鐘前」持續正確。
+                TimelineView(.periodic(from: .now, by: 10)) { context in
+                    Text(footer.lastUpdatedText(now: context.date))
+                        .help(footer.lastUpdatedAt.map { $0.formatted(date: .abbreviated, time: .standard) } ?? "")
                 }
             }
             .font(.caption)
             .foregroundStyle(.secondary)
 
-            if footer.connectionState != .connected {
-                Text("資料可能已過期，以上清單為最後一次成功更新的內容。")
+            if let staleNotice = footer.staleNotice {
+                Text(staleNotice)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
