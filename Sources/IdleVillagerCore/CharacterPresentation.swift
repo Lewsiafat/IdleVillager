@@ -23,6 +23,7 @@ public enum AgentKind: String, CaseIterable, Hashable, Sendable {
         "openai-codex": .codex,
         "gemini": .gemini,
         "gemini-cli": .gemini,
+        "codex-cli": .codex,
     ]
 }
 
@@ -98,6 +99,8 @@ public struct CharacterPresentation: Hashable, Sendable {
     public var layers: CharacterLayers
     /// 一次性過渡；沒有過渡、沒有前一狀態或 Reduce Motion 開啟時為 nil。
     public var transition: CharacterTransition?
+    /// 品牌本體；不帶 Agent 種類建立時為 `.generic`。品牌本體存在時取代 `layers.body` 的 Generic 圖形。
+    public var brandBody: BrandBody = .generic
 
     /// - Parameters:
     ///   - state: 目前的正規化狀態。

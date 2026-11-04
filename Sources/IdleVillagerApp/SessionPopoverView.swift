@@ -214,7 +214,7 @@ private struct SessionRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            CharacterView(state: row.state)
+            CharacterView(state: row.state, agentKind: AgentKind(rawAgentKind: row.agentKind))
             Text(row.icon)
                 .font(.body.weight(.bold))
                 .foregroundStyle(iconStyle)

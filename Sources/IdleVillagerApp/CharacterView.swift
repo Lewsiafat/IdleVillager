@@ -4,21 +4,27 @@ import IdleVillagerCore
 /// Generic 小村民的靜態姿勢，完全依 `CharacterPresentation` 的圖層描述繪製。
 ///
 /// 本體、手、腳、道具、表情、特效各自是一層，用 SF Symbols 與 SwiftUI Shapes 畫出，不使用任何圖片素材。
-/// 尺寸限制在 24 到 36 pt。這裡只畫靜態姿勢，過渡動畫由後續實作。
+/// 尺寸限制在 16 到 36 pt；18 pt 以下只畫本體（見 `CharacterDetail`）。這裡只畫靜態姿勢，過渡動畫由後續實作。
+/// 品牌素材存在時，本體換成該 Agent 種類的品牌標誌（見 `BrandBodyView`），否則為 Generic 小村民。
 struct CharacterView: View {
     let state: NormalizedState
+    var agentKind: AgentKind = .generic
     var size: CGFloat = 28
 
-    static let sizeRange: ClosedRange<CGFloat> = 24...36
+    static let sizeRange: ClosedRange<CGFloat> = 16...36
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
     @State private var previousState: NormalizedState?
 
     var body: some View {
-        let presentation = CharacterPresentation(state: state, previousState: previousState, reduceMotion: reduceMotion)
+        let presentation = CharacterPresentation(
+            state: state, previousState: previousState, reduceMotion: reduceMotion,
+            agentKind: agentKind, isBrandAssetAvailable: BrandAssetCatalog.isAvailable
+        )
         let side = min(max(size, Self.sizeRange.lowerBound), Self.sizeRange.upperBound)
-        CharacterCanvas(presentation: presentation, side: side, highContrast: contrast == .increased)
+        CharacterCanvas(presentation: presentation, side: side, highContrast: contrast == .increased,
+                        detail: CharacterDetail(size: Double(side)))
             .frame(width: side, height: side)
             .onChange(of: state) { oldValue, _ in
                 previousState = oldValue
@@ -32,11 +38,29 @@ private struct CharacterCanvas: View {
     let presentation: CharacterPresentation
     let side: CGFloat
     let highContrast: Bool
+    let detail: CharacterDetail
 
     private var layers: CharacterLayers { presentation.layers }
     private var lying: Bool { presentation.pose == .lyingDown }
 
     var body: some View {
+        if detail.drawsOuterLayers {
+            fullCharacter
+        } else {
+            // 小尺寸只畫主標誌（本體），置中放大，讓品牌仍可辨識。
+            bodyLayer(diameter: side * 0.84)
+                .frame(width: side, height: side)
+        }
+    }
+
+    /// 本體：品牌標誌或 Generic 圓形。品牌標誌不疊表情，避免改動標誌本身。
+    private func bodyLayer(diameter: CGFloat) -> some View {
+        BrandBodyView(brandBody: presentation.brandBody, side: diameter) {
+            LayerView(layer: layers.body, width: diameter, height: diameter, style: bodyStyle)
+        }
+    }
+
+    private var fullCharacter: some View {
         ZStack {
             if let prop = layers.prop {
                 LayerView(layer: prop, width: propSize.width, height: propSize.height, style: AnyShapeStyle(.secondary))
@@ -52,12 +76,12 @@ private struct CharacterCanvas: View {
                 handsView(hands)
             }
             ZStack {
-                LayerView(layer: layers.body, width: side * 0.48, height: side * 0.48, style: bodyStyle)
-                if let face = layers.face {
+                bodyLayer(diameter: side * 0.48)
+                if let face = layers.face, presentation.brandBody == .generic {
                     LayerView(layer: face, width: side * 0.26, height: faceHeight(face), style: AnyShapeStyle(.background))
                 }
             }
-            // 躺平時本體靠在床頭上；本體是圓形，不需要旋轉。
+            // 躺平時本體靠在床頭上；本體不旋轉，品牌標誌因此不變形。
             .position(point(lying ? CGPoint(x: 0.3, y: 0.5) : CGPoint(x: 0.4, y: 0.48)))
             if let effect = layers.effect {
                 LayerView(layer: effect, width: side * 0.3, height: side * 0.3, style: effectStyle)
