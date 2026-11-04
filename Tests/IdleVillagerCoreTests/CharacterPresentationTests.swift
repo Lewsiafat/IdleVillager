@@ -13,6 +13,8 @@ struct AgentKindTests {
         ("gemini", .gemini),
         ("GEMINI", .gemini),
         ("gemini-cli", .gemini),
+        ("codex-cli", .codex),
+        ("Codex_CLI", .codex),
     ])
     func knownRawAgentKindMapsToItsAgentKind(raw: String, expected: AgentKind) {
         #expect(AgentKind(rawAgentKind: raw) == expected)

@@ -12,7 +12,8 @@ let package = Package(
         .target(name: "IdleVillagerCore"),
         .executableTarget(
             name: "IdleVillagerApp",
-            dependencies: ["IdleVillagerCore"]
+            dependencies: ["IdleVillagerCore"],
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "IdleVillagerCoreTests",
