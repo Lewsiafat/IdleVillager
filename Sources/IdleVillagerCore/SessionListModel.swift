@@ -16,6 +16,30 @@ public struct SessionListModel: Hashable, Sendable {
             self.connectionText = connectionText
             self.lastUpdatedAt = lastUpdatedAt
         }
+
+        /// 最後成功更新時間的人類可讀文字，以 `now` 計算相對時間，例如「最後更新：3 分鐘前」。
+        ///
+        /// 未滿 10 秒（含時鐘誤差造成的未來時間）為「剛剛」，之後依序為秒、分鐘、小時、天，皆無條件捨去；
+        /// 從未成功更新時為「尚未成功更新」。
+        public func lastUpdatedText(now: Date) -> String {
+            guard let lastUpdatedAt else { return "尚未成功更新" }
+            let elapsed = Int(now.timeIntervalSince(lastUpdatedAt))
+            let relative: String
+            switch elapsed {
+            case ..<10: relative = "剛剛"
+            case ..<60: relative = "\(elapsed) 秒前"
+            case ..<3_600: relative = "\(elapsed / 60) 分鐘前"
+            case ..<86_400: relative = "\(elapsed / 3_600) 小時前"
+            default: relative = "\(elapsed / 86_400) 天前"
+            }
+            return "最後更新：" + relative
+        }
+
+        /// 斷線或重連中、且清單仍保留上次內容時的過期提示；已連線或沒有清單可提示時為 nil。
+        public var staleNotice: String? {
+            guard connectionState != .connected, lastUpdatedAt != nil else { return nil }
+            return "資料可能已過期，以上清單為最後一次成功更新的內容。"
+        }
     }
 
     /// 清單中的一列，代表某個 Pane 裡的一個 Agent Session。
@@ -122,6 +146,14 @@ public struct SessionListModel: Hashable, Sendable {
     /// Workspace → Tab → 列的三層群組。
     public var workspaces: [WorkspaceGroup]
     public var footer: Footer
+
+    /// 清單沒有任何列時 Popover 顯示的空狀態文字；有列時為 nil。
+    ///
+    /// 已連線時是明確的零 Agent 狀態，斷線或重連中則說明沒有可顯示的資料，兩者文字不同。
+    public var emptyStateText: String? {
+        guard workspaces.isEmpty else { return nil }
+        return footer.connectionState == .connected ? "目前沒有 Agent Session" : "未連線，沒有可顯示的 Session 資料"
+    }
 
     public init(snapshot: StoreSnapshot) {
         title = "IdleVillager"

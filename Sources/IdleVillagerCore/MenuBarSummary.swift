@@ -92,7 +92,15 @@ public enum MenuBarSummaryFormatter {
         return counts.isEmpty ? hiddenStatesMarker : counts + " " + hiddenStatesMarker
     }
 
-    /// 斷線模式的固定文字，不含任何數字。
+    /// 選單列要以 SF Symbol 呈現時的圖示名稱：斷線模式（含重連中）為斷線圖示，其他模式為 nil、改顯示文字。
+    public static func symbolName(for summary: MenuBarSummary) -> String? {
+        summary.mode == .disconnected ? disconnectedSymbolName : nil
+    }
+
+    /// 斷線模式的 SF Symbol 名稱，與文字版的 `⚠` 同義。
+    public static let disconnectedSymbolName = "exclamationmark.triangle"
+
+    /// 斷線模式的固定文字，不含任何數字。App 改以 `symbolName(for:)` 的圖示呈現時，這段文字作為無障礙與備援用。
     public static let disconnectedText = "⚠ 斷線"
 
     /// 零 Agent 模式的固定文字。

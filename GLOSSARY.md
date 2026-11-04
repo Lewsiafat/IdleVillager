@@ -26,7 +26,7 @@
 ## 選單列摘要
 
 - **Menu Bar Summary**：由 Store 的計數與連線狀態推導出的純值摘要模型（`MenuBarSummary`），再由 `MenuBarSummaryFormatter` 轉成選單列文字，例如 `⚒ 3  ✋ 2  💤 1`。文字不含任何 Session 名稱。
-- **摘要模式（Summary Mode）**：`normal`（顯示數量）、`disconnected`（斷線或重連中，只顯示斷線表示，不含任何數字）、`zeroAgents`（已連線但沒有 Agent Session，顯示「0 個 Agent」）。
+- **摘要模式（Summary Mode）**：`normal`（顯示數量）、`disconnected`（斷線或重連中，只顯示斷線表示，不含任何數字）、`zeroAgents`（已連線但沒有 Agent Session，顯示「0 個 Agent」）。斷線模式的文字版為 `⚠ 斷線`；App 的選單列改用 `MenuBarSummaryFormatter.symbolName(for:)` 提供的 SF Symbol（`exclamationmark.triangle`）呈現斷線圖示，其他模式該值為 nil、顯示文字。
 - **隱藏狀態提示（Hidden States）**：Done、Error、Unknown 不在選單列預設數量中；任一大於 0 時摘要模型的 `hasHiddenStates` 為 true，選單列尾端加上小標記 `•`。開啟 Done 小計數後，Done 不再算作隱藏狀態，Error 與 Unknown 仍然算。
 - **Done 小計數（Done Count）**：設定開啟後，選單列在 Idle 之後多顯示 `✓ n`，例如 `⚒ 3  ✋ 2  💤 1  ✓ 2`；數量為 0 時與其他類別一樣依「固定顯示 0 數量」決定是否顯示。
 
@@ -40,7 +40,10 @@
 - **Session List Model**：由 Store snapshot 推導出的 Popover 純值清單模型（`SessionListModel`），包含固定標題 `IdleVillager`、Agent 總數、Workspace → Tab → 列的三層群組，以及底部資訊區。畫面只渲染它，不自行推論狀態或排序。
 - **列（Row）**：清單中代表一個 Agent Session 的一列，以 `agentSessionID` 為 id，帶有 agentKind、displayName、paneLabel、正規化狀態、狀態圖示（⚒ ✋ ✓ 💤 ! ?）、狀態短文字（幹活中、等核准、完成、閒置、錯誤、訊號不足）與可選的補充說明（`detail`，目前是衝突描述）。
 - **清單優先度（Priority Order）**：Needs Approval > Error > Done > Working > Idle > Unknown。列依此排序；Tab 與 Workspace 群組依內含的最高優先度（`topState`）排序，所以急件所在的群組會浮到最上方。同優先度時依名稱（數字以數值比較）再依 ID 排序。
-- **底部資訊區（Footer）**：Popover 底部的來源與連線資訊，包含來源名稱 Herdr、連線狀態文字與最後成功更新時間。Herdr 只出現在這裡，不出現在標題。
+- **底部資訊區（Footer）**：Popover 底部的來源與連線資訊，包含來源名稱 Herdr、連線狀態文字（已連線、已斷線、重新連線中）與最後成功更新時間。Herdr 只出現在這裡，不出現在標題。
+- **最後更新文字（Last Updated Text）**：`Footer.lastUpdatedText(now:)` 以注入的當下時間產生相對時間文字，例如「最後更新：3 分鐘前」；未滿 10 秒為「剛剛」，從未成功更新為「尚未成功更新」。
+- **過期提示（Stale Notice）**：斷線或重連中、且曾成功更新過時，Footer 的 `staleNotice` 為「資料可能已過期，以上清單為最後一次成功更新的內容。」；已連線時為 nil。
+- **空狀態（Empty State）**：清單沒有任何列時 `SessionListModel.emptyStateText` 的文字。已連線是零 Agent 狀態「目前沒有 Agent Session」，斷線或重連中是「未連線，沒有可顯示的 Session 資料」，兩者刻意不同；有列時為 nil。
 - **Tab 收合**：使用者可收合 Tab 群組。收合狀態只存在 App 的 `SessionPopoverViewModel`，不在純值模型中，重啟後不保留。
 
 ## 小村民角色
@@ -57,6 +60,7 @@
 ## 其他
 
 - **isStale**：表示某個 Session 的資料已經不新鮮的旗標（`StoreSession.isStale`）。以該 Session 的 `updatedAt` 與上次成功讀取快照的時間兩者較晚者為基準，超過過期門檻（`staleThreshold`，預設 60 秒，可注入）時為 true；Adapter 回報斷線或重連中時，所有 Session 一律為 true。Store 在處理每個事件時重算，沒有事件時由 App 定期呼叫 `refreshStaleness()`。過期的列在狀態短文字後加上「（過期）」，例如「幹活中（過期）」，並帶 `isStale` 欄位。
+- **重連同步（Reconnect Resync）**：Adapter 送出 `connectionChanged(.connected)` 時，Session Store 重新讀取一次完整快照，以補上斷線期間錯過的變更；讀取成功才轉為 connected 並更新最後成功更新時間，失敗則維持 disconnected、保留上次清單且全部過期。
 - **事件訂閱優先、輪詢備援**：Adapter 取得變更的方式。來源支援事件訂閱時優先訂閱，否則由 Adapter 內部輪詢並合成同樣的事件；選擇與輪詢間隔都封裝在 Adapter 內，Store 以上不感知差異。
 - **Focus**：使用者點擊一列後，把 Herdr 對應視窗帶到前景並聚焦到指定 Pane 的動作；結果是成功，或帶明確原因的失敗。
 - **Focus Coordinator**：處理 Focus 流程的可觀察物件（`FocusCoordinator`）。以列的 `AgentSessionID` 與 `PaneID`（不用清單索引）先向 Session Store 的 snapshot 確認目標仍存在且 Pane 相符；不存在就不呼叫 Adapter，直接回傳「目標已不存在」；存在才呼叫 Adapter 的 focus。結果為 `FocusOutcome`（成功，或帶 `FocusFailure` 的失敗，`FocusFailure.message` 是使用者可讀原因）。最近一次失敗公開在 `lastFailure` 供 Popover 頂部顯示，成功時清空。
