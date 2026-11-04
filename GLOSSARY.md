@@ -20,6 +20,15 @@
 - **Error**：已確認任務失敗或異常。
 - **Unknown**：訊號不足、無法對應或訊號互相衝突時的狀態，必須明確顯示而不是被隱藏。
 
+- **State Normalizer**：把 Adapter 給的 `rawState` 與 `stateSource` 轉成上述六種狀態之一的純函式（`StateNormalizer`）。只有明確事件能得到非 Unknown 的狀態；`rawState` 的對應表只定義在 `StateNormalizer.rawStateTable` 一處。
+- **衝突描述（Conflict Note）**：一個 Session 同時帶有多個互斥訊號（`rawState` 以 `|` 分隔，例如 `working|idle`）時，該 Session 為 Unknown，並附上只含正規化狀態名稱的說明（例如「訊號衝突：Working、Idle」），不含任何來源原始文字。Needs Approval 與 Idle 同時出現不算衝突，結果為 Needs Approval。
+
+## 選單列摘要
+
+- **Menu Bar Summary**：由 Store 的計數與連線狀態推導出的純值摘要模型（`MenuBarSummary`），再由 `MenuBarSummaryFormatter` 轉成選單列文字，例如 `⚒ 3  ✋ 2  💤 1`。文字不含任何 Session 名稱。
+- **摘要模式（Summary Mode）**：`normal`（顯示數量）、`disconnected`（斷線或重連中，只顯示斷線表示，不含任何數字）、`zeroAgents`（已連線但沒有 Agent Session，顯示「0 個 Agent」）。
+- **隱藏狀態提示（Hidden States）**：Done、Error、Unknown 不在選單列預設數量中；任一大於 0 時摘要模型的 `hasHiddenStates` 為 true，選單列尾端加上小標記 `•`。
+
 ## 其他
 
 - **isStale**：表示某個 Session 的資料已經不新鮮的旗標；自上次成功更新超過門檻，或 Adapter 回報斷線時為 true。

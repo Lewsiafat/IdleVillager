@@ -40,7 +40,7 @@ struct SessionStoreTests {
         #expect(store.snapshot.counts.total == 0)
     }
 
-    @Test func snapshotWithOneSessionExposesItsFieldsAsUnknown() async throws {
+    @Test func snapshotWithOneExplicitRunningSessionExposesItsFieldsAsWorking() async throws {
         let session = makeSession()
         let adapter = FakeHerdrAdapter(snapshot: SessionSnapshot(sessions: [session]))
         adapter.finish()
@@ -61,8 +61,9 @@ struct SessionStoreTests {
         #expect(entry.session.displayName == "Claude Code")
         #expect(entry.session.rawState == "running")
         #expect(entry.session.stateSource == .explicitEvent)
-        #expect(entry.normalizedState == .unknown)
-        #expect(store.snapshot.counts.unknown == 1)
+        #expect(entry.normalizedState == .working)
+        #expect(entry.conflictNote == nil)
+        #expect(store.snapshot.counts.working == 1)
         #expect(store.snapshot.counts.total == 1)
     }
 

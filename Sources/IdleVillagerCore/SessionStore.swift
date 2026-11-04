@@ -53,10 +53,13 @@ public struct StateCounts: Hashable, Sendable {
 public struct StoreSession: Hashable, Sendable, Identifiable {
     public var session: AgentSession
     public var normalizedState: NormalizedState
+    /// 訊號互相衝突時的非敏感描述（只含正規化狀態名稱），供清單顯示；沒有衝突時為 nil。
+    public var conflictNote: String?
 
-    public init(session: AgentSession, normalizedState: NormalizedState) {
+    public init(session: AgentSession, normalizedState: NormalizedState, conflictNote: String? = nil) {
         self.session = session
         self.normalizedState = normalizedState
+        self.conflictNote = conflictNote
     }
 
     public var id: AgentSessionID { session.agentSessionID }
@@ -153,8 +156,10 @@ public final class SessionStore {
     }
 
     private func replaceSessions(with sessions: [AgentSession]) {
-        // 正規化規則尚未實作，所有 Session 先視為 unknown。
-        let entries = sessions.map { StoreSession(session: $0, normalizedState: .unknown) }
+        let entries = sessions.map { session in
+            let result = StateNormalizer.normalize(session)
+            return StoreSession(session: session, normalizedState: result.state, conflictNote: result.conflictNote)
+        }
         var counts = StateCounts()
         for entry in entries { counts[entry.normalizedState] += 1 }
         snapshot.sessions = entries

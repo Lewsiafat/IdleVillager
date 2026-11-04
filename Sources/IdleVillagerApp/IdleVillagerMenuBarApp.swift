@@ -10,8 +10,8 @@ struct IdleVillagerMenuBarApp: App {
         // 以 Swift Package 執行檔啟動時沒有 Info.plist 的 LSUIElement，改用程式設定成只出現在選單列。
         NSApplication.shared.setActivationPolicy(.accessory)
 
-        // 真實 Herdr Adapter 尚未驗證，先以 Fake Adapter 的空快照啟動。
-        let store = SessionStore(adapter: FakeHerdrAdapter(snapshot: .empty))
+        // 真實 Herdr Adapter 尚未驗證，先以 Fake Adapter 的示範快照啟動。
+        let store = SessionStore(adapter: FakeHerdrAdapter(snapshot: .demo))
         _store = State(initialValue: store)
         Task { await store.start() }
     }
@@ -26,17 +26,37 @@ struct IdleVillagerMenuBarApp: App {
     }
 }
 
-/// 選單列文字。本票只呈現零狀態與斷線，完整摘要模型由後續票實作。
+/// 選單列文字，完全由摘要模型決定；畫面不自行推論狀態。
 struct MenuBarLabel: View {
     let snapshot: StoreSnapshot
 
     var body: some View {
-        switch snapshot.connectionState {
-        case .connected:
-            Text("\(snapshot.counts.total) 個 Agent")
-        case .disconnected, .reconnecting:
-            Image(systemName: "bolt.horizontal.circle")
-                .accessibilityLabel("Herdr 未連線")
+        let summary = MenuBarSummary(snapshot: snapshot)
+        Text(MenuBarSummaryFormatter.text(for: summary))
+            .accessibilityLabel(accessibilityText(for: summary))
+    }
+
+    private func accessibilityText(for summary: MenuBarSummary) -> String {
+        switch summary.mode {
+        case .disconnected:
+            return "Herdr 未連線"
+        case .zeroAgents:
+            return "沒有 Agent"
+        case .normal:
+            var parts = summary.items.filter(\.isVisible).map { "\(name(of: $0.state)) \($0.count) 個" }
+            if summary.hasHiddenStates { parts.append("另有已完成、錯誤或未知的 Agent") }
+            return parts.joined(separator: "，")
+        }
+    }
+
+    private func name(of state: NormalizedState) -> String {
+        switch state {
+        case .working: "工作中"
+        case .needsApproval: "等待核准"
+        case .idle: "閒置"
+        case .done: "已完成"
+        case .error: "錯誤"
+        case .unknown: "未知"
         }
     }
 }
