@@ -43,6 +43,14 @@
 - **底部資訊區（Footer）**：Popover 底部的來源與連線資訊，包含來源名稱 Herdr、連線狀態文字與最後成功更新時間。Herdr 只出現在這裡，不出現在標題。
 - **Tab 收合**：使用者可收合 Tab 群組。收合狀態只存在 App 的 `SessionPopoverViewModel`，不在純值模型中，重啟後不保留。
 
+## 小村民角色
+
+- **Agent 種類（Agent Kind）**：`AgentKind` enum，值為 claude、codex、gemini、generic。由 Adapter 的 agentKind 原始字串以 `AgentKind(rawAgentKind:)` 對應，大小寫不敏感、底線與連字號視為相同（例如 `claude-code`、`openai-codex`、`gemini-cli`）；無法對應者為 generic。品牌素材取得前，所有種類的角色本體都以 Generic 小村民呈現。
+- **Character Presentation**：輸入正規化狀態、前一狀態與 Reduce Motion 開關，輸出角色呈現的純值（`CharacterPresentation`），包含姿勢、圖層與可選的過渡。畫面只依它繪製，不自行推論狀態。
+- **姿勢（Pose）**：每種正規化狀態恰好對應一種靜態姿勢（`CharacterPose`）：Working 幹活（`working`）、Needs Approval 舉手（`raisingHand`）、Done 交工（`delivering`）、Idle 躺平（`lyingDown`）、Error 警示（`alert`）、Unknown 疑惑（`puzzled`）。每種姿勢都有不依賴動畫的完整靜態版本。
+- **圖層（Layers）**：角色分成本體（body）、手（hands）、腳（feet）、道具（prop）、表情（face）、特效（effect）六層（`CharacterLayers`）。每層以 SF Symbol 名稱或 SwiftUI Shape 描述（`CharacterLayer`），本體一定存在，其他層為 nil 表示該姿勢不畫。Error 與 Unknown 不使用旗子、星光等成功類圖像。
+- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現）或系統 Reduce Motion 開啟時沒有過渡。過渡只是描述，動畫由 App 層實作。
+
 ## 其他
 
 - **isStale**：表示某個 Session 的資料已經不新鮮的旗標；自上次成功更新超過門檻，或 Adapter 回報斷線時為 true。
