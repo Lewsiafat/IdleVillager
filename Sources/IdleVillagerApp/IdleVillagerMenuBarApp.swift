@@ -50,16 +50,21 @@ struct MenuBarLabel: View {
     let settings: AppSettings
 
     var body: some View {
-        let summary = MenuBarSummary(snapshot: snapshot, settings: settings)
-        Group {
-            // 斷線或重連中只顯示斷線圖示，不顯示任何數字。
-            if let symbolName = MenuBarSummaryFormatter.symbolName(for: summary) {
-                Image(systemName: symbolName)
-            } else {
-                Text(MenuBarSummaryFormatter.text(for: summary))
+        // 少量角色模式且 Session 數量不超過門檻時顯示角色；其餘情況（含斷線、0 個、超過門檻）一律回到數量模式。
+        if case .characters(let items) = MenuBarCharacterMode(snapshot: snapshot, settings: settings).display {
+            MenuBarCharactersLabel(items: items)
+        } else {
+            let summary = MenuBarSummary(snapshot: snapshot, settings: settings)
+            Group {
+                // 斷線或重連中只顯示斷線圖示，不顯示任何數字。
+                if let symbolName = MenuBarSummaryFormatter.symbolName(for: summary) {
+                    Image(systemName: symbolName)
+                } else {
+                    Text(MenuBarSummaryFormatter.text(for: summary))
+                }
             }
+            .accessibilityLabel(accessibilityText(for: summary))
         }
-        .accessibilityLabel(accessibilityText(for: summary))
     }
 
     private func accessibilityText(for summary: MenuBarSummary) -> String {

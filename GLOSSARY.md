@@ -28,11 +28,14 @@
 - **Menu Bar Summary**：由 Store 的計數與連線狀態推導出的純值摘要模型（`MenuBarSummary`），再由 `MenuBarSummaryFormatter` 轉成選單列文字，例如 `⚒ 3  ✋ 2  💤 1`。文字不含任何 Session 名稱。
 - **摘要模式（Summary Mode）**：`normal`（顯示數量）、`disconnected`（斷線或重連中，只顯示斷線表示，不含任何數字）、`zeroAgents`（已連線但沒有 Agent Session，顯示「0 個 Agent」）。斷線模式的文字版為 `⚠ 斷線`；App 的選單列改用 `MenuBarSummaryFormatter.symbolName(for:)` 提供的 SF Symbol（`exclamationmark.triangle`）呈現斷線圖示，其他模式該值為 nil、顯示文字。
 - **隱藏狀態提示（Hidden States）**：Done、Error、Unknown 不在選單列預設數量中；任一大於 0 時摘要模型的 `hasHiddenStates` 為 true，選單列尾端加上小標記 `•`。開啟 Done 小計數後，Done 不再算作隱藏狀態，Error 與 Unknown 仍然算。
+- **選單列模式（Menu Bar Mode）**：使用者在設定中選擇的選單列呈現方式（`MenuBarMode`），分為數量模式（`counts`，預設，顯示摘要文字）與少量角色模式（`fewCharacters`）。
+- **少量角色模式（Few Characters Mode）**：Session 很少時，選單列改為每個 Session 顯示一個靜態小村民角色（16 pt，只畫本體，不播放動畫），後面接狀態圖示（⚒ ✋ ✓ 💤 ! ?），讓狀態不只靠角色或顏色辨識。角色依清單優先度排列，不含任何 Session 名稱。是否真的顯示角色由純值模型 `MenuBarCharacterMode` 決定，輸出 `MenuBarDisplay`：`.counts` 或 `.characters([MenuBarCharacterItem])`。
+- **少量角色門檻（Few Characters Threshold）**：少量角色模式最多顯示角色的 Session 數量（`fewCharactersThreshold`，預設 4，可注入）。Session 數量在 1 到門檻（含）之間且已連線時才顯示角色；超過門檻、沒有 Session、斷線或重連中時自動回到數量模式。
 - **Done 小計數（Done Count）**：設定開啟後，選單列在 Idle 之後多顯示 `✓ n`，例如 `⚒ 3  ✋ 2  💤 1  ✓ 2`；數量為 0 時與其他類別一樣依「固定顯示 0 數量」決定是否顯示。
 
 ## 設定
 
-- **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），以及預留但尚未接上行為的選單列模式（`menuBarMode`）、排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`）。摘要模型只透過 `MenuBarSummary(snapshot:settings:)` 接收設定值，不自行讀取偏好儲存。
+- **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），選單列模式（`menuBarMode`），以及預留但尚未接上行為的排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`）。摘要模型只透過 `MenuBarSummary(snapshot:settings:)` 接收設定值，不自行讀取偏好儲存。
 - **Settings Store**：設定的鍵值儲存介面（`SettingsStore`）。正式環境用 `UserDefaultsSettingsStore`（macOS 標準使用者偏好），測試用 `InMemorySettingsStore`；設定改動即時寫入，`AppSettings` 初始化時從中讀回，因此重啟後保留。
 
 ## Popover 清單
