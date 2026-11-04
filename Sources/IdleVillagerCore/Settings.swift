@@ -9,13 +9,13 @@ public enum MenuBarMode: String, CaseIterable, Hashable, Sendable {
     case fewCharacters
 }
 
-/// Popover 清單的排序規則。本票只定義與持久化，尚未接上行為。
+/// Popover 清單的排序規則，由 `SessionListModel(snapshot:sortRule:)` 套用。
 public enum SortRule: String, CaseIterable, Hashable, Sendable {
     /// 依狀態優先序排列（Needs Approval 最前）。
     case priority
-    /// 依 Workspace 名稱排列。
+    /// Workspace 與 Tab 依名稱排列，列仍依狀態優先序。
     case workspaceName
-    /// 固定順序，不因狀態改變而移動。
+    /// 固定順序：Workspace、Tab、列都依穩定 ID 排列，不因狀態改變而移動。
     case fixed
 }
 
@@ -73,17 +73,17 @@ public final class AppSettings {
         didSet { store.set(menuBarMode.rawValue, forKey: Key.menuBarMode) }
     }
 
-    /// 預留：Popover 清單排序規則。預設 `priority`；本票尚未接上行為。
+    /// Popover 清單排序規則。預設 `priority`。
     public var sortRule: SortRule {
         didSet { store.set(sortRule.rawValue, forKey: Key.sortRule) }
     }
 
-    /// 預留：是否播放動畫。預設開；本票尚未接上行為。
+    /// 是否播放角色動畫。預設開；關閉時效果等同系統 Reduce Motion（見 `CharacterMotion`）。
     public var animationsEnabled: Bool {
         didSet { store.set(animationsEnabled, forKey: Key.animationsEnabled) }
     }
 
-    /// 預留：是否使用低干擾提醒。預設開；本票尚未接上行為。
+    /// 低干擾提醒：待核准數量增加時選單列短暫強調。預設開；見 `ApprovalAlertTracker`。
     public var lowDistractionAlerts: Bool {
         didSet { store.set(lowDistractionAlerts, forKey: Key.lowDistractionAlerts) }
     }

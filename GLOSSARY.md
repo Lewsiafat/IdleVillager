@@ -35,7 +35,9 @@
 
 ## 設定
 
-- **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），選單列模式（`menuBarMode`），以及預留但尚未接上行為的排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`）。摘要模型只透過 `MenuBarSummary(snapshot:settings:)` 接收設定值，不自行讀取偏好儲存。
+- **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`），以及選單列模式（`menuBarMode`）。模型只透過 `MenuBarSummary(snapshot:settings:)`、`SessionListModel(snapshot:settings:)` 與 `ApprovalAlertTracker.observe(needsApprovalCount:settings:now:)` 接收設定值，不自行讀取偏好儲存。
+- **動畫開關（Animations Enabled）**：關閉後 Popover 角色只畫靜態姿勢，`CharacterMotion` 的循環與過渡一律為 nil，效果等同系統 Reduce Motion。預設開。
+- **低干擾提醒（Low-Distraction Alert）**：設定開啟時，待核准（Needs Approval）數量比上一次觀察**增加**，選單列短暫強調約 3 秒後恢復（文字加粗、SF Symbol 跳一次），不閃爍、不循環、不使用音效或系統通知。數量減少或不變不觸發；設定關閉時永不觸發並清除進行中的強調；第一次觀察只記下基準數量。判斷由純值 `ApprovalAlertTracker` 負責（輸出 `alertUntil`，時間可注入），App 的 `MenuBarAlertModifier` 只負責套用與到期還原。預設開。
 - **Settings Store**：設定的鍵值儲存介面（`SettingsStore`）。正式環境用 `UserDefaultsSettingsStore`（macOS 標準使用者偏好），測試用 `InMemorySettingsStore`；設定改動即時寫入，`AppSettings` 初始化時從中讀回，因此重啟後保留。
 
 ## Popover 清單
@@ -43,6 +45,7 @@
 - **Session List Model**：由 Store snapshot 推導出的 Popover 純值清單模型（`SessionListModel`），包含固定標題 `IdleVillager`、Agent 總數、Workspace → Tab → 列的三層群組，以及底部資訊區。畫面只渲染它，不自行推論狀態或排序。
 - **列（Row）**：清單中代表一個 Agent Session 的一列，以 `agentSessionID` 為 id，帶有 agentKind、displayName、paneLabel、正規化狀態、狀態圖示（⚒ ✋ ✓ 💤 ! ?）、狀態短文字（幹活中、等核准、完成、閒置、錯誤、訊號不足）與可選的補充說明（`detail`，目前是衝突描述）。
 - **清單優先度（Priority Order）**：Needs Approval > Error > Done > Working > Idle > Unknown。列依此排序；Tab 與 Workspace 群組依內含的最高優先度（`topState`）排序，所以急件所在的群組會浮到最上方。同優先度時依名稱（數字以數值比較）再依 ID 排序。
+- **排序規則（Sort Rule）**：Popover 清單的排序方式（`SortRule`），由 `SessionListModel(snapshot:sortRule:)` 套用，預設 `priority`。`priority` 即上述清單優先度；`workspaceName` 讓 Workspace 與 Tab 依名稱排序（數字以數值比較，同名再依 ID），列仍依優先度；`fixed` 讓 Workspace、Tab、列都依穩定 ID 的字串順序排序，是來源順序的近似，不因狀態改變而移動。
 - **底部資訊區（Footer）**：Popover 底部的來源與連線資訊，包含來源名稱 Herdr、連線狀態文字（已連線、已斷線、重新連線中）與最後成功更新時間。Herdr 只出現在這裡，不出現在標題。
 - **最後更新文字（Last Updated Text）**：`Footer.lastUpdatedText(now:)` 以注入的當下時間產生相對時間文字，例如「最後更新：3 分鐘前」；未滿 10 秒為「剛剛」，從未成功更新為「尚未成功更新」。
 - **過期提示（Stale Notice）**：斷線或重連中、且曾成功更新過時，Footer 的 `staleNotice` 為「資料可能已過期，以上清單為最後一次成功更新的內容。」；已連線時為 nil。

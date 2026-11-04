@@ -32,9 +32,11 @@ struct IdleVillagerMenuBarApp: App {
         MenuBarExtra {
             SessionPopoverView(snapshot: store.snapshot)
                 .environment(focusCoordinator)
+                .environment(settings)
             SettingsEntryButton()
         } label: {
             MenuBarLabel(snapshot: store.snapshot, settings: settings)
+                .approvalAlert(needsApprovalCount: store.snapshot.counts.needsApproval, settings: settings)
         }
         .menuBarExtraStyle(.window)
 

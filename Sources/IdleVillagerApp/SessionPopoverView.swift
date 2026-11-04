@@ -22,17 +22,19 @@ final class SessionPopoverViewModel {
     }
 }
 
-/// Popover 內容，完全由 `SessionListModel` 決定；畫面不自行推論狀態或排序。
+/// Popover 內容，完全由 `SessionListModel` 決定；畫面不自行推論狀態或排序。排序規則與動畫開關來自環境中的 `AppSettings`。
 struct SessionPopoverView: View {
     let snapshot: StoreSnapshot
     @State private var viewModel = SessionPopoverViewModel()
     @Environment(FocusCoordinator.self) private var focusCoordinator
+    @Environment(AppSettings.self) private var settings
 
     static let width: CGFloat = 360
+    /// 列的最小高度；系統字體放大時列可以長高，不截字。
     static let rowHeight: CGFloat = 36
 
     var body: some View {
-        let model = SessionListModel(snapshot: snapshot)
+        let model = SessionListModel(snapshot: snapshot, settings: settings)
         VStack(alignment: .leading, spacing: 0) {
             header(model)
             Divider()
@@ -190,7 +192,7 @@ private struct TabSection: View {
                 }
                 .padding(.leading, 24)
                 .padding(.trailing, 12)
-                .frame(height: 28)
+                .frame(minHeight: 28)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -212,11 +214,13 @@ private struct SessionRowView: View {
     let row: SessionListModel.Row
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(FocusCoordinator.self) private var focusCoordinator
+    @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         HStack(spacing: 8) {
-            CharacterView(state: row.state, agentKind: AgentKind(rawAgentKind: row.agentKind))
+            CharacterView(state: row.state, agentKind: AgentKind(rawAgentKind: row.agentKind),
+                          animationsEnabled: settings.animationsEnabled)
             Text(row.icon)
                 .font(.body.weight(.bold))
                 .foregroundStyle(iconStyle)
@@ -238,7 +242,7 @@ private struct SessionRowView: View {
         }
         .padding(.leading, 42)
         .padding(.trailing, 12)
-        .frame(height: SessionPopoverView.rowHeight)
+        .frame(minHeight: SessionPopoverView.rowHeight)
         .contentShape(Rectangle())
         .onTapGesture { focus() }
         .accessibilityElement(children: .ignore)
