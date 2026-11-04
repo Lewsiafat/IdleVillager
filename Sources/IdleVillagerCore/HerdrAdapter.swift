@@ -36,6 +36,16 @@ public enum FocusResult: Hashable, Sendable {
 /// 整個系統唯一的外部邊界，也是唯一的測試 seam。
 ///
 /// 真實的 Herdr 實作必須先在使用者環境驗證 API；此 protocol 不代表 Herdr API 已確認。
+///
+/// ## 事件訂閱優先、輪詢備援
+///
+/// 取得變更的方式由 Adapter 自行決定並完全封裝在內部：來源支援事件訂閱時優先使用訂閱；
+/// 不支援或訂閱中斷時，Adapter 改以低成本輪詢比對前後快照，自行合成同樣的
+/// `sessionAdded`、`sessionRemoved`、`sessionStateChanged` 事件。輪詢間隔與退避策略也由 Adapter 內部處理。
+/// 上層（Session Store 以及更上層的模型）只消費 `snapshot()` 與 `events`，不感知、也不應依賴兩種方式的差異。
+///
+/// `sessionStateChanged` 與 `sessionAdded` 帶的 `updatedAt` 必須是來源最後一次確認該 Session 狀態的時間；
+/// Store 以它判定 Session 是否過期（`StoreSession.isStale`）。
 public protocol HerdrAdapter: Sendable {
     /// 取得目前完整的 Workspace / Tab / Pane / Agent Session 階層快照。
     func snapshot() async throws -> SessionSnapshot

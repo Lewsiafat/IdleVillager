@@ -53,7 +53,8 @@
 
 ## 其他
 
-- **isStale**：表示某個 Session 的資料已經不新鮮的旗標；自上次成功更新超過門檻，或 Adapter 回報斷線時為 true。
+- **isStale**：表示某個 Session 的資料已經不新鮮的旗標（`StoreSession.isStale`）。以該 Session 的 `updatedAt` 與上次成功讀取快照的時間兩者較晚者為基準，超過過期門檻（`staleThreshold`，預設 60 秒，可注入）時為 true；Adapter 回報斷線或重連中時，所有 Session 一律為 true。Store 在處理每個事件時重算，沒有事件時由 App 定期呼叫 `refreshStaleness()`。過期的列在狀態短文字後加上「（過期）」，例如「幹活中（過期）」，並帶 `isStale` 欄位。
+- **事件訂閱優先、輪詢備援**：Adapter 取得變更的方式。來源支援事件訂閱時優先訂閱，否則由 Adapter 內部輪詢並合成同樣的事件；選擇與輪詢間隔都封裝在 Adapter 內，Store 以上不感知差異。
 - **Focus**：使用者點擊一列後，把 Herdr 對應視窗帶到前景並聚焦到指定 Pane 的動作；結果是成功，或帶明確原因的失敗。
 - **Focus Coordinator**：處理 Focus 流程的可觀察物件（`FocusCoordinator`）。以列的 `AgentSessionID` 與 `PaneID`（不用清單索引）先向 Session Store 的 snapshot 確認目標仍存在且 Pane 相符；不存在就不呼叫 Adapter，直接回傳「目標已不存在」；存在才呼叫 Adapter 的 focus。結果為 `FocusOutcome`（成功，或帶 `FocusFailure` 的失敗，`FocusFailure.message` 是使用者可讀原因）。最近一次失敗公開在 `lastFailure` 供 Popover 頂部顯示，成功時清空。
 - **Adapter**：把外部資料來源（目前是 Herdr）轉成本專案資料模型的元件，介面為 `HerdrAdapter` protocol；`FakeHerdrAdapter` 是記憶體內的實作。
