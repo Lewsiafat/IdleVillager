@@ -9,7 +9,6 @@ struct StateNormalizerTests {
         ("needsApproval", .needsApproval),
         ("waiting_for_approval", .needsApproval),
         ("awaiting_input", .needsApproval),
-        ("blocked", .needsApproval),
         ("done", .done),
         ("completed", .done),
         ("idle", .idle),
@@ -41,7 +40,7 @@ struct StateNormalizerTests {
         #expect(result.conflictNote == nil)
     }
 
-    @Test(arguments: ["", "   ", "thinking", "process_alive", "cpu_low"])
+    @Test(arguments: ["", "   ", "thinking", "process_alive", "cpu_low", "blocked", "BLOCKED"])
     func unmappableExplicitRawStateIsUnknownWithoutConflictNote(rawState: String) {
         let result = StateNormalizer.normalize(rawState: rawState, stateSource: .explicitEvent)
 
@@ -56,11 +55,18 @@ struct StateNormalizerTests {
         #expect(result.conflictNote == "訊號衝突：Working、Idle")
     }
 
-    @Test(arguments: ["needsApproval|idle", "idle|waiting_for_approval", "blocked|idle|awaiting-input"])
+    @Test(arguments: ["needsApproval|idle", "idle|waiting_for_approval", "awaiting_input|idle|awaiting-input"])
     func needsApprovalTakesPriorityOverIdleInTheSameSession(rawState: String) {
         let result = StateNormalizer.normalize(rawState: rawState, stateSource: .explicitEvent)
 
         #expect(result.state == .needsApproval)
+        #expect(result.conflictNote == nil)
+    }
+
+    @Test func blockedAlongsideIdleIsUnknownNotNeedsApproval() {
+        let result = StateNormalizer.normalize(rawState: "blocked|idle", stateSource: .explicitEvent)
+
+        #expect(result.state == .unknown)
         #expect(result.conflictNote == nil)
     }
 

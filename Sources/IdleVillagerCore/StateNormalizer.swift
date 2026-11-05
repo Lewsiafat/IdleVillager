@@ -16,7 +16,9 @@ public struct NormalizationResult: Hashable, Sendable {
 public enum StateNormalizer {
     /// rawState 到正規化狀態的對應表，這是唯一定義鍵集合的地方。
     ///
-    /// 鍵值是暫定的；真實 Herdr Adapter 驗證後依 Herdr 實際送出的值調整。
+    /// 整張表都是暫定的：在 #8 於使用者環境確認 Herdr 實際送出的 rawState 值之前，
+    /// 所有鍵都只是推測，確認後要逐一重新校對。語意不明確的值（例如 `blocked`，
+    /// 可能是等核准，也可能是錯誤或卡住）刻意不放進表中，讓它落到 Unknown。
     /// 比對時大小寫不敏感，底線與連字號視為相同。
     public static let rawStateTable: [String: NormalizedState] = [
         "working": .working,
@@ -25,7 +27,6 @@ public enum StateNormalizer {
         "needsApproval": .needsApproval,
         "waiting_for_approval": .needsApproval,
         "awaiting_input": .needsApproval,
-        "blocked": .needsApproval,
         "done": .done,
         "completed": .done,
         "idle": .idle,
