@@ -15,6 +15,14 @@ public enum AdapterEvent: Hashable, Sendable {
     case connectionChanged(ConnectionState)
 }
 
+/// 來源描述的固定用字。Footer 只顯示 Adapter 回報的值，不在畫面裡另寫來源。
+public enum SourceDescription {
+    /// 只有在使用者環境實際驗證過 Herdr API 的 Adapter 才回報這個名稱。
+    public static let herdr = "Herdr"
+    /// 記憶體內的示範資料，不代表已連上 Herdr。
+    public static let demo = "示範資料"
+}
+
 /// Focus 失敗的明確原因。
 public enum FocusFailureReason: Hashable, Sendable {
     /// 目標 Session 或 Pane 已不存在。
@@ -25,6 +33,8 @@ public enum FocusFailureReason: Hashable, Sendable {
     case disconnected
     /// 作業系統未能把 Herdr 視窗帶到前景。
     case windowNotBroughtToFront
+    /// 目前是示範資料，沒有可切回的真實 Session。
+    case demoMode
 }
 
 /// Focus 請求的結果。
@@ -47,6 +57,13 @@ public enum FocusResult: Hashable, Sendable {
 /// `sessionStateChanged` 與 `sessionAdded` 帶的 `updatedAt` 必須是來源最後一次確認該 Session 狀態的時間；
 /// Store 以它判定 Session 是否過期（`StoreSession.isStale`）。
 public protocol HerdrAdapter: Sendable {
+    /// 底部資訊區顯示的來源名稱。Session Store 在建立時同步讀取。
+    ///
+    /// 已在使用者環境驗證過的 Herdr 實作回報 `SourceDescription.herdr`。
+    /// 未驗證的實作必須回報別的名稱（`FakeHerdrAdapter` 回報 `SourceDescription.demo`），
+    /// 讓 Popover 不會出現「Herdr · 已連線」。
+    nonisolated var sourceDescription: String { get }
+
     /// 取得目前完整的 Workspace / Tab / Pane / Agent Session 階層快照。
     func snapshot() async throws -> SessionSnapshot
 
