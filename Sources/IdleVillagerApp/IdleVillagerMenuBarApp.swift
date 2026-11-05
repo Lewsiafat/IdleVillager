@@ -12,9 +12,14 @@ struct IdleVillagerMenuBarApp: App {
         // 以 Swift Package 執行檔啟動時沒有 Info.plist 的 LSUIElement，改用程式設定成只出現在選單列。
         NSApplication.shared.setActivationPolicy(.accessory)
 
-        // 真實 Herdr Adapter 尚未驗證，先以 Fake Adapter 的示範快照啟動。
-        // 預設來源是「示範資料」，focus 回傳示範模式失敗，不顯示「Herdr · 已連線」，也不假裝已切回。
-        let adapter = FakeHerdrAdapter(snapshot: .demo)
+        // 預設連 Herdr 的本機 socket。Herdr 沒在執行時畫面顯示斷線，不改用示範資料。
+        // 設定環境變數 IDLEVILLAGER_DEMO=1 才以 Fake Adapter 的示範快照啟動（來源顯示「示範資料」，focus 回傳示範模式失敗）。
+        let adapter: any HerdrAdapter
+        if ProcessInfo.processInfo.environment["IDLEVILLAGER_DEMO"] == "1" {
+            adapter = FakeHerdrAdapter(snapshot: .demo)
+        } else {
+            adapter = HerdrSocketAdapter(activator: AppKitTerminalActivator())
+        }
         let store = SessionStore(adapter: adapter)
         _store = State(initialValue: store)
         _focusCoordinator = State(initialValue: FocusCoordinator(store: store, adapter: adapter))
