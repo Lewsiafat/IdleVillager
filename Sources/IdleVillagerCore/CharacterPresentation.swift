@@ -55,7 +55,6 @@ public enum CharacterTransition: String, CaseIterable, Hashable, Sendable {
 public enum CharacterShape: String, CaseIterable, Hashable, Sendable {
     case circle
     case capsule
-    case roundedRectangle
 }
 
 /// 單一圖層的圖形描述：SF Symbol 名稱或 SwiftUI Shape。
