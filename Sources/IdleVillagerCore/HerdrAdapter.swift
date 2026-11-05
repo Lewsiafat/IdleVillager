@@ -11,7 +11,11 @@ public enum ConnectionState: Hashable, Sendable {
 public enum AdapterEvent: Hashable, Sendable {
     case sessionAdded(AgentSession)
     case sessionRemoved(AgentSessionID)
-    case sessionStateChanged(AgentSessionID, rawState: String, stateSource: StateSource, updatedAt: Date)
+    /// 狀態變更。`waitingReason` 是新狀態的可選等待原因（規範同 `AgentSession.waitingReason`），
+    /// 會取代該 Session 原本的等待原因；nil 表示新狀態沒有等待原因。
+    case sessionStateChanged(
+        AgentSessionID, rawState: String, stateSource: StateSource, updatedAt: Date, waitingReason: String? = nil
+    )
     case connectionChanged(ConnectionState)
 }
 

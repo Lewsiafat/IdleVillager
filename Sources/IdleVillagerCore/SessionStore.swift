@@ -187,13 +187,15 @@ public final class SessionStore {
         case .sessionRemoved(let id):
             snapshot.lastUpdatedAt = time
             replaceSessions(with: snapshot.sessions.map(\.session).filter { $0.agentSessionID != id }, at: time)
-        case .sessionStateChanged(let id, let rawState, let stateSource, let updatedAt):
+        case .sessionStateChanged(let id, let rawState, let stateSource, let updatedAt, let waitingReason):
             let sessions = snapshot.sessions.map { entry -> AgentSession in
                 var session = entry.session
                 if session.agentSessionID == id {
                     session.rawState = rawState
                     session.stateSource = stateSource
                     session.updatedAt = updatedAt
+                    // 等待原因屬於狀態的一部分，隨狀態一起取代，避免舊原因留在新狀態上。
+                    session.waitingReason = waitingReason
                 }
                 return session
             }

@@ -13,6 +13,7 @@ public enum StateSource: String, Hashable, Sendable, Codable {
 /// Adapter 回傳的單一 Agent Session metadata。
 ///
 /// 只包含監控與定位所需的欄位，刻意不提供任何可放置對話內容、Prompt 或密鑰的欄位。
+/// 唯一的自由文字欄位 `waitingReason` 也只能放來源提供的簡短 metadata。
 public struct AgentSession: Hashable, Sendable {
     public var workspaceID: WorkspaceID
     public var workspaceName: String
@@ -28,6 +29,11 @@ public struct AgentSession: Hashable, Sendable {
     public var rawState: String
     public var updatedAt: Date
     public var stateSource: StateSource
+    /// 可選的等待原因：來源提供的極短 metadata，例如「等待執行指令核准」，顯示在清單列的補充說明。
+    ///
+    /// 只能是簡短的狀態說明，**不得**包含對話內容、Prompt、指令全文、密碼或 API Key；
+    /// Adapter 拿不到符合條件的短說明時必須給 nil。沒有等待原因時為 nil。
+    public var waitingReason: String?
 
     public init(
         workspaceID: WorkspaceID,
@@ -41,7 +47,8 @@ public struct AgentSession: Hashable, Sendable {
         displayName: String,
         rawState: String,
         updatedAt: Date,
-        stateSource: StateSource
+        stateSource: StateSource,
+        waitingReason: String? = nil
     ) {
         self.workspaceID = workspaceID
         self.workspaceName = workspaceName
@@ -55,6 +62,7 @@ public struct AgentSession: Hashable, Sendable {
         self.rawState = rawState
         self.updatedAt = updatedAt
         self.stateSource = stateSource
+        self.waitingReason = waitingReason
     }
 }
 

@@ -57,7 +57,7 @@ public struct SessionListModel: Hashable, Sendable {
         public var icon: String
         /// 狀態短文字，例如「幹活中」「等核准」「訊號不足」；資料過期時加上後綴「（過期）」，例如「幹活中（過期）」。
         public var stateText: String
-        /// 可選的補充說明：等待原因或衝突描述。沒有時為 nil。
+        /// 可選的補充說明：衝突描述或等待原因，規則見 `detail(for:)`。沒有時為 nil。
         public var detail: String?
         /// 這列的資料是否已過期（來自 Store 的 `isStale`）。
         public var isStale: Bool
@@ -98,9 +98,18 @@ public struct SessionListModel: Hashable, Sendable {
                 icon: SessionListModel.icon(for: entry.normalizedState),
                 stateText: SessionListModel.stateText(for: entry.normalizedState)
                     + (entry.isStale ? SessionListModel.staleSuffix : ""),
-                detail: entry.conflictNote,
+                detail: Self.detail(for: entry),
                 isStale: entry.isStale
             )
+        }
+
+        /// 列的補充說明。衝突描述優先：Unknown 必須說明自己為何是 Unknown，所以有衝突描述時只顯示它；
+        /// 否則顯示等待原因（去除前後空白，空字串視為沒有）；兩者都沒有時為 nil。
+        static func detail(for entry: StoreSession) -> String? {
+            if let conflictNote = entry.conflictNote { return conflictNote }
+            guard let reason = entry.session.waitingReason?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !reason.isEmpty else { return nil }
+            return reason
         }
     }
 

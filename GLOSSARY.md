@@ -20,6 +20,7 @@
 - **Error**：已確認任務失敗或異常。
 - **Unknown**：訊號不足、無法對應或訊號互相衝突時的狀態，必須明確顯示而不是被隱藏。
 
+- **等待原因（Waiting Reason）**：來源提供、說明 Agent Session 為何在等的可選極短 metadata（`AgentSession.waitingReason`），例如「等待執行指令核准」。可由快照或 `sessionStateChanged` 事件的 `waitingReason` 帶入；狀態變更事件會連同等待原因一起取代，事件沒帶時清空，避免舊原因留在新狀態上。只能是簡短狀態說明，不得包含對話內容、Prompt、指令全文、密碼或 API Key；來源給不出符合條件的短說明時為 nil。空白字串視為沒有。顯示在列的補充說明，但衝突描述優先。
 - **State Normalizer**：把 Adapter 給的 `rawState` 與 `stateSource` 轉成上述六種狀態之一的純函式（`StateNormalizer`）。只有明確事件能得到非 Unknown 的狀態；`rawState` 的對應表只定義在 `StateNormalizer.rawStateTable` 一處。
 - **衝突描述（Conflict Note）**：一個 Session 同時帶有多個互斥訊號（`rawState` 以 `|` 分隔，例如 `working|idle`）時，該 Session 為 Unknown，並附上只含正規化狀態名稱的說明（例如「訊號衝突：Working、Idle」），不含任何來源原始文字。唯一的例外是 Needs Approval 與 Idle 同時出現：不算衝突，結果為 Needs Approval，也不附衝突描述；其他組合（例如 Done 與 Idle）仍是衝突。
 
@@ -43,7 +44,7 @@
 ## Popover 清單
 
 - **Session List Model**：由 Store snapshot 推導出的 Popover 純值清單模型（`SessionListModel`），包含固定標題 `IdleVillager`、標題狀態文字（`headerStatusText`：已連線時為「N 個 Agent」，從未連上為「未連線」，斷線為「已斷線」，重連中為「重新連線中」，斷線時不含數字）、Workspace → Tab → 列的三層群組，以及底部資訊區。畫面只渲染它，不自行推論狀態或排序。
-- **列（Row）**：清單中代表一個 Agent Session 的一列，以 `agentSessionID` 為 id，帶有 agentKind（`AgentKind`）、displayName、paneLabel、正規化狀態、狀態圖示（⚒ ✋ ✓ 💤 ! ?）、狀態短文字（幹活中、等核准、完成、閒置、錯誤、訊號不足）與可選的補充說明（`detail`，目前是衝突描述）。狀態短文字只定義在 `SessionListModel.stateText(for:)` 一處，Popover 清單、選單列的無障礙文字都使用它，不另寫「工作中」「未知」等別的說法。
+- **列（Row）**：清單中代表一個 Agent Session 的一列，以 `agentSessionID` 為 id，帶有 agentKind（`AgentKind`）、displayName、paneLabel、正規化狀態、狀態圖示（⚒ ✋ ✓ 💤 ! ?）、狀態短文字（幹活中、等核准、完成、閒置、錯誤、訊號不足）與可選的補充說明（`detail`）。補充說明的優先順序定義在 `SessionListModel.Row.detail(for:)`：有衝突描述時只顯示衝突描述（Unknown 必須說明自己為何是 Unknown），否則顯示等待原因，兩者都沒有時為 nil。狀態短文字只定義在 `SessionListModel.stateText(for:)` 一處，Popover 清單、選單列的無障礙文字都使用它，不另寫「工作中」「未知」等別的說法。
 - **清單優先度（Priority Order）**：Needs Approval > Error > Done > Working > Idle > Unknown。列依此排序；Tab 與 Workspace 群組依內含的最高優先度（`topState`）排序，所以急件所在的群組會浮到最上方。同優先度時依名稱（數字以數值比較）再依 ID 排序。
 - **排序規則（Sort Rule）**：Popover 清單的排序方式（`SortRule`），由 `SessionListModel(snapshot:sortRule:)` 套用，預設 `priority`。`priority` 即上述清單優先度；`workspaceName` 讓 Workspace 與 Tab 依名稱排序（數字以數值比較，同名再依 ID），列仍依優先度；`fixed` 讓 Workspace、Tab、列都依穩定 ID 的字串順序排序，是來源順序的近似，不因狀態改變而移動。
 - **來源描述（Source Description）**：Adapter 提供、給使用者看的來源名稱（`HerdrAdapter.sourceDescription`，用字集中在 `SourceDescription`）。Session Store 放進 `StoreSnapshot.sourceDescription`，Footer 的 `sourceName` 直接採用，清單模型不寫死來源。已在使用者環境驗證過 Herdr API 的 Adapter 回報「Herdr」（`SourceDescription.herdr`）；`FakeHerdrAdapter` 回報「示範資料」（`SourceDescription.demo`）。未驗證的實作不得回報「Herdr」，因此示範模式下 Footer 是「來源：示範資料 · 已連線」，不會出現「Herdr · 已連線」。來源名稱只出現在 Footer，不出現在標題或聚焦失敗訊息（`FocusFailure.message` 以「來源」中性稱呼）。
