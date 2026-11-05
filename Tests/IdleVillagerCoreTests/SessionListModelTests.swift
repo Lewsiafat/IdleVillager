@@ -32,13 +32,45 @@ private let fixedNow = Date(timeIntervalSince1970: 1_800_000_000)
 
 /// 以 Fake Adapter 餵入 Session 與事件，回傳 Store 處理完後的 Popover 清單模型。
 @MainActor
-private func listModel(of sessions: [AgentSession], events: [AdapterEvent] = []) async -> SessionListModel {
-    let adapter = FakeHerdrAdapter(snapshot: SessionSnapshot(sessions: sessions))
+private func listModel(
+    of sessions: [AgentSession],
+    events: [AdapterEvent] = [],
+    sourceDescription: String = SourceDescription.demo
+) async -> SessionListModel {
+    let adapter = FakeHerdrAdapter(
+        snapshot: SessionSnapshot(sessions: sessions),
+        sourceDescription: sourceDescription
+    )
     for event in events { adapter.send(event) }
     adapter.finish()
     let store = SessionStore(adapter: adapter, now: { fixedNow })
     await store.start()
     return SessionListModel(snapshot: store.snapshot)
+}
+
+/// Popover 會顯示的文字。用來確認示範模式不會出現「Herdr · 已連線」。
+private func popoverTexts(_ model: SessionListModel) -> [String] {
+    var texts = [
+        model.title,
+        "\(model.agentCount) 個 Agent",
+        "來源：\(model.footer.sourceName) · \(model.footer.connectionText)",
+        model.footer.lastUpdatedText(now: fixedNow),
+    ]
+    if let emptyStateText = model.emptyStateText { texts.append(emptyStateText) }
+    if let staleNotice = model.footer.staleNotice { texts.append(staleNotice) }
+    for workspace in model.workspaces {
+        texts.append(workspace.name)
+        for tab in workspace.tabs {
+            texts.append(tab.name)
+            for row in tab.rows {
+                texts.append(row.icon)
+                texts.append("\(row.displayName) · \(row.paneLabel)")
+                texts.append(row.stateText)
+                if let detail = row.detail { texts.append(detail) }
+            }
+        }
+    }
+    return texts
 }
 
 @MainActor
@@ -54,16 +86,40 @@ struct SessionListModelTests {
         #expect(model.agentCount == 3)
     }
 
-    @Test func herdrAppearsOnlyInTheFooterWithConnectionAndLastUpdate() async {
-        let model = await listModel(of: [session("s1", rawState: "working")])
+    @Test func herdrAppearsOnlyInTheFooterWhenTheAdapterReportsIt() async {
+        let model = await listModel(
+            of: [session("s1", rawState: "working")],
+            sourceDescription: SourceDescription.herdr
+        )
 
         #expect(model.footer == SessionListModel.Footer(
-            sourceName: "Herdr",
+            sourceName: SourceDescription.herdr,
             connectionState: .connected,
             connectionText: "已連線",
             lastUpdatedAt: Date(timeIntervalSince1970: 1_800_000_000)
         ))
         #expect(model.title.contains("Herdr") == false)
+        let footerLine = "來源：\(model.footer.sourceName) · \(model.footer.connectionText)"
+        #expect(footerLine == "來源：Herdr · 已連線")
+        #expect(popoverTexts(model).filter { $0 != footerLine }.contains { $0.contains("Herdr") } == false)
+    }
+
+    @Test func fakeAdapterFooterNamesDemoDataAndNeverClaimsHerdrConnected() async {
+        let adapter = FakeHerdrAdapter(snapshot: .demo)
+        adapter.finish()
+        let store = SessionStore(adapter: adapter, now: { fixedNow })
+        #expect(store.snapshot.sourceDescription == SourceDescription.demo)
+
+        await store.start()
+        let model = SessionListModel(snapshot: store.snapshot)
+
+        #expect(model.footer.sourceName == SourceDescription.demo)
+        #expect(model.footer.connectionState == .connected)
+        #expect(model.footer.connectionText == "已連線")
+        let footerLine = "來源：\(model.footer.sourceName) · \(model.footer.connectionText)"
+        #expect(footerLine == "來源：示範資料 · 已連線")
+        #expect(popoverTexts(model).contains { $0.contains("Herdr · 已連線") } == false)
+        #expect(popoverTexts(model).contains { $0.contains("Herdr") } == false)
     }
 
     @Test func footerShowsDisconnectionWhileKeepingTheLastSuccessfulUpdate() async {
@@ -72,7 +128,7 @@ struct SessionListModelTests {
             events: [.connectionChanged(.disconnected)]
         )
 
-        #expect(model.footer.sourceName == "Herdr")
+        #expect(model.footer.sourceName == SourceDescription.demo)
         #expect(model.footer.connectionState == .disconnected)
         #expect(model.footer.connectionText == "已斷線")
         #expect(model.footer.lastUpdatedAt == Date(timeIntervalSince1970: 1_800_000_000))

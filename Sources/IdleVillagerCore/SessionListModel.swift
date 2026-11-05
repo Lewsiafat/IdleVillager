@@ -2,7 +2,7 @@ import Foundation
 
 /// Popover 清單的純值模型，由 Store snapshot 推導。
 public struct SessionListModel: Hashable, Sendable {
-    /// Popover 底部的來源與連線資訊區。Herdr 只出現在這裡。
+    /// Popover 底部的來源與連線資訊區。來源名稱來自 Adapter 的來源描述，只出現在這裡。
     public struct Footer: Hashable, Sendable {
         public var sourceName: String
         public var connectionState: ConnectionState
@@ -170,7 +170,7 @@ public struct SessionListModel: Hashable, Sendable {
         agentCount = snapshot.counts.total
         workspaces = Self.group(snapshot.sessions, sortRule: sortRule)
         footer = Footer(
-            sourceName: "Herdr",
+            sourceName: snapshot.sourceDescription,
             connectionState: snapshot.connectionState,
             connectionText: Self.connectionText(snapshot.connectionState),
             lastUpdatedAt: snapshot.lastUpdatedAt

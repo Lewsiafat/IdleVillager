@@ -56,7 +56,7 @@ struct SessionPopoverView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
                     .accessibilityHidden(true)
-                Text("無法切回：\(failure.message)")
+                Text(failure.bannerText)
                     .font(.callout)
                 Spacer()
                 Button {

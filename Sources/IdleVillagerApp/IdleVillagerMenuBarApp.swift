@@ -13,7 +13,7 @@ struct IdleVillagerMenuBarApp: App {
         NSApplication.shared.setActivationPolicy(.accessory)
 
         // 真實 Herdr Adapter 尚未驗證，先以 Fake Adapter 的示範快照啟動。
-        // 示範用 Fake Adapter 的 focus 預設回傳成功。
+        // 預設來源是「示範資料」，focus 回傳示範模式失敗，不顯示「Herdr · 已連線」，也不假裝已切回。
         let adapter = FakeHerdrAdapter(snapshot: .demo)
         let store = SessionStore(adapter: adapter)
         _store = State(initialValue: store)

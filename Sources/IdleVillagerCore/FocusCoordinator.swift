@@ -20,6 +20,18 @@ public struct FocusFailure: Hashable, Sendable {
         case .unsupported: "Herdr 不支援聚焦到這個 Pane"
         case .disconnected: "與 Herdr 斷線，無法聚焦"
         case .windowNotBroughtToFront: "未能把 Herdr 視窗帶到前景"
+        case .demoMode: "示範模式無法切回"
+        }
+    }
+
+    /// Popover 頂部顯示的完整文字。
+    ///
+    /// 一般失敗加上「無法切回：」前綴。示範模式的訊息本身就是完整失敗說明，不再加前綴，
+    /// 避免變成「無法切回：示範模式無法切回」。
+    public var bannerText: String {
+        switch reason {
+        case .demoMode: message
+        default: "無法切回：\(message)"
         }
     }
 }
