@@ -39,11 +39,11 @@ struct StoreNormalizationTests {
     @Test func eachSessionIsCountedInExactlyOneOfTheSixStates() async {
         let store = await startedStore(with: [
             session("w1", rawState: "working"),
-            session("w2", rawState: "running"),
-            session("w3", rawState: "busy", workspace: "ws-2"),
-            session("a1", rawState: "waiting_for_approval"),
-            session("a2", rawState: "awaiting_input", workspace: "ws-2"),
-            session("d1", rawState: "completed"),
+            session("w2", rawState: "working"),
+            session("w3", rawState: "working", workspace: "ws-2"),
+            session("a1", rawState: "blocked"),
+            session("a2", rawState: "blocked", workspace: "ws-2"),
+            session("d1", rawState: "done"),
             session("i1", rawState: "idle"),
             session("i2", rawState: "IDLE", workspace: "ws-2"),
             session("e1", rawState: "failed"),
@@ -57,8 +57,9 @@ struct StoreNormalizationTests {
         #expect(counts.needsApproval == 2)
         #expect(counts.done == 1)
         #expect(counts.idle == 2)
-        #expect(counts.error == 1)
-        #expect(counts.unknown == 3)
+        // Herdr 沒有錯誤狀態，"failed" 不在對應表中，因此落到 Unknown，不會被誤判成 Error。
+        #expect(counts.error == 0)
+        #expect(counts.unknown == 4)
         #expect(counts.total == 12)
         #expect(store.snapshot.sessions.count == 12)
     }
@@ -87,7 +88,7 @@ struct StoreNormalizationTests {
     @Test func doneIsNotCountedAsIdle() async {
         let store = await startedStore(with: [
             session("d1", rawState: "done"),
-            session("d2", rawState: "completed"),
+            session("d2", rawState: "done"),
         ])
 
         #expect(store.snapshot.counts.done == 2)
@@ -95,7 +96,7 @@ struct StoreNormalizationTests {
     }
 
     @Test func sessionWithBothNeedsApprovalAndIdleSignalsIsCountedAsNeedsApproval() async throws {
-        let store = await startedStore(with: [session("s1", rawState: "idle|awaiting_input")])
+        let store = await startedStore(with: [session("s1", rawState: "idle|blocked")])
 
         let entry = try #require(store.snapshot.sessions.first)
         #expect(entry.normalizedState == .needsApproval)
@@ -106,10 +107,10 @@ struct StoreNormalizationTests {
 
     @Test func stateChangedEventIsNormalizedAgain() async throws {
         let store = await startedStore(
-            with: [session("s1", rawState: "running")],
+            with: [session("s1", rawState: "working")],
             events: [.sessionStateChanged(
                 AgentSessionID("s1"),
-                rawState: "waiting-for-approval",
+                rawState: "blocked",
                 stateSource: .explicitEvent,
                 updatedAt: Date(timeIntervalSince1970: 1_700_000_100)
             )]
@@ -123,7 +124,7 @@ struct StoreNormalizationTests {
 
     @Test func stateChangedToIndirectSignalFallsBackToUnknown() async throws {
         let store = await startedStore(
-            with: [session("s1", rawState: "running")],
+            with: [session("s1", rawState: "working")],
             events: [.sessionStateChanged(
                 AgentSessionID("s1"),
                 rawState: "idle",

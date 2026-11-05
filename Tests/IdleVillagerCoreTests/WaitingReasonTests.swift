@@ -49,7 +49,7 @@ private func rows(_ snapshot: StoreSnapshot) -> [SessionListModel.Row] {
 struct WaitingReasonTests {
     @Test func aWaitingReasonFromTheSnapshotIsShownAsTheRowDetail() async {
         let snapshot = await storeSnapshot(of: [
-            session("a1", rawState: "needsApproval", waitingReason: "等待執行指令核准"),
+            session("a1", rawState: "blocked", waitingReason: "等待執行指令核准"),
         ])
 
         #expect(snapshot.sessions.first?.session.waitingReason == "等待執行指令核准")
@@ -65,7 +65,7 @@ struct WaitingReasonTests {
     }
 
     @Test func aBlankWaitingReasonIsTreatedAsNone() async {
-        let snapshot = await storeSnapshot(of: [session("a1", rawState: "needsApproval", waitingReason: "  \n ")])
+        let snapshot = await storeSnapshot(of: [session("a1", rawState: "blocked", waitingReason: "  \n ")])
 
         #expect(rows(snapshot)[0].detail == nil)
     }
@@ -83,7 +83,7 @@ struct WaitingReasonTests {
     @Test func aStateChangeEventCarriesTheWaitingReason() async {
         let snapshot = await storeSnapshot(
             of: [session("s1", rawState: "working")],
-            events: [stateChanged("s1", to: "needsApproval", waitingReason: "等待檔案寫入權限")]
+            events: [stateChanged("s1", to: "blocked", waitingReason: "等待檔案寫入權限")]
         )
 
         #expect(snapshot.sessions.first?.session.waitingReason == "等待檔案寫入權限")
@@ -92,7 +92,7 @@ struct WaitingReasonTests {
 
     @Test func aStateChangeWithoutWaitingReasonClearsThePreviousOne() async {
         let snapshot = await storeSnapshot(
-            of: [session("s1", rawState: "needsApproval", waitingReason: "等待執行指令核准")],
+            of: [session("s1", rawState: "blocked", waitingReason: "等待執行指令核准")],
             events: [stateChanged("s1", to: "working")]
         )
 

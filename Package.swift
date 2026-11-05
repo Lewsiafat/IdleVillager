@@ -17,7 +17,8 @@ let package = Package(
         ),
         .testTarget(
             name: "IdleVillagerCoreTests",
-            dependencies: ["IdleVillagerCore"]
+            dependencies: ["IdleVillagerCore"],
+            resources: [.copy("Fixtures")]
         ),
     ]
 )

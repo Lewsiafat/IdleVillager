@@ -86,7 +86,7 @@ struct AppSettingsTests {
     @Test func showDoneCountAddsTheDoneCategoryAfterIdleAndDropsTheMarkerForDone() async {
         let store = await startedStore(with: [
             session("w1", rawState: "working"),
-            session("a1", rawState: "needsApproval"),
+            session("a1", rawState: "blocked"),
             session("i1", rawState: "idle"),
             session("d1", rawState: "done"),
             session("d2", rawState: "done"),

@@ -26,13 +26,17 @@ private func session(
 
 /// 以 Fake Adapter 餵入 Session 與事件，回傳處理完後的 Store snapshot。
 @MainActor
-private func snapshot(of sessions: [AgentSession], events: [AdapterEvent] = []) async -> StoreSnapshot {
+private func snapshot(
+    of sessions: [AgentSession],
+    events: [AdapterEvent] = [],
+    errorIDs: Set<String> = []
+) async -> StoreSnapshot {
     let adapter = FakeHerdrAdapter(snapshot: SessionSnapshot(sessions: sessions))
     for event in events { adapter.send(event) }
     adapter.finish()
     let store = SessionStore(adapter: adapter)
     await store.start()
-    return store.snapshot
+    return store.snapshot.forcingError(for: errorIDs)
 }
 
 @MainActor
@@ -59,7 +63,7 @@ struct MenuBarCharacterModeTests {
         let snapshot = await snapshot(of: [
             session("i1", rawState: "idle", agentKind: "gemini-cli"),
             session("w1", rawState: "working", agentKind: "claude-code"),
-            session("a1", rawState: "needsApproval", agentKind: "codex"),
+            session("a1", rawState: "blocked", agentKind: "codex"),
         ])
 
         let mode = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters)
@@ -75,7 +79,7 @@ struct MenuBarCharacterModeTests {
         let snapshot = await snapshot(of: [
             session("i1", rawState: "idle", agentKind: "gemini-cli"),
             session("w1", rawState: "working", agentKind: "claude-code"),
-            session("a1", rawState: "needsApproval", agentKind: "codex"),
+            session("a1", rawState: "blocked", agentKind: "codex"),
             session("d1", rawState: "done", agentKind: "aider"),
         ])
 
@@ -89,7 +93,7 @@ struct MenuBarCharacterModeTests {
             session("w10", rawState: "working", paneLabel: "Pane 10"),
             session("w2", rawState: "working", paneLabel: "Pane 2"),
             session("e1", rawState: "error", paneLabel: "Pane 3"),
-        ])
+        ], errorIDs: ["e1"])
 
         let mode = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters)
 
@@ -104,7 +108,7 @@ struct MenuBarCharacterModeTests {
         let snapshot = await snapshot(of: [
             session("w1", rawState: "working"),
             session("w2", rawState: "working"),
-            session("a1", rawState: "needsApproval"),
+            session("a1", rawState: "blocked"),
             session("i1", rawState: "idle"),
             session("u1", rawState: "thinking"),
         ])
@@ -137,7 +141,7 @@ struct MenuBarCharacterModeTests {
     @Test func injectedThresholdDecidesWhenToFallBack() async {
         let snapshot = await snapshot(of: [
             session("w1", rawState: "working"),
-            session("a1", rawState: "needsApproval"),
+            session("a1", rawState: "blocked"),
             session("i1", rawState: "idle"),
         ])
 
@@ -157,7 +161,7 @@ struct MenuBarCharacterModeTests {
     }
 
     @Test func switchingTheModeInAppSettingsChangesTheDisplay() async {
-        let snapshot = await snapshot(of: [session("a1", rawState: "needsApproval", agentKind: "gemini")])
+        let snapshot = await snapshot(of: [session("a1", rawState: "blocked", agentKind: "gemini")])
         let settings = AppSettings(store: InMemorySettingsStore())
 
         let before = MenuBarCharacterMode(snapshot: snapshot, settings: settings)
