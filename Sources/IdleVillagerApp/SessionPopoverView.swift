@@ -79,7 +79,7 @@ struct SessionPopoverView: View {
             Text(model.title)
                 .font(.headline)
             Spacer()
-            Text("\(model.agentCount) 個 Agent")
+            Text(model.headerStatusText)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 12)

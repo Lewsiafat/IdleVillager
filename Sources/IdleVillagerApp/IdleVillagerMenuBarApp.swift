@@ -72,7 +72,7 @@ struct MenuBarLabel: View {
     private func accessibilityText(for summary: MenuBarSummary) -> String {
         switch summary.mode {
         case .disconnected:
-            return snapshot.connectionState == .reconnecting ? "正在重新連線 Herdr" : "Herdr 未連線"
+            return snapshot.connectionState == .reconnecting ? "正在重新連線" : "未連線"
         case .zeroAgents:
             return "沒有 Agent"
         case .normal:

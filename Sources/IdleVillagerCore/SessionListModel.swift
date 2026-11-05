@@ -141,11 +141,23 @@ public struct SessionListModel: Hashable, Sendable {
 
     /// Popover 固定標題。
     public var title: String
-    /// Agent Session 總數。
+    /// Agent Session 總數。斷線或重連中時可能是過期的數字，畫面請改用 `headerStatusText`。
     public var agentCount: Int
     /// Workspace → Tab → 列的三層群組。
     public var workspaces: [WorkspaceGroup]
     public var footer: Footer
+
+    /// Popover 標題右側的狀態文字。
+    ///
+    /// 已連線時是 Agent 總數，例如「3 個 Agent」，零 Agent 為「0 個 Agent」；
+    /// 從未連上為「未連線」，曾連上後斷線為「已斷線」，重連中為「重新連線中」。斷線時不顯示任何數字，避免 0 或過期的舊數量。
+    public var headerStatusText: String {
+        switch footer.connectionState {
+        case .connected: "\(agentCount) 個 Agent"
+        case .disconnected: footer.lastUpdatedAt == nil ? "未連線" : "已斷線"
+        case .reconnecting: "重新連線中"
+        }
+    }
 
     /// 清單沒有任何列時 Popover 顯示的空狀態文字；有列時為 nil。
     ///

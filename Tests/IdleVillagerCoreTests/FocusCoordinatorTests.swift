@@ -82,9 +82,9 @@ struct FocusCoordinatorTests {
     }
 
     @Test(arguments: [
-        (FocusFailureReason.unsupported, "Herdr 不支援聚焦到這個 Pane", "無法切回：Herdr 不支援聚焦到這個 Pane"),
-        (FocusFailureReason.disconnected, "與 Herdr 斷線，無法聚焦", "無法切回：與 Herdr 斷線，無法聚焦"),
-        (FocusFailureReason.windowNotBroughtToFront, "未能把 Herdr 視窗帶到前景", "無法切回：未能把 Herdr 視窗帶到前景"),
+        (FocusFailureReason.unsupported, "來源不支援聚焦到這個 Pane", "無法切回：來源不支援聚焦到這個 Pane"),
+        (FocusFailureReason.disconnected, "來源已斷線", "無法切回：來源已斷線"),
+        (FocusFailureReason.windowNotBroughtToFront, "未能把來源視窗帶到前景", "無法切回：未能把來源視窗帶到前景"),
         (FocusFailureReason.targetNotFound, "目標已不存在", "無法切回：目標已不存在"),
         (FocusFailureReason.demoMode, "示範模式無法切回", "示範模式無法切回"),
     ])
