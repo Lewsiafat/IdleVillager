@@ -46,10 +46,10 @@ struct MenuBarSummaryTests {
     @Test func showsWorkingNeedsApprovalAndIdleCountsInOrder() async {
         let result = await summary(of: [
             session("w1", rawState: "working"),
-            session("w2", rawState: "running"),
-            session("w3", rawState: "busy"),
-            session("a1", rawState: "needsApproval"),
-            session("a2", rawState: "awaiting_input"),
+            session("w2", rawState: "working"),
+            session("w3", rawState: "working"),
+            session("a1", rawState: "blocked"),
+            session("a2", rawState: "blocked"),
             session("i1", rawState: "idle"),
         ])
 
@@ -101,7 +101,7 @@ struct MenuBarSummaryTests {
         let result = await summary(
             of: [
                 session("w1", rawState: "working"),
-                session("a1", rawState: "needsApproval"),
+                session("a1", rawState: "blocked"),
                 session("d1", rawState: "done"),
             ],
             events: [.connectionChanged(connectionState)]
@@ -135,14 +135,14 @@ struct MenuBarSummaryTests {
     @Test func sixStatesProduceCountsForTheThreeCategoriesAndAHiddenStatesMarker() async {
         let result = await summary(of: [
             session("w1", rawState: "working"),
-            session("w2", rawState: "running"),
-            session("w3", rawState: "busy"),
-            session("a1", rawState: "needsApproval"),
-            session("a2", rawState: "awaiting_input"),
+            session("w2", rawState: "working"),
+            session("w3", rawState: "working"),
+            session("a1", rawState: "blocked"),
+            session("a2", rawState: "blocked"),
             session("i1", rawState: "idle"),
             session("d1", rawState: "done"),
             session("e1", rawState: "error"),
-            session("u1", rawState: "running|idle"),
+            session("u1", rawState: "working|idle"),
         ])
 
         #expect(result.mode == .normal)
@@ -162,7 +162,7 @@ struct MenuBarSummaryTests {
     @Test func menuBarTextNeverContainsSessionNames() async {
         let result = await summary(of: [
             session("w1", rawState: "working", displayName: "Secret Agent Alpha", workspaceName: "Project Phoenix", tabName: "Refactor Tab", paneLabel: "Left Pane"),
-            session("a1", rawState: "needsApproval", displayName: "Codex Beta", workspaceName: "Project Phoenix", tabName: "Review Tab", paneLabel: "Right Pane"),
+            session("a1", rawState: "blocked", displayName: "Codex Beta", workspaceName: "Project Phoenix", tabName: "Review Tab", paneLabel: "Right Pane"),
             session("d1", rawState: "done", displayName: "Gemini Gamma", workspaceName: "Project Orion", tabName: "Docs Tab", paneLabel: "Bottom Pane"),
         ])
 

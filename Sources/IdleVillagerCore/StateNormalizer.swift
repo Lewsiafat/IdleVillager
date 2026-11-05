@@ -16,22 +16,17 @@ public struct NormalizationResult: Hashable, Sendable {
 public enum StateNormalizer {
     /// rawState 到正規化狀態的對應表，這是唯一定義鍵集合的地方。
     ///
-    /// 整張表都是暫定的：在 #8 於使用者環境確認 Herdr 實際送出的 rawState 值之前，
-    /// 所有鍵都只是推測，確認後要逐一重新校對。語意不明確的值（例如 `blocked`，
-    /// 可能是等核准，也可能是錯誤或卡住）刻意不放進表中，讓它落到 Unknown。
+    /// 鍵集合就是 Herdr `agent_status` 的五種值，已於 2026-11-05 在使用者環境實測確認
+    /// （見 `docs/adr/0002-herdr-socket-api.md` 決策 5）：`blocked` 是 Herdr 辨識到核准或提問 UI，
+    /// 對應 Needs Approval；`done` 與 `idle` 由伺服器區分，分別對應 Done 與 Idle。
+    /// Herdr 沒有錯誤狀態，因此表中沒有任何鍵對應 Error。表外的值（含 Herdr 日後新增的值）一律落到 Unknown。
     /// 比對時大小寫不敏感，底線與連字號視為相同。
     public static let rawStateTable: [String: NormalizedState] = [
         "working": .working,
-        "running": .working,
-        "busy": .working,
-        "needsApproval": .needsApproval,
-        "waiting_for_approval": .needsApproval,
-        "awaiting_input": .needsApproval,
+        "blocked": .needsApproval,
         "done": .done,
-        "completed": .done,
         "idle": .idle,
-        "error": .error,
-        "failed": .error,
+        "unknown": .unknown,
     ]
 
     private static let lookup: [String: NormalizedState] = Dictionary(

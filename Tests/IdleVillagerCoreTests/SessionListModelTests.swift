@@ -35,7 +35,8 @@ private let fixedNow = Date(timeIntervalSince1970: 1_800_000_000)
 private func listModel(
     of sessions: [AgentSession],
     events: [AdapterEvent] = [],
-    sourceDescription: String = SourceDescription.demo
+    sourceDescription: String = SourceDescription.demo,
+    errorIDs: Set<String> = []
 ) async -> SessionListModel {
     let adapter = FakeHerdrAdapter(
         snapshot: SessionSnapshot(sessions: sessions),
@@ -45,7 +46,7 @@ private func listModel(
     adapter.finish()
     let store = SessionStore(adapter: adapter, now: { fixedNow })
     await store.start()
-    return SessionListModel(snapshot: store.snapshot)
+    return SessionListModel(snapshot: store.snapshot.forcingError(for: errorIDs))
 }
 
 /// Popover 會顯示的文字。用來確認示範模式不會出現「Herdr · 已連線」。
@@ -168,10 +169,10 @@ struct SessionListModelTests {
 
     @Test(arguments: [
         ("working", NormalizedState.working, "⚒", "幹活中"),
-        ("needsApproval", NormalizedState.needsApproval, "✋", "等核准"),
+        ("blocked", NormalizedState.needsApproval, "✋", "等核准"),
         ("done", NormalizedState.done, "✓", "完成"),
         ("idle", NormalizedState.idle, "💤", "閒置"),
-        ("failed", NormalizedState.error, "!", "錯誤"),
+        ("error", NormalizedState.error, "!", "錯誤"),
         ("thinking", NormalizedState.unknown, "?", "訊號不足"),
     ])
     func eachRowShowsAgentPaneStateIconAndShortText(
@@ -180,9 +181,11 @@ struct SessionListModelTests {
         expectedIcon: String,
         expectedText: String
     ) async {
-        let model = await listModel(of: [
-            session("s1", rawState: rawState, paneLabel: "Pane 2", kind: "codex", displayName: "Codex"),
-        ])
+        // Herdr 沒有錯誤狀態，Error 列直接在 Store snapshot 上製造。
+        let model = await listModel(
+            of: [session("s1", rawState: rawState, paneLabel: "Pane 2", kind: "codex", displayName: "Codex")],
+            errorIDs: expectedState == .error ? ["s1"] : []
+        )
 
         #expect(model.workspaces[0].tabs[0].rows == [
             SessionListModel.Row(
@@ -205,9 +208,9 @@ struct SessionListModelTests {
             session("i1", rawState: "idle"),
             session("w1", rawState: "working"),
             session("d1", rawState: "done"),
-            session("e1", rawState: "failed"),
-            session("a1", rawState: "needsApproval"),
-        ])
+            session("e1", rawState: "error"),
+            session("a1", rawState: "blocked"),
+        ], errorIDs: ["e1"])
 
         #expect(model.workspaces[0].tabs[0].rows.map(\.id.rawValue) == ["a1", "e1", "d1", "w1", "i1", "u1"])
         #expect(model.workspaces[0].tabs[0].rows.map(\.icon) == ["✋", "!", "✓", "⚒", "💤", "?"])
@@ -218,11 +221,11 @@ struct SessionListModelTests {
         let zulu = (id: "ws-zulu", name: "Zulu")
         let model = await listModel(of: [
             session("a-w", rawState: "working", workspace: alpha, tab: ("tab-a1", "A1")),
-            session("a-e", rawState: "failed", workspace: alpha, tab: ("tab-a2", "A2")),
+            session("a-e", rawState: "error", workspace: alpha, tab: ("tab-a2", "A2")),
             session("z-i", rawState: "idle", workspace: zulu, tab: ("tab-z1", "Z1")),
             session("z-w", rawState: "working", workspace: zulu, tab: ("tab-z2", "Z2")),
-            session("z-a", rawState: "needsApproval", workspace: zulu, tab: ("tab-z2", "Z2")),
-        ])
+            session("z-a", rawState: "blocked", workspace: zulu, tab: ("tab-z2", "Z2")),
+        ], errorIDs: ["a-e"])
 
         #expect(model.workspaces.map(\.name) == ["Zulu", "Alpha"])
         #expect(model.workspaces[0].tabs.map(\.name) == ["Z2", "Z1"])
@@ -295,7 +298,7 @@ struct SessionListModelTests {
             events: [
                 .sessionStateChanged(
                     AgentSessionID("b-i"),
-                    rawState: "needsApproval",
+                    rawState: "blocked",
                     stateSource: .explicitEvent,
                     updatedAt: Date(timeIntervalSince1970: 1_700_000_100)
                 ),

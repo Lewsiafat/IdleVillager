@@ -13,7 +13,7 @@ private func makeSession(id: String, tabID: String, paneID: String) -> AgentSess
         agentSessionID: AgentSessionID(id),
         agentKind: "claude",
         displayName: "Claude Code",
-        rawState: "running",
+        rawState: "working",
         updatedAt: Date(timeIntervalSince1970: 1_700_000_000),
         stateSource: .explicitEvent
     )

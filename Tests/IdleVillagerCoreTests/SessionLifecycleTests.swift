@@ -93,7 +93,7 @@ struct StateChangeSequenceTests {
     /// Session b 依序變成 Working、Needs Approval、Working、Done。
     private let sequence: [AdapterEvent] = [
         stateChanged("b", to: "working", at: Date(timeIntervalSince1970: 1_700_000_010)),
-        stateChanged("b", to: "needsApproval", at: Date(timeIntervalSince1970: 1_700_000_020)),
+        stateChanged("b", to: "blocked", at: Date(timeIntervalSince1970: 1_700_000_020)),
         stateChanged("b", to: "working", at: Date(timeIntervalSince1970: 1_700_000_030)),
         stateChanged("b", to: "done", at: Date(timeIntervalSince1970: 1_700_000_040)),
     ]
@@ -158,7 +158,7 @@ struct StateChangeSequenceTests {
 
     @Test func stateChangeForUnknownSessionIDIsIgnored() async {
         let store = await startedStore(with: initial, events: [
-            stateChanged("ghost", to: "needsApproval", at: Date(timeIntervalSince1970: 1_700_000_010)),
+            stateChanged("ghost", to: "blocked", at: Date(timeIntervalSince1970: 1_700_000_010)),
         ])
 
         #expect(store.snapshot.counts.total == 2)
@@ -206,7 +206,7 @@ struct SessionRemovalTests {
         let store = await startedStore(
             with: [
                 session("a", rawState: "working", paneLabel: "Pane 1", workspace: "ws-1"),
-                session("b", rawState: "needsApproval", paneLabel: "Pane 1", workspace: "ws-2", tab: "tab-9"),
+                session("b", rawState: "blocked", paneLabel: "Pane 1", workspace: "ws-2", tab: "tab-9"),
             ],
             events: [.sessionRemoved(AgentSessionID("b"))]
         )
@@ -282,7 +282,7 @@ struct StalenessTests {
                 session("a", rawState: "working", paneLabel: "Pane 1"),
                 session("b", rawState: "working", paneLabel: "Pane 2"),
             ],
-            events: [stateChanged("b", to: "needsApproval", at: t0.addingTimeInterval(100))],
+            events: [stateChanged("b", to: "blocked", at: t0.addingTimeInterval(100))],
             clock: clock
         )
 

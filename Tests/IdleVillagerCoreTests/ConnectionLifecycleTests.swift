@@ -98,7 +98,7 @@ struct DisconnectedPresentationTests {
         let store = await finishedStore(
             with: [
                 session("a", rawState: "working", paneLabel: "Pane 1"),
-                session("b", rawState: "needsApproval", paneLabel: "Pane 2"),
+                session("b", rawState: "blocked", paneLabel: "Pane 2"),
                 session("c", rawState: "idle", paneLabel: "Pane 3"),
             ],
             events: [.connectionChanged(state)]
@@ -117,7 +117,7 @@ struct DisconnectedPresentationTests {
         let store = await finishedStore(
             with: [
                 session("a", rawState: "working", paneLabel: "Pane 1"),
-                session("b", rawState: "needsApproval", paneLabel: "Pane 2"),
+                session("b", rawState: "blocked", paneLabel: "Pane 2"),
             ],
             events: [.connectionChanged(.disconnected)]
         )
@@ -247,7 +247,7 @@ struct ReconnectionTests {
         let reconnectedAt = Date(timeIntervalSince1970: 1_800_000_300)
         await adapter.setSnapshot(SessionSnapshot(sessions: [
             session("a", rawState: "done", paneLabel: "Pane 1", updatedAt: reconnectedAt),
-            session("c", rawState: "needsApproval", paneLabel: "Pane 3", updatedAt: reconnectedAt),
+            session("c", rawState: "blocked", paneLabel: "Pane 3", updatedAt: reconnectedAt),
         ]))
         clock.set(reconnectedAt)
         adapter.send(.connectionChanged(.connected))

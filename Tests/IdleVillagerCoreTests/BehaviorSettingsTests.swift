@@ -47,11 +47,11 @@ private func snapshot(of sessions: [AgentSession], events: [AdapterEvent] = []) 
 /// 急件（Needs Approval）在 Beta 9 與 Zeta，Alpha 只有 Working 與 Idle。
 private let mixedSessions: [AgentSession] = [
     session("s1", rawState: "idle", workspace: ("ws-a", "Zeta"), tab: ("tab-a1", "Tab 10"), paneLabel: "Pane 1"),
-    session("s2", rawState: "needsApproval", workspace: ("ws-a", "Zeta"), tab: ("tab-a2", "Tab 2"), paneLabel: "Pane 1"),
+    session("s2", rawState: "blocked", workspace: ("ws-a", "Zeta"), tab: ("tab-a2", "Tab 2"), paneLabel: "Pane 1"),
     session("s3", rawState: "idle", workspace: ("ws-b", "Alpha"), tab: ("tab-b1", "Main"), paneLabel: "Pane 1"),
     session("s4", rawState: "working", workspace: ("ws-b", "Alpha"), tab: ("tab-b1", "Main"), paneLabel: "Pane 2"),
     session("s5", rawState: "working", workspace: ("ws-c", "Beta 9"), tab: ("tab-c1", "Only"), paneLabel: "Pane 1"),
-    session("s6", rawState: "needsApproval", workspace: ("ws-c", "Beta 9"), tab: ("tab-c1", "Only"), paneLabel: "Pane 9"),
+    session("s6", rawState: "blocked", workspace: ("ws-c", "Beta 9"), tab: ("tab-c1", "Only"), paneLabel: "Pane 9"),
     session("s0", rawState: "working", workspace: ("ws-c", "Beta 9"), tab: ("tab-c1", "Only"), paneLabel: "Pane 3"),
 ]
 
@@ -104,9 +104,9 @@ struct SortRuleTests {
 
     @Test func fixedOrderDoesNotMoveWhenStatesChange() async {
         let changed = await snapshot(of: mixedSessions, events: [
-            stateChanged("s1", to: "needsApproval"),
+            stateChanged("s1", to: "blocked"),
             stateChanged("s2", to: "idle"),
-            stateChanged("s3", to: "needsApproval"),
+            stateChanged("s3", to: "blocked"),
         ])
 
         #expect(outline(SessionListModel(snapshot: changed, sortRule: .fixed)) == [
@@ -176,7 +176,7 @@ struct ApprovalAlertTests {
 
     @Test func countRisingFromZeroToOneAlertsForThreeSeconds() async {
         let before = await snapshot(of: [idleSession])
-        let after = await snapshot(of: [idleSession], events: [stateChanged("s1", to: "needsApproval")])
+        let after = await snapshot(of: [idleSession], events: [stateChanged("s1", to: "blocked")])
         let settings = AppSettings(store: InMemorySettingsStore())
         var tracker = ApprovalAlertTracker()
 
@@ -190,7 +190,7 @@ struct ApprovalAlertTests {
     }
 
     @Test func countFallingFromOneToZeroDoesNotAlert() async {
-        let withApproval = await snapshot(of: [idleSession], events: [stateChanged("s1", to: "needsApproval")])
+        let withApproval = await snapshot(of: [idleSession], events: [stateChanged("s1", to: "blocked")])
         let resolved = await snapshot(of: [idleSession])
         let settings = AppSettings(store: InMemorySettingsStore())
         var tracker = ApprovalAlertTracker()
@@ -225,7 +225,7 @@ struct ApprovalAlertTests {
 
     @Test func switchedOffNeverAlerts() async {
         let before = await snapshot(of: [idleSession])
-        let after = await snapshot(of: [idleSession], events: [stateChanged("s1", to: "needsApproval")])
+        let after = await snapshot(of: [idleSession], events: [stateChanged("s1", to: "blocked")])
         let settings = AppSettings(store: InMemorySettingsStore())
         settings.lowDistractionAlerts = false
         var tracker = ApprovalAlertTracker()
@@ -311,7 +311,7 @@ struct MenuBarAlertEmphasisTests {
         let idle = session("s1", rawState: "idle", workspace: ("ws-1", "W"), tab: ("tab-1", "T"), paneLabel: "Pane 1")
         let working = session("s2", rawState: "working", workspace: ("ws-1", "W"), tab: ("tab-1", "T"), paneLabel: "Pane 2")
         let before = await snapshot(of: [idle, working])
-        let after = await snapshot(of: [idle, working], events: [stateChanged("s1", to: "needsApproval")])
+        let after = await snapshot(of: [idle, working], events: [stateChanged("s1", to: "blocked")])
         let settings = AppSettings(store: InMemorySettingsStore())
         settings.menuBarMode = .fewCharacters
         var tracker = ApprovalAlertTracker()

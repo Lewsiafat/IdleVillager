@@ -2,18 +2,22 @@ import Testing
 import IdleVillagerCore
 
 struct StateNormalizerTests {
+    @Test func tableContainsExactlyHerdrsFiveAgentStatusValues() {
+        #expect(StateNormalizer.rawStateTable == [
+            "working": .working,
+            "blocked": .needsApproval,
+            "done": .done,
+            "idle": .idle,
+            "unknown": .unknown,
+        ])
+    }
+
     @Test(arguments: [
         ("working", NormalizedState.working),
-        ("running", .working),
-        ("busy", .working),
-        ("needsApproval", .needsApproval),
-        ("waiting_for_approval", .needsApproval),
-        ("awaiting_input", .needsApproval),
+        ("blocked", .needsApproval),
         ("done", .done),
-        ("completed", .done),
         ("idle", .idle),
-        ("error", .error),
-        ("failed", .error),
+        ("unknown", .unknown),
     ])
     func explicitEventRawStateMapsToItsNormalizedState(rawState: String, expected: NormalizedState) {
         let result = StateNormalizer.normalize(rawState: rawState, stateSource: .explicitEvent)
@@ -23,16 +27,16 @@ struct StateNormalizerTests {
     }
 
     @Test(arguments: [
-        ("RUNNING", NormalizedState.working),
-        ("Waiting-For-Approval", .needsApproval),
-        ("needsapproval", .needsApproval),
-        ("Awaiting-Input", .needsApproval),
+        ("WORKING", NormalizedState.working),
+        ("Blocked", .needsApproval),
+        ("DONE", .done),
+        (" idle ", .idle),
     ])
-    func matchingIgnoresCaseAndTreatsHyphenAsUnderscore(rawState: String, expected: NormalizedState) {
+    func matchingIgnoresCaseAndSurroundingWhitespace(rawState: String, expected: NormalizedState) {
         #expect(StateNormalizer.normalize(rawState: rawState, stateSource: .explicitEvent).state == expected)
     }
 
-    @Test(arguments: [StateSource.indirectSignal, .unspecified], ["idle", "working", "needsApproval", "done", "error"])
+    @Test(arguments: [StateSource.indirectSignal, .unspecified], ["idle", "working", "blocked", "done"])
     func nonExplicitSourceIsAlwaysUnknownNeverIdle(stateSource: StateSource, rawState: String) {
         let result = StateNormalizer.normalize(rawState: rawState, stateSource: stateSource)
 
@@ -40,7 +44,11 @@ struct StateNormalizerTests {
         #expect(result.conflictNote == nil)
     }
 
-    @Test(arguments: ["", "   ", "thinking", "process_alive", "cpu_low", "blocked", "BLOCKED"])
+    /// 先前暫定表裡的推測值與 Herdr 不存在的錯誤狀態，現在都落到 Unknown，不會被誤判。
+    @Test(arguments: [
+        "", "   ", "thinking", "process_alive", "cpu_low",
+        "running", "busy", "needsApproval", "awaiting_input", "waiting_for_approval", "completed", "error", "failed",
+    ])
     func unmappableExplicitRawStateIsUnknownWithoutConflictNote(rawState: String) {
         let result = StateNormalizer.normalize(rawState: rawState, stateSource: .explicitEvent)
 
@@ -49,13 +57,13 @@ struct StateNormalizerTests {
     }
 
     @Test func conflictingSignalsAreUnknownWithANoteNamingOnlyTheStates() {
-        let result = StateNormalizer.normalize(rawState: "busy|idle", stateSource: .explicitEvent)
+        let result = StateNormalizer.normalize(rawState: "working|idle", stateSource: .explicitEvent)
 
         #expect(result.state == .unknown)
         #expect(result.conflictNote == "訊號衝突：Working、Idle")
     }
 
-    @Test(arguments: ["needsApproval|idle", "idle|waiting_for_approval", "awaiting_input|idle|awaiting-input"])
+    @Test(arguments: ["blocked|idle", "idle|blocked", "blocked|idle|Blocked"])
     func needsApprovalTakesPriorityOverIdleInTheSameSession(rawState: String) {
         let result = StateNormalizer.normalize(rawState: rawState, stateSource: .explicitEvent)
 
@@ -63,38 +71,38 @@ struct StateNormalizerTests {
         #expect(result.conflictNote == nil)
     }
 
-    @Test func blockedAlongsideIdleIsUnknownNotNeedsApproval() {
-        let result = StateNormalizer.normalize(rawState: "blocked|idle", stateSource: .explicitEvent)
+    @Test func needsApprovalOverIdleExceptionDoesNotHideOtherConflicts() {
+        let result = StateNormalizer.normalize(rawState: "blocked|idle|working", stateSource: .explicitEvent)
+
+        #expect(result.state == .unknown)
+        #expect(result.conflictNote == "訊號衝突：Working、Needs Approval")
+    }
+
+    @Test func anUnmappableSignalAmongMappableOnesMakesTheWholeSessionUnknown() {
+        let result = StateNormalizer.normalize(rawState: "blocked|error", stateSource: .explicitEvent)
 
         #expect(result.state == .unknown)
         #expect(result.conflictNote == nil)
     }
 
-    @Test func needsApprovalOverIdleExceptionDoesNotHideOtherConflicts() {
-        let result = StateNormalizer.normalize(rawState: "needsApproval|idle|error", stateSource: .explicitEvent)
-
-        #expect(result.state == .unknown)
-        #expect(result.conflictNote == "訊號衝突：Needs Approval、Error")
-    }
-
     @Test func signalsThatMapToTheSameStateAreNotAConflict() {
-        let result = StateNormalizer.normalize(rawState: "running|busy", stateSource: .explicitEvent)
+        let result = StateNormalizer.normalize(rawState: "working|WORKING", stateSource: .explicitEvent)
 
         #expect(result.state == .working)
         #expect(result.conflictNote == nil)
     }
 
     @Test func doneAlongsideIdleIsAConflictNotIdle() {
-        let result = StateNormalizer.normalize(rawState: "completed|idle", stateSource: .explicitEvent)
+        let result = StateNormalizer.normalize(rawState: "done|idle", stateSource: .explicitEvent)
 
         #expect(result.state == .unknown)
         #expect(result.conflictNote == "訊號衝突：Done、Idle")
     }
 
     @Test func conflictNoteListsEveryConflictingStateWithoutRawText() {
-        let result = StateNormalizer.normalize(rawState: "FAILED|running|NeedsApproval", stateSource: .explicitEvent)
+        let result = StateNormalizer.normalize(rawState: "DONE|working|Blocked", stateSource: .explicitEvent)
 
         #expect(result.state == .unknown)
-        #expect(result.conflictNote == "訊號衝突：Working、Needs Approval、Error")
+        #expect(result.conflictNote == "訊號衝突：Working、Needs Approval、Done")
     }
 }
