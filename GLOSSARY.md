@@ -30,7 +30,7 @@
 - **隱藏狀態提示（Hidden States）**：Done、Error、Unknown 不在選單列預設數量中；任一大於 0 時摘要模型的 `hasHiddenStates` 為 true，選單列尾端加上小標記 `•`。開啟 Done 小計數後，Done 不再算作隱藏狀態，Error 與 Unknown 仍然算。
 - **選單列模式（Menu Bar Mode）**：使用者在設定中選擇的選單列呈現方式（`MenuBarMode`），分為數量模式（`counts`，預設，顯示摘要文字）與少量角色模式（`fewCharacters`）。
 - **少量角色模式（Few Characters Mode）**：Session 很少時，選單列改為每個 Session 顯示一個靜態小村民角色（16 pt，只畫本體，不播放動畫），後面接狀態圖示（⚒ ✋ ✓ 💤 ! ?），讓狀態不只靠角色或顏色辨識。角色依清單優先度排列，不含任何 Session 名稱。是否真的顯示角色由純值模型 `MenuBarCharacterMode` 決定，輸出 `MenuBarDisplay`：`.counts` 或 `.characters([MenuBarCharacterItem])`。
-- **少量角色門檻（Few Characters Threshold）**：少量角色模式最多顯示角色的 Session 數量（`fewCharactersThreshold`，預設 4，可注入）。Session 數量在 1 到門檻（含）之間且已連線時才顯示角色；超過門檻、沒有 Session、斷線或重連中時自動回到數量模式。
+- **少量角色門檻（Few Characters Threshold）**：決定少量角色模式何時改回數量模式的 Session 數量（`fewCharactersThreshold`，預設 4，可注入）。Session 數量至少 1 個、**低於**門檻（嚴格小於，預設即最多 3 個）且已連線時才顯示角色；達到或超過門檻、沒有 Session、斷線或重連中時自動回到數量模式。
 - **Done 小計數（Done Count）**：設定開啟後，選單列在 Idle 之後多顯示 `✓ n`，例如 `⚒ 3  ✋ 2  💤 1  ✓ 2`；數量為 0 時與其他類別一樣依「固定顯示 0 數量」決定是否顯示。
 
 ## 設定

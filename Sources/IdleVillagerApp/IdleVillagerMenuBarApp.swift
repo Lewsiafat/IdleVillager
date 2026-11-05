@@ -52,7 +52,7 @@ struct MenuBarLabel: View {
     let settings: AppSettings
 
     var body: some View {
-        // 少量角色模式且 Session 數量不超過門檻時顯示角色；其餘情況（含斷線、0 個、超過門檻）一律回到數量模式。
+        // 少量角色模式且 Session 數量低於門檻時顯示角色；其餘情況（含斷線、0 個、達到或超過門檻）一律回到數量模式。
         if case .characters(let items) = MenuBarCharacterMode(snapshot: snapshot, settings: settings).display {
             MenuBarCharactersLabel(items: items)
         } else {
