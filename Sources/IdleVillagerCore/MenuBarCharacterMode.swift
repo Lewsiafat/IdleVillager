@@ -68,7 +68,7 @@ public struct MenuBarCharacterMode: Hashable, Sendable {
                     agentSessionID: entry.session.agentSessionID,
                     agentKind: AgentKind(rawAgentKind: entry.session.agentKind),
                     normalizedState: entry.normalizedState,
-                    icon: SessionListModel.icon(for: entry.normalizedState)
+                    icon: entry.normalizedState.icon
                 )
             }
         display = .characters(items)
@@ -97,6 +97,6 @@ public struct MenuBarCharacterMode: Hashable, Sendable {
     }
 
     private static func rank(_ state: NormalizedState) -> Int {
-        SessionListModel.priorityOrder.firstIndex(of: state) ?? SessionListModel.priorityOrder.count
+        state.priorityRank
     }
 }

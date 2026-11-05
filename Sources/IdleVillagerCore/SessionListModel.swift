@@ -95,8 +95,8 @@ public struct SessionListModel: Hashable, Sendable {
                 displayName: session.displayName,
                 paneLabel: session.paneLabel,
                 state: entry.normalizedState,
-                icon: SessionListModel.icon(for: entry.normalizedState),
-                stateText: SessionListModel.stateText(for: entry.normalizedState)
+                icon: entry.normalizedState.icon,
+                stateText: entry.normalizedState.shortText
                     + (entry.isStale ? SessionListModel.staleSuffix : ""),
                 detail: Self.detail(for: entry),
                 isStale: entry.isStale
@@ -127,7 +127,7 @@ public struct SessionListModel: Hashable, Sendable {
 
         /// 群組內最高優先度的狀態，決定群組的排序。
         public var topState: NormalizedState {
-            SessionListModel.highestPriority(rows.map(\.state))
+            NormalizedState.highestPriority(rows.map(\.state))
         }
     }
 
@@ -145,7 +145,7 @@ public struct SessionListModel: Hashable, Sendable {
 
         /// 群組內最高優先度的狀態，決定群組的排序。
         public var topState: NormalizedState {
-            SessionListModel.highestPriority(tabs.map(\.topState))
+            NormalizedState.highestPriority(tabs.map(\.topState))
         }
     }
 
@@ -237,11 +237,6 @@ public struct SessionListModel: Hashable, Sendable {
         return workspaces
     }
 
-    /// 一組狀態中最高優先度者；空集合為 Unknown。
-    static func highestPriority(_ states: [NormalizedState]) -> NormalizedState {
-        states.min { rank($0) < rank($1) } ?? .unknown
-    }
-
     /// 群組排序。`priority` 先比內含的最高優先度；`priority` 與 `workspaceName` 接著依名稱，再依 ID；
     /// `fixed` 只依 ID 的字串順序。最後一律以 ID 決定，確保順序穩定。
     private static func groupPrecedes(
@@ -254,12 +249,9 @@ public struct SessionListModel: Hashable, Sendable {
         return lhsID < rhsID
     }
 
-    /// 清單排序用的優先度，由高到低：Needs Approval > Error > Done > Working > Idle > Unknown。
-    public static let priorityOrder: [NormalizedState] = [.needsApproval, .error, .done, .working, .idle, .unknown]
-
-    /// 數字越小越優先。
+    /// 數字越小越優先，來自 `NormalizedState.priorityRank`。
     private static func rank(_ state: NormalizedState) -> Int {
-        priorityOrder.firstIndex(of: state) ?? priorityOrder.count
+        state.priorityRank
     }
 
     /// 列的排序：先比優先度，同優先度依 paneLabel，再依 agentSessionID，確保順序穩定。
@@ -275,30 +267,6 @@ public struct SessionListModel: Hashable, Sendable {
         case .orderedAscending: true
         case .orderedDescending: false
         case .orderedSame: nil
-        }
-    }
-
-    /// 狀態在清單中的圖示。
-    public static func icon(for state: NormalizedState) -> String {
-        switch state {
-        case .working: "⚒"
-        case .needsApproval: "✋"
-        case .done: "✓"
-        case .idle: "💤"
-        case .error: "!"
-        case .unknown: "?"
-        }
-    }
-
-    /// 狀態短文字（GLOSSARY 的用字）。清單、選單列與無障礙文字都以這裡為唯一來源。
-    public static func stateText(for state: NormalizedState) -> String {
-        switch state {
-        case .working: "幹活中"
-        case .needsApproval: "等核准"
-        case .done: "完成"
-        case .idle: "閒置"
-        case .error: "錯誤"
-        case .unknown: "訊號不足"
         }
     }
 

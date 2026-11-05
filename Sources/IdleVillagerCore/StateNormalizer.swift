@@ -61,23 +61,12 @@ public enum StateNormalizer {
         // 等核准的 Agent 本來就沒在動，兩個訊號並不真正互斥，因此不算衝突。
         if states.contains(.needsApproval) { states.remove(.idle) }
         guard states.count > 1 else { return NormalizationResult(state: states.first ?? .unknown) }
-        let names = NormalizedState.allCases.filter(states.contains).map(displayName)
+        let names = NormalizedState.allCases.filter(states.contains).map(\.presentation.englishName)
         return NormalizationResult(state: .unknown, conflictNote: "訊號衝突：" + names.joined(separator: "、"))
     }
 
     /// rawState 內多個訊號的分隔字元。
     public static let signalSeparator: Character = "|"
-
-    private static func displayName(_ state: NormalizedState) -> String {
-        switch state {
-        case .working: "Working"
-        case .needsApproval: "Needs Approval"
-        case .done: "Done"
-        case .idle: "Idle"
-        case .error: "Error"
-        case .unknown: "Unknown"
-        }
-    }
 
     private static func canonicalKey(_ raw: String) -> String {
         raw.lowercased().replacingOccurrences(of: "-", with: "_")

@@ -55,10 +55,10 @@ public struct MenuBarSummary: Hashable, Sendable {
             return
         }
         mode = .normal
-        var categories: [(NormalizedState, String)] = [(.working, "⚒"), (.needsApproval, "✋"), (.idle, "💤")]
-        if showDoneCount { categories.append((.done, "✓")) }
-        items = categories.map { state, icon in
-            Item(state: state, icon: icon, count: counts[state], isVisible: alwaysShowZero || counts[state] > 0)
+        var categories: [NormalizedState] = [.working, .needsApproval, .idle]
+        if showDoneCount { categories.append(.done) }
+        items = categories.map { state in
+            Item(state: state, icon: state.icon, count: counts[state], isVisible: alwaysShowZero || counts[state] > 0)
         }
         let hiddenDone = showDoneCount ? 0 : counts.done
         hasHiddenStates = hiddenDone > 0 || counts.error > 0 || counts.unknown > 0
