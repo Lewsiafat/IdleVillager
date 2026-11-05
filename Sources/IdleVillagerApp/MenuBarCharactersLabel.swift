@@ -37,9 +37,9 @@ struct MenuBarCharactersLabel: View {
         }
     }
 
-    /// 依序列出每個 Agent 的種類與狀態，例如「Codex 等待核准，Claude 工作中」。
+    /// 依序列出每個 Agent 的種類與狀態，例如「Codex 等核准，Claude 幹活中」。狀態用字與清單相同（`SessionListModel.stateText(for:)`）。
     static func accessibilityText(for items: [MenuBarCharacterItem]) -> String {
-        items.map { "\(kindName($0.agentKind)) \(stateName($0.normalizedState))" }.joined(separator: "，")
+        items.map { "\(kindName($0.agentKind)) \(SessionListModel.stateText(for: $0.normalizedState))" }.joined(separator: "，")
     }
 
     private static func kindName(_ kind: AgentKind) -> String {
@@ -48,17 +48,6 @@ struct MenuBarCharactersLabel: View {
         case .codex: "Codex"
         case .gemini: "Gemini"
         case .generic: "Agent"
-        }
-    }
-
-    private static func stateName(_ state: NormalizedState) -> String {
-        switch state {
-        case .working: "工作中"
-        case .needsApproval: "等待核准"
-        case .done: "已完成"
-        case .idle: "閒置"
-        case .error: "錯誤"
-        case .unknown: "未知"
         }
     }
 }

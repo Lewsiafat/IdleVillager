@@ -48,7 +48,8 @@ public struct SessionListModel: Hashable, Sendable {
         public var id: AgentSessionID
         /// Focus 的目標 Pane。
         public var paneID: PaneID
-        public var agentKind: String
+        /// Agent 種類，由 Adapter 的 agentKind 原始字串以 `AgentKind(rawAgentKind:)` 對應。
+        public var agentKind: AgentKind
         public var displayName: String
         public var paneLabel: String
         public var state: NormalizedState
@@ -64,7 +65,7 @@ public struct SessionListModel: Hashable, Sendable {
         public init(
             id: AgentSessionID,
             paneID: PaneID,
-            agentKind: String,
+            agentKind: AgentKind,
             displayName: String,
             paneLabel: String,
             state: NormalizedState,
@@ -90,7 +91,7 @@ public struct SessionListModel: Hashable, Sendable {
             self.init(
                 id: session.agentSessionID,
                 paneID: session.paneID,
-                agentKind: session.agentKind,
+                agentKind: AgentKind(rawAgentKind: session.agentKind),
                 displayName: session.displayName,
                 paneLabel: session.paneLabel,
                 state: entry.normalizedState,
@@ -280,7 +281,7 @@ public struct SessionListModel: Hashable, Sendable {
         }
     }
 
-    /// 狀態在清單中的短文字。
+    /// 狀態短文字（GLOSSARY 的用字）。清單、選單列與無障礙文字都以這裡為唯一來源。
     public static func stateText(for state: NormalizedState) -> String {
         switch state {
         case .working: "幹活中"

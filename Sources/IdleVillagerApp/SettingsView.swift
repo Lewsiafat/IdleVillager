@@ -14,7 +14,7 @@ struct SettingsView: View {
                     Text("少量角色模式").tag(MenuBarMode.fewCharacters)
                 }
                 Toggle("固定顯示數量為 0 的類別", isOn: $settings.alwaysShowZeroCounts)
-                Toggle("顯示已完成小計數（✓）", isOn: $settings.showDoneCount)
+                Toggle("顯示完成小計數（✓）", isOn: $settings.showDoneCount)
             }
             BehaviorSettingsSection(settings: settings)
         }

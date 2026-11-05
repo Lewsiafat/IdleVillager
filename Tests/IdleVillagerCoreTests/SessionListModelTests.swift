@@ -188,7 +188,7 @@ struct SessionListModelTests {
             SessionListModel.Row(
                 id: AgentSessionID("s1"),
                 paneID: PaneID("pane-s1"),
-                agentKind: "codex",
+                agentKind: .codex,
                 displayName: "Codex",
                 paneLabel: "Pane 2",
                 state: expectedState,
@@ -257,7 +257,7 @@ struct SessionListModelTests {
         #expect(rows.map(\.id) == [AgentSessionID("claude-a"), AgentSessionID("claude-b")])
         #expect(rows.map(\.paneLabel) == ["Pane 1", "Pane 2"])
         #expect(rows.map(\.paneID) == [PaneID("pane-claude-a"), PaneID("pane-claude-b")])
-        #expect(rows.map(\.agentKind) == ["claude", "claude"])
+        #expect(rows.map(\.agentKind) == [.claude, .claude])
         #expect(rows.map(\.displayName) == ["Claude Code", "Claude Code"])
     }
 
