@@ -52,7 +52,7 @@ private func listModel(
 private func popoverTexts(_ model: SessionListModel) -> [String] {
     var texts = [
         model.title,
-        "\(model.agentCount) 個 Agent",
+        model.headerStatusText,
         "來源：\(model.footer.sourceName) · \(model.footer.connectionText)",
         model.footer.lastUpdatedText(now: fixedNow),
     ]

@@ -17,9 +17,9 @@ public struct FocusFailure: Hashable, Sendable {
     public var message: String {
         switch reason {
         case .targetNotFound: "目標已不存在"
-        case .unsupported: "Herdr 不支援聚焦到這個 Pane"
-        case .disconnected: "與 Herdr 斷線，無法聚焦"
-        case .windowNotBroughtToFront: "未能把 Herdr 視窗帶到前景"
+        case .unsupported: "來源不支援聚焦到這個 Pane"
+        case .disconnected: "來源已斷線"
+        case .windowNotBroughtToFront: "未能把來源視窗帶到前景"
         case .demoMode: "示範模式無法切回"
         }
     }
