@@ -15,15 +15,27 @@ public actor FakeHerdrAdapter: HerdrAdapter {
 
     public nonisolated let events: AsyncStream<AdapterEvent>
     private nonisolated let continuation: AsyncStream<AdapterEvent>.Continuation
+    /// 底部資訊區的來源名稱。預設是示範資料，不是已驗證的 Herdr 連線。
+    public nonisolated let sourceDescription: String
 
     private var currentSnapshot: SessionSnapshot
     private var snapshotError: (any Error & Sendable)?
     private var focusResult: FocusResult
     public private(set) var focusRequests: [FocusRequest] = []
 
-    public init(snapshot: SessionSnapshot = .empty, focusResult: FocusResult = .success) {
+    /// - Parameters:
+    ///   - snapshot: `snapshot()` 回傳的快照。
+    ///   - focusResult: `focus` 的回傳值。預設為示範模式失敗，避免把假成功當成已切回真實 Session。
+    ///     測試要模擬成功或其他失敗時，請明確傳入對應的 `FocusResult`。
+    ///   - sourceDescription: 底部資訊區的來源名稱。預設「示範資料」。
+    public init(
+        snapshot: SessionSnapshot = .empty,
+        focusResult: FocusResult = .failure(.demoMode),
+        sourceDescription: String = SourceDescription.demo
+    ) {
         self.currentSnapshot = snapshot
         self.focusResult = focusResult
+        self.sourceDescription = sourceDescription
         (events, continuation) = AsyncStream.makeStream(of: AdapterEvent.self)
     }
 

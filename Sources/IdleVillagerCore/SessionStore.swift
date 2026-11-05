@@ -77,17 +77,21 @@ public struct StoreSession: Hashable, Sendable, Identifiable {
 /// Session Store 對外的可觀察快照。
 public struct StoreSnapshot: Hashable, Sendable {
     public var connectionState: ConnectionState
+    /// Adapter 的來源描述。Footer 直接顯示它，清單模型不另寫來源名稱。
+    public var sourceDescription: String
     public var lastUpdatedAt: Date?
     public var sessions: [StoreSession]
     public var counts: StateCounts
 
     public init(
         connectionState: ConnectionState,
+        sourceDescription: String,
         lastUpdatedAt: Date?,
         sessions: [StoreSession],
         counts: StateCounts
     ) {
         self.connectionState = connectionState
+        self.sourceDescription = sourceDescription
         self.lastUpdatedAt = lastUpdatedAt
         self.sessions = sessions
         self.counts = counts
@@ -124,6 +128,7 @@ public final class SessionStore {
         self.staleThreshold = staleThreshold
         self.snapshot = StoreSnapshot(
             connectionState: .disconnected,
+            sourceDescription: adapter.sourceDescription,
             lastUpdatedAt: nil,
             sessions: [],
             counts: StateCounts()

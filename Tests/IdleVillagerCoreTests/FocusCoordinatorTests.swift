@@ -82,12 +82,17 @@ struct FocusCoordinatorTests {
     }
 
     @Test(arguments: [
-        (FocusFailureReason.unsupported, "Herdr 不支援聚焦到這個 Pane"),
-        (FocusFailureReason.disconnected, "與 Herdr 斷線，無法聚焦"),
-        (FocusFailureReason.windowNotBroughtToFront, "未能把 Herdr 視窗帶到前景"),
-        (FocusFailureReason.targetNotFound, "目標已不存在"),
+        (FocusFailureReason.unsupported, "Herdr 不支援聚焦到這個 Pane", "無法切回：Herdr 不支援聚焦到這個 Pane"),
+        (FocusFailureReason.disconnected, "與 Herdr 斷線，無法聚焦", "無法切回：與 Herdr 斷線，無法聚焦"),
+        (FocusFailureReason.windowNotBroughtToFront, "未能把 Herdr 視窗帶到前景", "無法切回：未能把 Herdr 視窗帶到前景"),
+        (FocusFailureReason.targetNotFound, "目標已不存在", "無法切回：目標已不存在"),
+        (FocusFailureReason.demoMode, "示範模式無法切回", "示範模式無法切回"),
     ])
-    func adapterFailureBecomesReadableOutcomeAndLastFailure(reason: FocusFailureReason, message: String) async {
+    func adapterFailureBecomesReadableOutcomeAndLastFailure(
+        reason: FocusFailureReason,
+        message: String,
+        bannerText: String
+    ) async {
         let (adapter, coordinator) = await makeCoordinator(focusResult: .failure(reason))
 
         let outcome = await coordinator.focus(sessionID: AgentSessionID("session-a"), paneID: PaneID("pane-a"))
@@ -96,6 +101,28 @@ struct FocusCoordinatorTests {
         #expect(outcome == .failure(expected))
         #expect(coordinator.lastFailure == expected)
         #expect(coordinator.lastFailure?.message == message)
+        #expect(coordinator.lastFailure?.bannerText == bannerText)
+        #expect(await adapter.focusRequests.count == 1)
+    }
+
+    @Test func demoAdapterFocusFailsInsteadOfPretendingSuccess() async {
+        let adapter = FakeHerdrAdapter(snapshot: .demo)
+        adapter.finish()
+        let store = SessionStore(adapter: adapter)
+        await store.start()
+        let coordinator = FocusCoordinator(store: store, adapter: adapter)
+
+        let outcome = await coordinator.focus(sessionID: AgentSessionID("demo-1"), paneID: PaneID("demo-pane-1"))
+
+        let expected = FocusFailure(
+            sessionID: AgentSessionID("demo-1"),
+            paneID: PaneID("demo-pane-1"),
+            reason: .demoMode
+        )
+        #expect(outcome == .failure(expected))
+        #expect(coordinator.lastFailure == expected)
+        #expect(coordinator.lastFailure?.message == "示範模式無法切回")
+        #expect(coordinator.lastFailure?.bannerText == "示範模式無法切回")
         #expect(await adapter.focusRequests.count == 1)
     }
 

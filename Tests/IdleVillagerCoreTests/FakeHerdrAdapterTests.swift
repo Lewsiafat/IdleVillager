@@ -2,6 +2,18 @@ import Testing
 import IdleVillagerCore
 
 struct FakeHerdrAdapterTests {
+    @Test func defaultSourceIsDemoDataAndDefaultFocusFailsAsDemoMode() async {
+        let adapter = FakeHerdrAdapter(snapshot: .demo)
+
+        let result = await adapter.focus(sessionID: AgentSessionID("demo-1"), paneID: PaneID("demo-pane-1"))
+
+        #expect(adapter.sourceDescription == SourceDescription.demo)
+        #expect(result == .failure(.demoMode))
+        #expect(await adapter.focusRequests == [
+            .init(sessionID: AgentSessionID("demo-1"), paneID: PaneID("demo-pane-1")),
+        ])
+    }
+
     @Test func focusRecordsEachRequestAndReturnsTheConfiguredResult() async {
         let adapter = FakeHerdrAdapter(focusResult: .success)
 
