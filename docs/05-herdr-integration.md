@@ -1,6 +1,6 @@
 # 05 — Herdr 整合計畫與待驗證清單
 
-> 此文件列出整合目標與驗證步驟，**不是已確認的 Herdr API 文件**。實作前應以使用者安裝的版本與官方文件核對名稱、傳輸格式和可用功能。
+> 此文件列出整合目標與驗證步驟。待驗證清單已於 2026-11-05 在使用者環境以 Herdr 0.9.5 實測完成，結論記錄在 `docs/adr/0002-herdr-socket-api.md`；其他版本仍應重新核對。
 
 ## 需取得的能力
 
@@ -11,17 +11,17 @@
 5. 由 Workspace / Tab / Pane ID 定位 Session。
 6. 將 Herdr 對應視窗真正帶到 macOS 前景。
 
-## 待實機驗證（不可預設成功）
+## 待實機驗證（已於 2026-11-05 在使用者環境完成，詳見 `docs/adr/0002-herdr-socket-api.md`）
 
-- [ ] Herdr 是 TUI 或獨立桌面 App？版本是多少？
-- [ ] 是否有本機 Socket / IPC？其位置、權限、訊息格式為何？
-- [ ] Session snapshot 能否顯示所有 Tab / Pane？
-- [ ] 是否可直接取得 agentKind 與真實任務狀態？
-- [ ] 是否能區分 Done、Idle、Blocked / Approval？
-- [ ] 焦點 API 是否能定位單一 Pane？若不能，是否有其他受支援的方法？
-- [ ] 焦點成功後 macOS 是否把正確視窗移到前景？
-- [ ] 多工作區、多視窗、同名 Tab、同類 Agent 的情況是否可用？
-- [ ] Herdr 重啟、關閉及版本更新時如何處理？
+- [x] Herdr 是 TUI 或獨立桌面 App？版本是多少？——TUI 加常駐 `herdr server`；0.9.5，protocol 22。
+- [x] 是否有本機 Socket / IPC？其位置、權限、訊息格式為何？——`~/.config/herdr/herdr.sock`，newline-delimited JSON，schema 可由 `herdr api schema --json` 匯出。
+- [x] Session snapshot 能否顯示所有 Tab / Pane？——`session.snapshot` 回傳全部 Workspace / Tab / Pane / Agent。
+- [x] 是否可直接取得 agentKind 與真實任務狀態？——`agents[].agent` 與 `agent_status`。
+- [x] 是否能區分 Done、Idle、Blocked / Approval？——可以，`done` / `idle` / `blocked` 三者由伺服器區分。
+- [x] 焦點 API 是否能定位單一 Pane？——`agent.focus` 與 `pane.focus` 可直接定位，並切換 Workspace 與 Tab。
+- [x] 焦點成功後 macOS 是否把正確視窗移到前景？——不會，需由本專案把終端機 App（本機為 Ghostty）帶到前景。
+- [x] 多工作區、多視窗、同名 Tab、同類 Agent 的情況是否可用？——ID 穩定唯一，實測 5 個 Claude Code Session 不混淆。
+- [x] Herdr 重啟、關閉及版本更新時如何處理？——socket 路徑固定，重連即可；`ping` 回傳 protocol 可偵測不相容。
 
 ## 點擊一列的預期流程
 
