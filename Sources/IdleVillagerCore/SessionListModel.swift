@@ -111,6 +111,11 @@ public struct SessionListModel: Hashable, Sendable {
                   !reason.isEmpty else { return nil }
             return reason
         }
+
+        /// 列的清單排序鍵：正規化狀態、paneLabel 與 agentSessionID。
+        var listOrderKey: ListOrderKey {
+            ListOrderKey(state: state, name: paneLabel, id: id.rawValue)
+        }
     }
 
     /// Workspace 底下的一個 Tab 群組。
@@ -129,6 +134,11 @@ public struct SessionListModel: Hashable, Sendable {
         public var topState: NormalizedState {
             NormalizedState.highestPriority(rows.map(\.state))
         }
+
+        /// 群組的清單排序鍵：最高優先度、Tab 名稱與 TabID。
+        var listOrderKey: ListOrderKey {
+            ListOrderKey(state: topState, name: name, id: id.rawValue)
+        }
     }
 
     /// 最上層的 Workspace 群組。
@@ -146,6 +156,11 @@ public struct SessionListModel: Hashable, Sendable {
         /// 群組內最高優先度的狀態，決定群組的排序。
         public var topState: NormalizedState {
             NormalizedState.highestPriority(tabs.map(\.topState))
+        }
+
+        /// 群組的清單排序鍵：最高優先度、Workspace 名稱與 WorkspaceID。
+        var listOrderKey: ListOrderKey {
+            ListOrderKey(state: topState, name: name, id: id.rawValue)
         }
     }
 
@@ -218,56 +233,16 @@ public struct SessionListModel: Hashable, Sendable {
                 ))
             }
         }
+        // 列在 `workspaceName` 規則下仍依優先度排序，只有 `fixed` 改依 ID。
+        let rowRule: SortRule = sortRule == .fixed ? .fixed : .priority
         for w in workspaces.indices {
             for t in workspaces[w].tabs.indices {
-                switch sortRule {
-                case .priority, .workspaceName:
-                    workspaces[w].tabs[t].rows.sort(by: rowPrecedes)
-                case .fixed:
-                    workspaces[w].tabs[t].rows.sort { $0.id.rawValue < $1.id.rawValue }
-                }
+                workspaces[w].tabs[t].rows.sort { ListOrderKey.precedes($0.listOrderKey, $1.listOrderKey, by: rowRule) }
             }
-            workspaces[w].tabs.sort { lhs, rhs in
-                groupPrecedes(sortRule, lhs.topState, lhs.name, lhs.id.rawValue, rhs.topState, rhs.name, rhs.id.rawValue)
-            }
+            workspaces[w].tabs.sort { ListOrderKey.precedes($0.listOrderKey, $1.listOrderKey, by: sortRule) }
         }
-        workspaces.sort { lhs, rhs in
-            groupPrecedes(sortRule, lhs.topState, lhs.name, lhs.id.rawValue, rhs.topState, rhs.name, rhs.id.rawValue)
-        }
+        workspaces.sort { ListOrderKey.precedes($0.listOrderKey, $1.listOrderKey, by: sortRule) }
         return workspaces
-    }
-
-    /// 群組排序。`priority` 先比內含的最高優先度；`priority` 與 `workspaceName` 接著依名稱，再依 ID；
-    /// `fixed` 只依 ID 的字串順序。最後一律以 ID 決定，確保順序穩定。
-    private static func groupPrecedes(
-        _ sortRule: SortRule,
-        _ lhsState: NormalizedState, _ lhsName: String, _ lhsID: String,
-        _ rhsState: NormalizedState, _ rhsName: String, _ rhsID: String
-    ) -> Bool {
-        if sortRule == .priority, rank(lhsState) != rank(rhsState) { return rank(lhsState) < rank(rhsState) }
-        if sortRule != .fixed, let order = nameOrder(lhsName, rhsName) { return order }
-        return lhsID < rhsID
-    }
-
-    /// 數字越小越優先，來自 `NormalizedState.priorityRank`。
-    private static func rank(_ state: NormalizedState) -> Int {
-        state.priorityRank
-    }
-
-    /// 列的排序：先比優先度，同優先度依 paneLabel，再依 agentSessionID，確保順序穩定。
-    private static func rowPrecedes(_ lhs: Row, _ rhs: Row) -> Bool {
-        if rank(lhs.state) != rank(rhs.state) { return rank(lhs.state) < rank(rhs.state) }
-        if let order = nameOrder(lhs.paneLabel, rhs.paneLabel) { return order }
-        return lhs.id.rawValue < rhs.id.rawValue
-    }
-
-    /// 名稱比較，數字以數值比較（Pane 2 在 Pane 10 之前）；名稱相同時回傳 nil。
-    private static func nameOrder(_ lhs: String, _ rhs: String) -> Bool? {
-        switch lhs.compare(rhs, options: .numeric) {
-        case .orderedAscending: true
-        case .orderedDescending: false
-        case .orderedSame: nil
-        }
     }
 
     /// 資料過期的列在狀態短文字後加上的標示。
