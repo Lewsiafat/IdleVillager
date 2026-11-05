@@ -70,6 +70,13 @@ struct StateNormalizerTests {
         #expect(result.conflictNote == nil)
     }
 
+    @Test func needsApprovalOverIdleExceptionDoesNotHideOtherConflicts() {
+        let result = StateNormalizer.normalize(rawState: "needsApproval|idle|error", stateSource: .explicitEvent)
+
+        #expect(result.state == .unknown)
+        #expect(result.conflictNote == "訊號衝突：Needs Approval、Error")
+    }
+
     @Test func signalsThatMapToTheSameStateAreNotAConflict() {
         let result = StateNormalizer.normalize(rawState: "running|busy", stateSource: .explicitEvent)
 

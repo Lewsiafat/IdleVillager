@@ -14,14 +14,14 @@
 每個 Agent Session 在任一時刻恰好屬於下列六種之一。
 
 - **Working**：Agent 正在執行任務，或有可靠的進行中訊號。
-- **Needs Approval**：Agent 在等人核准、回答或給權限，優先於 Idle。
+- **Needs Approval**：Agent 在等人核准、回答或給權限，優先於 Idle。與 Idle 同時出現時結果為 Needs Approval，這是「互斥訊號衝突即 Unknown」的刻意例外，因為等核准的 Agent 本來就沒在動，兩個訊號並不真正互斥（見衝突描述）。
 - **Done**：任務已完成，可能還沒被查看；Done 不等於 Idle。
 - **Idle**：Session 存在但沒有活躍任務，只能由明確事件推導，不能由 CPU 低或久未輸出推導。
 - **Error**：已確認任務失敗或異常。
 - **Unknown**：訊號不足、無法對應或訊號互相衝突時的狀態，必須明確顯示而不是被隱藏。
 
 - **State Normalizer**：把 Adapter 給的 `rawState` 與 `stateSource` 轉成上述六種狀態之一的純函式（`StateNormalizer`）。只有明確事件能得到非 Unknown 的狀態；`rawState` 的對應表只定義在 `StateNormalizer.rawStateTable` 一處。
-- **衝突描述（Conflict Note）**：一個 Session 同時帶有多個互斥訊號（`rawState` 以 `|` 分隔，例如 `working|idle`）時，該 Session 為 Unknown，並附上只含正規化狀態名稱的說明（例如「訊號衝突：Working、Idle」），不含任何來源原始文字。Needs Approval 與 Idle 同時出現不算衝突，結果為 Needs Approval。
+- **衝突描述（Conflict Note）**：一個 Session 同時帶有多個互斥訊號（`rawState` 以 `|` 分隔，例如 `working|idle`）時，該 Session 為 Unknown，並附上只含正規化狀態名稱的說明（例如「訊號衝突：Working、Idle」），不含任何來源原始文字。唯一的例外是 Needs Approval 與 Idle 同時出現：不算衝突，結果為 Needs Approval，也不附衝突描述；其他組合（例如 Done 與 Idle）仍是衝突。
 
 ## 選單列摘要
 

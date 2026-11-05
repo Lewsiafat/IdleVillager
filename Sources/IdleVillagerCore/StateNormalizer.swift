@@ -57,7 +57,8 @@ public enum StateNormalizer {
             guard let state = lookup[canonicalKey(token)] else { return NormalizationResult(state: .unknown) }
             states.insert(state)
         }
-        // Needs Approval 優先於 Idle：兩者同時出現不算衝突。
+        // Needs Approval 優先於 Idle 是「互斥訊號衝突即 Unknown」的刻意例外：
+        // 等核准的 Agent 本來就沒在動，兩個訊號並不真正互斥，因此不算衝突。
         if states.contains(.needsApproval) { states.remove(.idle) }
         guard states.count > 1 else { return NormalizationResult(state: states.first ?? .unknown) }
         let names = NormalizedState.allCases.filter(states.contains).map(displayName)
