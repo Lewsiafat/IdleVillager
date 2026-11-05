@@ -75,6 +75,18 @@ public struct MenuBarSummary: Hashable, Sendable {
     }
 }
 
+extension MenuBarSummary {
+    /// 依使用者設定產生摘要。設定值由呼叫端傳入，摘要本身不讀取偏好儲存。
+    @MainActor
+    public init(snapshot: StoreSnapshot, settings: AppSettings) {
+        self.init(
+            snapshot: snapshot,
+            alwaysShowZero: settings.alwaysShowZeroCounts,
+            showDoneCount: settings.showDoneCount
+        )
+    }
+}
+
 /// 把摘要模型轉成選單列文字。
 public enum MenuBarSummaryFormatter {
     /// 選單列文字，例如 `⚒ 3  ✋ 2  💤 1`。

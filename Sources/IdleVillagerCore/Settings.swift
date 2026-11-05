@@ -102,18 +102,6 @@ public final class AppSettings {
     }
 }
 
-extension MenuBarSummary {
-    /// 依使用者設定產生摘要。設定值由呼叫端傳入，摘要本身不讀取偏好儲存。
-    @MainActor
-    public init(snapshot: StoreSnapshot, settings: AppSettings) {
-        self.init(
-            snapshot: snapshot,
-            alwaysShowZero: settings.alwaysShowZeroCounts,
-            showDoneCount: settings.showDoneCount
-        )
-    }
-}
-
 /// 以 macOS 標準使用者偏好（`UserDefaults`）實作的 `SettingsStore`。
 public final class UserDefaultsSettingsStore: SettingsStore {
     private let defaults: UserDefaults
