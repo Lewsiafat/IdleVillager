@@ -219,7 +219,7 @@ private struct SessionRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            CharacterView(state: row.state, agentKind: AgentKind(rawAgentKind: row.agentKind),
+            CharacterView(state: row.state, agentKind: row.agentKind,
                           animationsEnabled: settings.animationsEnabled)
             Text(row.icon)
                 .font(.body.weight(.bold))

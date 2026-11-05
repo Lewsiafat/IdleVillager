@@ -48,7 +48,8 @@ public struct SessionListModel: Hashable, Sendable {
         public var id: AgentSessionID
         /// Focus 的目標 Pane。
         public var paneID: PaneID
-        public var agentKind: String
+        /// Agent 種類，由 Adapter 的 agentKind 原始字串以 `AgentKind(rawAgentKind:)` 對應。
+        public var agentKind: AgentKind
         public var displayName: String
         public var paneLabel: String
         public var state: NormalizedState
@@ -56,7 +57,7 @@ public struct SessionListModel: Hashable, Sendable {
         public var icon: String
         /// 狀態短文字，例如「幹活中」「等核准」「訊號不足」；資料過期時加上後綴「（過期）」，例如「幹活中（過期）」。
         public var stateText: String
-        /// 可選的補充說明：等待原因或衝突描述。沒有時為 nil。
+        /// 可選的補充說明：衝突描述或等待原因，規則見 `detail(for:)`。沒有時為 nil。
         public var detail: String?
         /// 這列的資料是否已過期（來自 Store 的 `isStale`）。
         public var isStale: Bool
@@ -64,7 +65,7 @@ public struct SessionListModel: Hashable, Sendable {
         public init(
             id: AgentSessionID,
             paneID: PaneID,
-            agentKind: String,
+            agentKind: AgentKind,
             displayName: String,
             paneLabel: String,
             state: NormalizedState,
@@ -90,16 +91,25 @@ public struct SessionListModel: Hashable, Sendable {
             self.init(
                 id: session.agentSessionID,
                 paneID: session.paneID,
-                agentKind: session.agentKind,
+                agentKind: AgentKind(rawAgentKind: session.agentKind),
                 displayName: session.displayName,
                 paneLabel: session.paneLabel,
                 state: entry.normalizedState,
                 icon: SessionListModel.icon(for: entry.normalizedState),
                 stateText: SessionListModel.stateText(for: entry.normalizedState)
                     + (entry.isStale ? SessionListModel.staleSuffix : ""),
-                detail: entry.conflictNote,
+                detail: Self.detail(for: entry),
                 isStale: entry.isStale
             )
+        }
+
+        /// 列的補充說明。衝突描述優先：Unknown 必須說明自己為何是 Unknown，所以有衝突描述時只顯示它；
+        /// 否則顯示等待原因（去除前後空白，空字串視為沒有）；兩者都沒有時為 nil。
+        static func detail(for entry: StoreSession) -> String? {
+            if let conflictNote = entry.conflictNote { return conflictNote }
+            guard let reason = entry.session.waitingReason?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !reason.isEmpty else { return nil }
+            return reason
         }
     }
 
@@ -280,7 +290,7 @@ public struct SessionListModel: Hashable, Sendable {
         }
     }
 
-    /// 狀態在清單中的短文字。
+    /// 狀態短文字（GLOSSARY 的用字）。清單、選單列與無障礙文字都以這裡為唯一來源。
     public static func stateText(for state: NormalizedState) -> String {
         switch state {
         case .working: "幹活中"

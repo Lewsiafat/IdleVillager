@@ -72,27 +72,16 @@ struct MenuBarLabel: View {
     private func accessibilityText(for summary: MenuBarSummary) -> String {
         switch summary.mode {
         case .disconnected:
-            return snapshot.connectionState == .reconnecting ? "正在重新連線" : "未連線"
+            return snapshot.connectionState == .reconnecting ? "重新連線中" : "未連線"
         case .zeroAgents:
             return "沒有 Agent"
         case .normal:
-            var parts = summary.items.filter(\.isVisible).map { "\(name(of: $0.state)) \($0.count) 個" }
+            var parts = summary.items.filter(\.isVisible).map { "\(SessionListModel.stateText(for: $0.state)) \($0.count) 個" }
             if summary.hasHiddenStates {
                 let showsDone = summary.items.contains { $0.state == .done }
-                parts.append(showsDone ? "另有錯誤或未知的 Agent" : "另有已完成、錯誤或未知的 Agent")
+                parts.append(showsDone ? "另有錯誤或訊號不足的 Agent" : "另有完成、錯誤或訊號不足的 Agent")
             }
             return parts.joined(separator: "，")
-        }
-    }
-
-    private func name(of state: NormalizedState) -> String {
-        switch state {
-        case .working: "工作中"
-        case .needsApproval: "等待核准"
-        case .idle: "閒置"
-        case .done: "已完成"
-        case .error: "錯誤"
-        case .unknown: "未知"
         }
     }
 }
