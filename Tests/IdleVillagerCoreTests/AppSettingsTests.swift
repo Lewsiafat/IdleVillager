@@ -1,6 +1,6 @@
 import Foundation
 import Observation
-import os
+import Synchronization
 import Testing
 import IdleVillagerCore
 
@@ -134,7 +134,7 @@ struct AppSettingsTests {
     @Test func changingASettingNotifiesObserversOfTheSummary() async {
         let store = await startedStore(with: [session("w1", rawState: "working")])
         let settings = AppSettings(store: InMemorySettingsStore())
-        let changeCount = OSAllocatedUnfairLock(initialState: 0)
+        let changeCount = Mutex(0)
 
         withObservationTracking {
             _ = MenuBarSummary(snapshot: store.snapshot, settings: settings)
