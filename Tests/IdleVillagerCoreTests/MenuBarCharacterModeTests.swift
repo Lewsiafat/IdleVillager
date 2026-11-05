@@ -55,7 +55,23 @@ struct MenuBarCharacterModeTests {
         ]))
     }
 
-    @Test func sessionsUpToTheDefaultThresholdShowCharactersInPriorityOrder() async {
+    @Test func sessionsBelowTheDefaultThresholdShowCharactersInPriorityOrder() async {
+        let snapshot = await snapshot(of: [
+            session("i1", rawState: "idle", agentKind: "gemini-cli"),
+            session("w1", rawState: "working", agentKind: "claude-code"),
+            session("a1", rawState: "needsApproval", agentKind: "codex"),
+        ])
+
+        let mode = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters)
+
+        #expect(mode.display == .characters([
+            MenuBarCharacterItem(agentSessionID: AgentSessionID("a1"), agentKind: .codex, normalizedState: .needsApproval, icon: "✋"),
+            MenuBarCharacterItem(agentSessionID: AgentSessionID("w1"), agentKind: .claude, normalizedState: .working, icon: "⚒"),
+            MenuBarCharacterItem(agentSessionID: AgentSessionID("i1"), agentKind: .gemini, normalizedState: .idle, icon: "💤"),
+        ]))
+    }
+
+    @Test func sessionsEqualToTheDefaultThresholdFallBackToCounts() async {
         let snapshot = await snapshot(of: [
             session("i1", rawState: "idle", agentKind: "gemini-cli"),
             session("w1", rawState: "working", agentKind: "claude-code"),
@@ -65,12 +81,7 @@ struct MenuBarCharacterModeTests {
 
         let mode = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters)
 
-        #expect(mode.display == .characters([
-            MenuBarCharacterItem(agentSessionID: AgentSessionID("a1"), agentKind: .codex, normalizedState: .needsApproval, icon: "✋"),
-            MenuBarCharacterItem(agentSessionID: AgentSessionID("d1"), agentKind: .generic, normalizedState: .done, icon: "✓"),
-            MenuBarCharacterItem(agentSessionID: AgentSessionID("w1"), agentKind: .claude, normalizedState: .working, icon: "⚒"),
-            MenuBarCharacterItem(agentSessionID: AgentSessionID("i1"), agentKind: .gemini, normalizedState: .idle, icon: "💤"),
-        ]))
+        #expect(mode.display == .counts)
     }
 
     @Test func sameStateCharactersAreOrderedByPaneLabelNumerically() async {
@@ -130,11 +141,11 @@ struct MenuBarCharacterModeTests {
             session("i1", rawState: "idle"),
         ])
 
-        let thresholdTwo = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters, fewCharactersThreshold: 2)
         let thresholdThree = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters, fewCharactersThreshold: 3)
+        let thresholdFour = MenuBarCharacterMode(snapshot: snapshot, menuBarMode: .fewCharacters, fewCharactersThreshold: 4)
 
-        #expect(thresholdTwo.display == .counts)
-        #expect(thresholdThree.display == .characters([
+        #expect(thresholdThree.display == .counts)
+        #expect(thresholdFour.display == .characters([
             MenuBarCharacterItem(agentSessionID: AgentSessionID("a1"), agentKind: .claude, normalizedState: .needsApproval, icon: "✋"),
             MenuBarCharacterItem(agentSessionID: AgentSessionID("w1"), agentKind: .claude, normalizedState: .working, icon: "⚒"),
             MenuBarCharacterItem(agentSessionID: AgentSessionID("i1"), agentKind: .claude, normalizedState: .idle, icon: "💤"),

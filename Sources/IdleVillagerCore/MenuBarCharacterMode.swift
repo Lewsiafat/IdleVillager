@@ -16,6 +16,14 @@ public struct MenuBarCharacterItem: Hashable, Sendable, Identifiable {
     }
 
     public var id: AgentSessionID { agentSessionID }
+
+    /// 低干擾提醒進行中時，這個角色是否要加上強調外框。
+    ///
+    /// 只有待核准（Needs Approval）的角色會被強調，讓使用者看得出是哪一個 Session 在等核准；
+    /// 外框只是額外提示，狀態仍由 ✋ 圖示表達，不只靠外框或顏色。
+    public func isHighlighted(during emphasis: MenuBarAlertEmphasis) -> Bool {
+        emphasis == .emphasized && normalizedState == .needsApproval
+    }
 }
 
 /// 選單列實際要呈現的內容。
@@ -28,10 +36,10 @@ public enum MenuBarDisplay: Hashable, Sendable {
 
 /// 依選單列模式與 Session 數量決定選單列呈現數量還是角色的純值模型。
 ///
-/// 只有在使用者選擇少量角色模式、已連線，且 Session 數量介於 1 與門檻（含）之間時才呈現角色；
-/// 超過門檻、沒有 Session 或斷線時自動回到數量模式，避免把選單列撐爆或顯示過期角色。
+/// 只有在使用者選擇少量角色模式、已連線，且 Session 數量至少 1 個並低於門檻時才呈現角色；
+/// 達到或超過門檻、沒有 Session 或斷線時自動回到數量模式，避免把選單列撐爆或顯示過期角色。
 public struct MenuBarCharacterMode: Hashable, Sendable {
-    /// 預設門檻：最多 4 個 Session 時顯示角色。
+    /// 預設門檻：Session 數量低於 4 個（也就是最多 3 個）時顯示角色。
     public static let defaultFewCharactersThreshold = 4
 
     public var display: MenuBarDisplay
@@ -39,7 +47,7 @@ public struct MenuBarCharacterMode: Hashable, Sendable {
     /// - Parameters:
     ///   - snapshot: Session Store 的快照。
     ///   - menuBarMode: 使用者選擇的選單列模式。
-    ///   - fewCharactersThreshold: 少量角色模式最多顯示的 Session 數量，超過就回到數量模式。
+    ///   - fewCharactersThreshold: 少量角色門檻。Session 數量低於門檻才顯示角色，達到或超過就回到數量模式。
     public init(
         snapshot: StoreSnapshot,
         menuBarMode: MenuBarMode,
@@ -48,7 +56,7 @@ public struct MenuBarCharacterMode: Hashable, Sendable {
         let count = snapshot.sessions.count
         guard menuBarMode == .fewCharacters,
               snapshot.connectionState == .connected,
-              count > 0, count <= fewCharactersThreshold
+              count > 0, count < fewCharactersThreshold
         else {
             display = .counts
             return

@@ -1,5 +1,16 @@
 import Foundation
 
+/// 選單列在某個時刻的提醒強調程度，由 `ApprovalAlertTracker.emphasis(at:)` 決定。
+///
+/// 數量模式下強調為文字加粗與 SF Symbol 跳一次；少量角色模式下為待核准角色加上外框
+/// （見 `MenuBarCharacterItem.isHighlighted(during:)`）。實際繪製由 App 層負責。
+public enum MenuBarAlertEmphasis: Hashable, Sendable {
+    /// 沒有進行中的提醒，選單列維持原樣。
+    case none
+    /// 提醒進行中，選單列短暫強調。
+    case emphasized
+}
+
 /// 低干擾提醒：待核准（Needs Approval）數量增加時，選單列短暫強調一次。
 ///
 /// 這是純值 reducer。每次觀察到新的待核准數量就呼叫 `observe`，它和上一次的數量比較：
@@ -45,6 +56,11 @@ public struct ApprovalAlertTracker: Hashable, Sendable {
     public func isAlerting(at now: Date) -> Bool {
         guard let alertUntil else { return false }
         return now < alertUntil
+    }
+
+    /// 在 `now` 時選單列應呈現的強調程度：提醒進行中為 `.emphasized`，否則為 `.none`。
+    public func emphasis(at now: Date) -> MenuBarAlertEmphasis {
+        isAlerting(at: now) ? .emphasized : .none
     }
 }
 
