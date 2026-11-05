@@ -62,13 +62,13 @@ public struct MenuBarCharacterMode: Hashable, Sendable {
             return
         }
         let items = snapshot.sessions
-            .sorted(by: Self.precedes)
+            .sorted { ListOrderKey.precedes($0.listOrderKey, $1.listOrderKey) }
             .map { entry in
                 MenuBarCharacterItem(
                     agentSessionID: entry.session.agentSessionID,
                     agentKind: AgentKind(rawAgentKind: entry.session.agentKind),
                     normalizedState: entry.normalizedState,
-                    icon: SessionListModel.icon(for: entry.normalizedState)
+                    icon: entry.normalizedState.icon
                 )
             }
         display = .characters(items)
@@ -82,21 +82,5 @@ public struct MenuBarCharacterMode: Hashable, Sendable {
         fewCharactersThreshold: Int = MenuBarCharacterMode.defaultFewCharactersThreshold
     ) {
         self.init(snapshot: snapshot, menuBarMode: settings.menuBarMode, fewCharactersThreshold: fewCharactersThreshold)
-    }
-
-    /// 與 Popover 列相同的排序：先比清單優先度，同優先度依 paneLabel（數字以數值比較），再依 agentSessionID。
-    private static func precedes(_ lhs: StoreSession, _ rhs: StoreSession) -> Bool {
-        let lhsRank = rank(lhs.normalizedState)
-        let rhsRank = rank(rhs.normalizedState)
-        if lhsRank != rhsRank { return lhsRank < rhsRank }
-        switch lhs.session.paneLabel.compare(rhs.session.paneLabel, options: .numeric) {
-        case .orderedAscending: return true
-        case .orderedDescending: return false
-        case .orderedSame: return lhs.session.agentSessionID.rawValue < rhs.session.agentSessionID.rawValue
-        }
-    }
-
-    private static func rank(_ state: NormalizedState) -> Int {
-        SessionListModel.priorityOrder.firstIndex(of: state) ?? SessionListModel.priorityOrder.count
     }
 }

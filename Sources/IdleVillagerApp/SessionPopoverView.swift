@@ -184,7 +184,7 @@ private struct TabSection: View {
                         .lineLimit(1)
                     if collapsed {
                         // 收合時仍顯示群組內最高優先度的狀態，避免急件被藏起來。
-                        Text("\(SessionListModel.icon(for: tab.topState)) \(tab.rows.count)")
+                        Text("\(tab.topState.icon) \(tab.rows.count)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

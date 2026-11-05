@@ -267,7 +267,7 @@ struct MenuBarAlertEmphasisTests {
             agentSessionID: AgentSessionID(id),
             agentKind: .claude,
             normalizedState: state,
-            icon: SessionListModel.icon(for: state)
+            icon: state.icon
         )
     }
 

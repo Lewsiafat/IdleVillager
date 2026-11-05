@@ -55,10 +55,10 @@ public struct MenuBarSummary: Hashable, Sendable {
             return
         }
         mode = .normal
-        var categories: [(NormalizedState, String)] = [(.working, "⚒"), (.needsApproval, "✋"), (.idle, "💤")]
-        if showDoneCount { categories.append((.done, "✓")) }
-        items = categories.map { state, icon in
-            Item(state: state, icon: icon, count: counts[state], isVisible: alwaysShowZero || counts[state] > 0)
+        var categories: [NormalizedState] = [.working, .needsApproval, .idle]
+        if showDoneCount { categories.append(.done) }
+        items = categories.map { state in
+            Item(state: state, icon: state.icon, count: counts[state], isVisible: alwaysShowZero || counts[state] > 0)
         }
         let hiddenDone = showDoneCount ? 0 : counts.done
         hasHiddenStates = hiddenDone > 0 || counts.error > 0 || counts.unknown > 0
@@ -71,6 +71,18 @@ public struct MenuBarSummary: Hashable, Sendable {
             connectionState: snapshot.connectionState,
             alwaysShowZero: alwaysShowZero,
             showDoneCount: showDoneCount
+        )
+    }
+}
+
+extension MenuBarSummary {
+    /// 依使用者設定產生摘要。設定值由呼叫端傳入，摘要本身不讀取偏好儲存。
+    @MainActor
+    public init(snapshot: StoreSnapshot, settings: AppSettings) {
+        self.init(
+            snapshot: snapshot,
+            alwaysShowZero: settings.alwaysShowZeroCounts,
+            showDoneCount: settings.showDoneCount
         )
     }
 }

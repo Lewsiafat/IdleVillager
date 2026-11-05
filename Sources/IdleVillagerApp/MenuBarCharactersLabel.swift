@@ -42,9 +42,9 @@ struct MenuBarCharactersLabel: View {
         }
     }
 
-    /// 依序列出每個 Agent 的種類與狀態，例如「Codex 等核准，Claude 幹活中」。狀態用字與清單相同（`SessionListModel.stateText(for:)`）。
+    /// 依序列出每個 Agent 的種類與狀態，例如「Codex 等核准，Claude 幹活中」。狀態用字與清單相同（`NormalizedState.shortText`）。
     static func accessibilityText(for items: [MenuBarCharacterItem]) -> String {
-        items.map { "\(kindName($0.agentKind)) \(SessionListModel.stateText(for: $0.normalizedState))" }.joined(separator: "，")
+        items.map { "\(kindName($0.agentKind)) \($0.normalizedState.shortText)" }.joined(separator: "，")
     }
 
     private static func kindName(_ kind: AgentKind) -> String {

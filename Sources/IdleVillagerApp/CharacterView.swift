@@ -179,7 +179,6 @@ private struct LayerView: View {
         switch shape {
         case .circle: Circle().fill(style)
         case .capsule: Capsule().fill(style)
-        case .roundedRectangle: RoundedRectangle(cornerRadius: min(width, height) * 0.25).fill(style)
         }
     }
 }

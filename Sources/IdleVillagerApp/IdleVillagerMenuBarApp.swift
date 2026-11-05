@@ -76,7 +76,7 @@ struct MenuBarLabel: View {
         case .zeroAgents:
             return "沒有 Agent"
         case .normal:
-            var parts = summary.items.filter(\.isVisible).map { "\(SessionListModel.stateText(for: $0.state)) \($0.count) 個" }
+            var parts = summary.items.filter(\.isVisible).map { "\($0.state.shortText) \($0.count) 個" }
             if summary.hasHiddenStates {
                 let showsDone = summary.items.contains { $0.state == .done }
                 parts.append(showsDone ? "另有錯誤或訊號不足的 Agent" : "另有完成、錯誤或訊號不足的 Agent")
