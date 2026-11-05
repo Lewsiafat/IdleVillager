@@ -37,7 +37,7 @@
 
 - **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`），以及選單列模式（`menuBarMode`）。模型只透過 `MenuBarSummary(snapshot:settings:)`、`SessionListModel(snapshot:settings:)` 與 `ApprovalAlertTracker.observe(needsApprovalCount:settings:now:)` 接收設定值，不自行讀取偏好儲存。
 - **動畫開關（Animations Enabled）**：關閉後 Popover 角色只畫靜態姿勢，`CharacterMotion` 的循環與過渡一律為 nil，效果等同系統 Reduce Motion。預設開。
-- **低干擾提醒（Low-Distraction Alert）**：設定開啟時，待核准（Needs Approval）數量比上一次觀察**增加**，選單列短暫強調約 3 秒後恢復（文字加粗、SF Symbol 跳一次），不閃爍、不循環、不使用音效或系統通知。數量減少或不變不觸發；設定關閉時永不觸發並清除進行中的強調；第一次觀察只記下基準數量。判斷由純值 `ApprovalAlertTracker` 負責（輸出 `alertUntil`，時間可注入），App 的 `MenuBarAlertModifier` 只負責套用與到期還原。預設開。
+- **低干擾提醒（Low-Distraction Alert）**：設定開啟時，待核准（Needs Approval）數量比上一次觀察**增加**，選單列短暫強調約 3 秒後恢復，不閃爍、不循環、不使用音效或系統通知。數量模式為文字加粗、SF Symbol 跳一次；少量角色模式的選單列是預先畫好的圖片，改為在產圖時替待核准角色加上圓角外框並把 ✋ 改粗體（`MenuBarCharacterItem.isHighlighted(during:)`），狀態仍由圖示表達。強調程度為 `MenuBarAlertEmphasis`（`none` 或 `emphasized`），由 `ApprovalAlertTracker.emphasis(at:)` 依同一個計時決定。數量減少或不變不觸發；設定關閉時永不觸發並清除進行中的強調；第一次觀察只記下基準數量。判斷由純值 `ApprovalAlertTracker` 負責（輸出 `alertUntil`，時間可注入），App 的 `MenuBarAlertModifier` 只負責套用與到期還原。預設開。
 - **Settings Store**：設定的鍵值儲存介面（`SettingsStore`）。正式環境用 `UserDefaultsSettingsStore`（macOS 標準使用者偏好），測試用 `InMemorySettingsStore`；設定改動即時寫入，`AppSettings` 初始化時從中讀回，因此重啟後保留。
 
 ## Popover 清單

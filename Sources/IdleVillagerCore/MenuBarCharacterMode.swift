@@ -16,6 +16,14 @@ public struct MenuBarCharacterItem: Hashable, Sendable, Identifiable {
     }
 
     public var id: AgentSessionID { agentSessionID }
+
+    /// 低干擾提醒進行中時，這個角色是否要加上強調外框。
+    ///
+    /// 只有待核准（Needs Approval）的角色會被強調，讓使用者看得出是哪一個 Session 在等核准；
+    /// 外框只是額外提示，狀態仍由 ✋ 圖示表達，不只靠外框或顏色。
+    public func isHighlighted(during emphasis: MenuBarAlertEmphasis) -> Bool {
+        emphasis == .emphasized && normalizedState == .needsApproval
+    }
 }
 
 /// 選單列實際要呈現的內容。

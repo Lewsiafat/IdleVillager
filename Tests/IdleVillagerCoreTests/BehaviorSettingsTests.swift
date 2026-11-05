@@ -259,6 +259,80 @@ struct ApprovalAlertTests {
 }
 
 @MainActor
+struct MenuBarAlertEmphasisTests {
+    private let t0 = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func item(_ id: String, _ state: NormalizedState) -> MenuBarCharacterItem {
+        MenuBarCharacterItem(
+            agentSessionID: AgentSessionID(id),
+            agentKind: .claude,
+            normalizedState: state,
+            icon: SessionListModel.icon(for: state)
+        )
+    }
+
+    @Test func emphasisFollowsTheSameTimerAsTheAlert() {
+        let settings = AppSettings(store: InMemorySettingsStore())
+        var tracker = ApprovalAlertTracker()
+
+        tracker.observe(needsApprovalCount: 0, settings: settings, now: t0)
+        #expect(tracker.emphasis(at: t0) == .none)
+
+        tracker.observe(needsApprovalCount: 1, settings: settings, now: t0)
+        #expect(tracker.emphasis(at: t0) == .emphasized)
+        #expect(tracker.emphasis(at: Date(timeIntervalSince1970: 1_800_000_002.9)) == .emphasized)
+        #expect(tracker.emphasis(at: Date(timeIntervalSince1970: 1_800_000_003)) == .none)
+    }
+
+    @Test func switchedOffNeverEmphasizes() {
+        let settings = AppSettings(store: InMemorySettingsStore())
+        settings.lowDistractionAlerts = false
+        var tracker = ApprovalAlertTracker()
+
+        tracker.observe(needsApprovalCount: 0, settings: settings, now: t0)
+        tracker.observe(needsApprovalCount: 1, settings: settings, now: t0)
+
+        #expect(tracker.emphasis(at: t0) == .none)
+    }
+
+    @Test func onlyNeedsApprovalCharactersAreHighlightedWhileEmphasized() {
+        let approval = item("a1", .needsApproval)
+        let others = [item("w1", .working), item("i1", .idle), item("d1", .done), item("e1", .error), item("u1", .unknown)]
+
+        #expect(approval.isHighlighted(during: .emphasized))
+        #expect(approval.isHighlighted(during: .none) == false)
+        for other in others {
+            #expect(other.isHighlighted(during: .emphasized) == false)
+            #expect(other.isHighlighted(during: .none) == false)
+        }
+    }
+
+    @Test func fewCharactersModeHighlightsTheNewApprovalOnlyDuringTheAlert() async {
+        let idle = session("s1", rawState: "idle", workspace: ("ws-1", "W"), tab: ("tab-1", "T"), paneLabel: "Pane 1")
+        let working = session("s2", rawState: "working", workspace: ("ws-1", "W"), tab: ("tab-1", "T"), paneLabel: "Pane 2")
+        let before = await snapshot(of: [idle, working])
+        let after = await snapshot(of: [idle, working], events: [stateChanged("s1", to: "needsApproval")])
+        let settings = AppSettings(store: InMemorySettingsStore())
+        settings.menuBarMode = .fewCharacters
+        var tracker = ApprovalAlertTracker()
+
+        tracker.observe(needsApprovalCount: before.counts.needsApproval, settings: settings, now: t0)
+        tracker.observe(needsApprovalCount: after.counts.needsApproval, settings: settings, now: t0)
+
+        guard case .characters(let items) = MenuBarCharacterMode(snapshot: after, settings: settings).display else {
+            Issue.record("預期少量角色模式顯示角色")
+            return
+        }
+        let duringAlert = items.filter { $0.isHighlighted(during: tracker.emphasis(at: t0)) }.map(\.agentSessionID)
+        let expired = tracker.emphasis(at: Date(timeIntervalSince1970: 1_800_000_003))
+        let afterAlert = items.filter { $0.isHighlighted(during: expired) }
+
+        #expect(duringAlert == [AgentSessionID("s1")])
+        #expect(afterAlert.isEmpty)
+    }
+}
+
+@MainActor
 struct BehaviorSettingsPersistenceTests {
     @Test func behaviorSettingsSurviveARestart() {
         let store = InMemorySettingsStore()
