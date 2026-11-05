@@ -42,7 +42,7 @@ struct StoreNormalizationTests {
             session("w2", rawState: "running"),
             session("w3", rawState: "busy", workspace: "ws-2"),
             session("a1", rawState: "waiting_for_approval"),
-            session("a2", rawState: "blocked", workspace: "ws-2"),
+            session("a2", rawState: "awaiting_input", workspace: "ws-2"),
             session("d1", rawState: "completed"),
             session("i1", rawState: "idle"),
             session("i2", rawState: "IDLE", workspace: "ws-2"),

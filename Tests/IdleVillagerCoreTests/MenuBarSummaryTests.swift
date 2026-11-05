@@ -49,7 +49,7 @@ struct MenuBarSummaryTests {
             session("w2", rawState: "running"),
             session("w3", rawState: "busy"),
             session("a1", rawState: "needsApproval"),
-            session("a2", rawState: "blocked"),
+            session("a2", rawState: "awaiting_input"),
             session("i1", rawState: "idle"),
         ])
 
