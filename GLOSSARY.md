@@ -76,5 +76,16 @@
 - **事件訂閱優先、輪詢備援**：Adapter 取得變更的方式。來源支援事件訂閱時優先訂閱，否則由 Adapter 內部輪詢並合成同樣的事件；選擇與輪詢間隔都封裝在 Adapter 內，Store 以上不感知差異。
 - **Focus**：使用者點擊一列後，把來源對應視窗帶到前景並聚焦到指定 Pane 的動作；結果是成功，或帶明確原因的失敗。尚未驗證的 Fake Adapter 不得回報成功：`FakeHerdrAdapter` 預設失敗原因是 `FocusFailureReason.demoMode`，`FocusFailure.message` 與 Popover 頂部文字都是「示範模式無法切回」，Popover 保持開啟。測試要模擬真實成功或其他失敗時，必須明確傳入 `FocusResult`。
 - **Focus Coordinator**：處理 Focus 流程的可觀察物件（`FocusCoordinator`）。以列的 `AgentSessionID` 與 `PaneID`（不用清單索引）先向 Session Store 的 snapshot 確認目標仍存在且 Pane 相符；不存在就不呼叫 Adapter，直接回傳「目標已不存在」；存在才呼叫 Adapter 的 focus。結果為 `FocusOutcome`（成功，或帶 `FocusFailure` 的失敗）。`FocusFailure.message` 是使用者可讀原因；`FocusFailure.bannerText` 是 Popover 頂部顯示的完整文字（一般失敗為「無法切回：」加上原因，示範模式就是「示範模式無法切回」）。最近一次失敗公開在 `lastFailure` 供 Popover 頂部顯示，成功時清空。
-- **Adapter**：把外部資料來源（目前是 Herdr）轉成本專案資料模型的元件，介面為 `HerdrAdapter` protocol；`FakeHerdrAdapter` 是記憶體內的實作。
+- **Adapter**：把外部資料來源（目前是 Herdr）轉成本專案資料模型的元件，介面為 `HerdrAdapter` protocol；`HerdrSocketAdapter` 是真實實作，`FakeHerdrAdapter` 是記憶體內的實作。App 預設使用真實實作，只有設定環境變數 `IDLEVILLAGER_DEMO=1` 時才改用 Fake Adapter 的示範快照；連不上 Herdr 時顯示斷線，不改用示範資料。
+
+## Herdr 整合
+
+- **Herdr Socket Adapter**：真實的 Herdr Adapter（`HerdrSocketAdapter`），透過 Herdr 的本機 Unix domain socket（預設 `~/.config/herdr/herdr.sock`，可用環境變數 `IDLEVILLAGER_HERDR_SOCKET` 改路徑）以一行一個 JSON 的協定取得資料。依據是 `docs/adr/0002-herdr-socket-api.md` 記錄的實測結果，因此來源描述回報「Herdr」。只請求 metadata，不呼叫 `agent.read`、`pane.read`、`agent.prompt`、`pane.send_*` 等會接觸終端內容或送入文字的方法；日誌只記事件種類、連線狀態與 ID。
+- **請求連線（Request Connection）**：每次請求（`ping`、`session.snapshot`、`agent.get`、`agent.focus`）各開一條短連線，送一行、讀一行就關閉。
+- **訂閱連線（Subscription Connection）**：專門接收事件的長連線。送出 `events.subscribe` 並收到 `subscription_started` 後，這條連線上不再送任何請求（Herdr 會因此關閉連線）。訂閱內容由純函式 `HerdrSubscriptionPlan.subscriptions(agentPaneIDs:)` 決定：全部生命週期事件，加上每個已知 Agent Pane 各一項 `pane.agent_status_changed`；刻意不訂閱帶終端內容的 `pane.output_matched`。Agent Pane 集合改變時開一條新的訂閱連線，成功後才關閉舊的。
+- **對帳快照（Reconcile Snapshot）**：Adapter 重新取一次 `session.snapshot` 並與上一份比對，由純函式 `HerdrSnapshotDiff.events(from:to:)` 合成事件：消失的送 `sessionRemoved`，新出現的送 `sessionAdded`，metadata（Workspace、Tab、Pane、名稱）改變的以 `sessionAdded` 整筆取代，其餘一律送 `sessionStateChanged`（狀態沒變也送，讓 `updatedAt` 更新，Store 才不會把仍存在的 Session 判為過期）。每 30 秒一次，收到生命週期事件或訂閱連線中斷時立即執行；訂閱連線中斷期間它就是輪詢備援。
+- **退避（Backoff）**：重新訂閱與斷線後重試的等待秒數（`HerdrBackoff`）：1、2、4、8、16，之後固定 30；成功後回到 1。
+- **快照對應（Snapshot Mapping）**：把 Herdr 快照轉成 `AgentSession` 的純函式（`HerdrSnapshotMapper`）。只有 `agents[]` 會成為 Agent Session；`AgentSessionID` 取 `terminal_id`；Workspace 與 Tab 名稱取 `label`；`paneLabel` 取 Agent 的 `title`、Pane 的 `label`，都沒有時用 Pane ID；顯示名稱取 `terminal_title_stripped`，沒有時用 Agent 種類；`rawState` 原樣保留 `agent_status`；`stateSource` 為 `explicitEvent`；`updatedAt` 是收到資料的時間（來源沒有時間戳記）；`waitingReason` 為 nil。
+- **連線狀態回報**：請求成功為 connected；socket 不存在或連線被拒為 disconnected；曾經連上後發生其他失敗（逾時、意外關閉）為 reconnecting。從斷線或重連中恢復時送 `connectionChanged(.connected)`，觸發 Store 的重連同步。
+- **Terminal Activator**：把執行 Herdr 客戶端的終端機 App 帶到 macOS 前景的介面（`TerminalActivator`）。Core 以 `HerdrClientProcessLocator` 用 `sysctl` 找出執行檔名為 `herdr`、第一個參數不是 `server` 的程序，並列出它往上的父程序鏈；App 的 `AppKitTerminalActivator` 沿鏈找到第一個有 bundle identifier 的 App（本機為 Ghostty）並啟用。Core 因此不依賴 AppKit。聚焦流程為 `agent.get` 確認目標存在（`agent_not_found` 回「目標已不存在」）、`agent.focus` 並確認 `focused` 為 true、最後帶到前景（失敗回「未能把來源視窗帶到前景」）；socket 連不上回「來源已斷線」。
 - **Seam**：可以在不改動呼叫端的情況下替換實作的介面接縫。本專案的測試 seam 是 `HerdrAdapter`（所有 Session 資料都透過 Fake Adapter 餵入）與 `SettingsStore`（偏好儲存以記憶體內實作替換）。
