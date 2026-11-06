@@ -26,11 +26,13 @@
 - 可及性：顏色之外必須有圖示、文字或數字。
 - 不附第三方品牌圖檔；後續依權利與來源補齊。
 
+## 已決策事項
+
+- 最低 macOS 版本：macOS 14，見 `docs/adr/0001-swift-package-and-minimum-macos.md`。
+- Herdr 目標版次與客戶端型態、事件訂閱與輪詢備援方案：真實 Adapter（`HerdrSocketAdapter`）直接使用 Herdr 的本機 Unix domain socket，見 `docs/adr/0002-herdr-socket-api.md`。
+
 ## 待決策事項
 
-- 最低 macOS 版本。
-- Herdr 目標版次與客戶端型態。
-- 事件訂閱與輪詢備援方案。
 - Menu Bar 是否持續顯示 Done / Error / Unknown 的小計數。
 - 實作時採 SVG 轉 PDF / 向量 Asset，或其他原生可行管線。
 

@@ -7,7 +7,7 @@ private let fixedNow = Date(timeIntervalSince1970: 1_800_000_000)
 private func makeSession(
     id: String = "session-1",
     paneID: String = "pane-1",
-    rawState: String = "running"
+    rawState: String = "working"
 ) -> AgentSession {
     AgentSession(
         workspaceID: WorkspaceID("ws-1"),
@@ -59,7 +59,7 @@ struct SessionStoreTests {
         #expect(entry.session.paneLabel == "Pane 1")
         #expect(entry.session.agentKind == "claude")
         #expect(entry.session.displayName == "Claude Code")
-        #expect(entry.session.rawState == "running")
+        #expect(entry.session.rawState == "working")
         #expect(entry.session.stateSource == .explicitEvent)
         #expect(entry.normalizedState == .working)
         #expect(entry.conflictNote == nil)
@@ -97,8 +97,8 @@ struct SessionStoreTests {
     @Test func sessionStateChangedEventUpdatesRawStateOfThatSessionOnly() async throws {
         let changedAt = Date(timeIntervalSince1970: 1_750_000_000)
         let adapter = FakeHerdrAdapter(snapshot: SessionSnapshot(sessions: [
-            makeSession(id: "session-1", paneID: "pane-1", rawState: "running"),
-            makeSession(id: "session-2", paneID: "pane-2", rawState: "running"),
+            makeSession(id: "session-1", paneID: "pane-1", rawState: "working"),
+            makeSession(id: "session-2", paneID: "pane-2", rawState: "working"),
         ]))
         adapter.send(.sessionStateChanged(
             AgentSessionID("session-1"),
@@ -115,7 +115,7 @@ struct SessionStoreTests {
         let second = try #require(store.snapshot.sessions.first { $0.id == AgentSessionID("session-2") })
         #expect(first.session.rawState == "waiting_approval")
         #expect(first.session.updatedAt == changedAt)
-        #expect(second.session.rawState == "running")
+        #expect(second.session.rawState == "working")
         #expect(store.snapshot.counts.total == 2)
     }
 

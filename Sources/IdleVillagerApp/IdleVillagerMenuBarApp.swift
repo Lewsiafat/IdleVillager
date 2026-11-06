@@ -12,9 +12,14 @@ struct IdleVillagerMenuBarApp: App {
         // 以 Swift Package 執行檔啟動時沒有 Info.plist 的 LSUIElement，改用程式設定成只出現在選單列。
         NSApplication.shared.setActivationPolicy(.accessory)
 
-        // 真實 Herdr Adapter 尚未驗證，先以 Fake Adapter 的示範快照啟動。
-        // 預設來源是「示範資料」，focus 回傳示範模式失敗，不顯示「Herdr · 已連線」，也不假裝已切回。
-        let adapter = FakeHerdrAdapter(snapshot: .demo)
+        // 預設連 Herdr 的本機 socket。Herdr 沒在執行時畫面顯示斷線，不改用示範資料。
+        // 設定環境變數 IDLEVILLAGER_DEMO=1 才以 Fake Adapter 的示範快照啟動（來源顯示「示範資料」，focus 回傳示範模式失敗）。
+        let adapter: any HerdrAdapter
+        if ProcessInfo.processInfo.environment["IDLEVILLAGER_DEMO"] == "1" {
+            adapter = FakeHerdrAdapter(snapshot: .demo)
+        } else {
+            adapter = HerdrSocketAdapter(activator: AppKitTerminalActivator())
+        }
         let store = SessionStore(adapter: adapter)
         _store = State(initialValue: store)
         _focusCoordinator = State(initialValue: FocusCoordinator(store: store, adapter: adapter))
@@ -30,19 +35,42 @@ struct IdleVillagerMenuBarApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            SessionPopoverView(snapshot: store.snapshot)
+            // 在 View 內讀 store.snapshot 才會被 Observation 追蹤；在 Scene 層讀取時，Popover 開著期間不會重繪。
+            LiveSessionPopover(store: store)
                 .environment(focusCoordinator)
                 .environment(settings)
             SettingsEntryButton()
         } label: {
-            MenuBarLabel(snapshot: store.snapshot, settings: settings)
-                .approvalAlert(needsApprovalCount: store.snapshot.counts.needsApproval, settings: settings)
+            LiveMenuBarLabel(store: store, settings: settings)
         }
         .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView(settings: settings)
         }
+    }
+}
+
+/// 觀察 Session Store 並把最新快照交給 Popover 內容。
+///
+/// 必須在 View 的 body 內讀取 `store.snapshot`，SwiftUI 才會在快照變動時重繪已開啟的 Popover；
+/// 若在 `App.body` 的 Scene 層讀取，Popover 開著時清單會停在開啟當下的資料，點擊舊列會得到「目標已不存在」。
+struct LiveSessionPopover: View {
+    let store: SessionStore
+
+    var body: some View {
+        SessionPopoverView(snapshot: store.snapshot)
+    }
+}
+
+/// 觀察 Session Store 並把最新快照交給選單列 label，理由同 `LiveSessionPopover`。
+struct LiveMenuBarLabel: View {
+    let store: SessionStore
+    let settings: AppSettings
+
+    var body: some View {
+        MenuBarLabel(snapshot: store.snapshot, settings: settings)
+            .approvalAlert(needsApprovalCount: store.snapshot.counts.needsApproval, settings: settings)
     }
 }
 
