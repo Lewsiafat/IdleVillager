@@ -35,19 +35,42 @@ struct IdleVillagerMenuBarApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            SessionPopoverView(snapshot: store.snapshot)
+            // 在 View 內讀 store.snapshot 才會被 Observation 追蹤；在 Scene 層讀取時，Popover 開著期間不會重繪。
+            LiveSessionPopover(store: store)
                 .environment(focusCoordinator)
                 .environment(settings)
             SettingsEntryButton()
         } label: {
-            MenuBarLabel(snapshot: store.snapshot, settings: settings)
-                .approvalAlert(needsApprovalCount: store.snapshot.counts.needsApproval, settings: settings)
+            LiveMenuBarLabel(store: store, settings: settings)
         }
         .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView(settings: settings)
         }
+    }
+}
+
+/// 觀察 Session Store 並把最新快照交給 Popover 內容。
+///
+/// 必須在 View 的 body 內讀取 `store.snapshot`，SwiftUI 才會在快照變動時重繪已開啟的 Popover；
+/// 若在 `App.body` 的 Scene 層讀取，Popover 開著時清單會停在開啟當下的資料，點擊舊列會得到「目標已不存在」。
+struct LiveSessionPopover: View {
+    let store: SessionStore
+
+    var body: some View {
+        SessionPopoverView(snapshot: store.snapshot)
+    }
+}
+
+/// 觀察 Session Store 並把最新快照交給選單列 label，理由同 `LiveSessionPopover`。
+struct LiveMenuBarLabel: View {
+    let store: SessionStore
+    let settings: AppSettings
+
+    var body: some View {
+        MenuBarLabel(snapshot: store.snapshot, settings: settings)
+            .approvalAlert(needsApprovalCount: store.snapshot.counts.needsApproval, settings: settings)
     }
 }
 
