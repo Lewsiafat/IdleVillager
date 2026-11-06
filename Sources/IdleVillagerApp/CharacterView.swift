@@ -37,6 +37,9 @@ struct CharacterView: View {
                 transitionTrigger: previousState
             )
             .frame(width: side, height: side)
+            // 讓位移與旋轉動畫以角色自己的框為基準。Popover 開著時清單會即時更新，
+            // 沒有這行的話，正在播循環動畫的角色會被畫到捲動區的左上角。
+            .geometryGroup()
             .onChange(of: state) { oldValue, _ in
                 previousState = oldValue
             }
