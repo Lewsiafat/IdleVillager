@@ -26,12 +26,16 @@ final class SessionPopoverViewModel {
 struct SessionPopoverView: View {
     let snapshot: StoreSnapshot
     @State private var viewModel = SessionPopoverViewModel()
+    /// 清單內容量到的實際高度；nil 表示還沒量到（第一次排版前）。
+    @State private var listContentHeight: CGFloat?
     @Environment(FocusCoordinator.self) private var focusCoordinator
     @Environment(AppSettings.self) private var settings
 
     static let width: CGFloat = 360
     /// 列的最小高度；系統字體放大時列可以長高，不截字。
     static let rowHeight: CGFloat = 36
+    /// 清單區的最大高度；內容超過就捲動。
+    static let maxListHeight: CGFloat = 480
 
     var body: some View {
         let model = SessionListModel(snapshot: snapshot, settings: settings)
@@ -101,8 +105,16 @@ struct SessionPopoverView: View {
                     }
                 }
                 .padding(.vertical, 6)
+                // ScrollView 自己回報的理想高度會比內容少幾個 pt，最後一列的下緣因此被 footer 的分隔線蓋到。
+                // 改成量內容的實際高度，直接指定 ScrollView 的高度；內容超過上限時仍可捲動。
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    listContentHeight = height
+                }
             }
-            .frame(maxHeight: 480)
+            .frame(height: listContentHeight.map { min($0, Self.maxListHeight) })
+            .frame(maxHeight: Self.maxListHeight)
         }
     }
 
