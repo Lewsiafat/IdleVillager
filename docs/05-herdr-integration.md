@@ -21,7 +21,7 @@
 - [x] 焦點 API 是否能定位單一 Pane？——`agent.focus` 與 `pane.focus` 可直接定位，並切換 Workspace 與 Tab。
 - [x] 焦點成功後 macOS 是否把正確視窗移到前景？——不會，需由本專案把終端機 App（本機為 Ghostty）帶到前景。
 - [x] 多工作區、多視窗、同名 Tab、同類 Agent 的情況是否可用？——ID 穩定唯一，實測 5 個 Claude Code Session 不混淆。
-- [x] Herdr 重啟、關閉及版本更新時如何處理？——socket 路徑固定，重連即可；`ping` 回傳 protocol 可偵測不相容。
+- [x] Herdr 重啟、關閉及版本更新時如何處理？——socket 路徑固定，重連即可；`ping` 回傳 protocol 可偵測不相容。注意 `herdr server stop` 會連同 pane 裡的 Agent 一起結束，重啟後所有 Agent 都是新的程序，`terminal_id` 全部換新；本專案以 `terminal_id` 當 Session ID，所以重連後清單會整批換成新的 Session，這是預期行為。
 
 ## 點擊一列的預期流程
 
