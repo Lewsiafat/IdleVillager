@@ -36,6 +36,19 @@ extension NormalizedState {
     /// 狀態短文字，等同 `presentation.shortText`。
     public var shortText: String { presentation.shortText }
 
+    /// 選單列數量模式使用的 SF Symbol 名稱。與 `icon` 同義，只是改用系統圖示，
+    /// 讓選單列的狀態圖示大小一致、能跟著選單列的明暗色變化。
+    public var symbolName: String {
+        switch self {
+        case .working: "hammer.fill"
+        case .needsApproval: "hand.raised.fill"
+        case .done: "checkmark"
+        case .idle: "zzz"
+        case .error: "exclamationmark"
+        case .unknown: "questionmark"
+        }
+    }
+
     /// 清單優先度，由高到低：Needs Approval > Error > Done > Working > Idle > Unknown。
     /// Popover 清單與少量角色模式都依此排序。
     public static let priorityOrder: [NormalizedState] = [.needsApproval, .error, .done, .working, .idle, .unknown]
