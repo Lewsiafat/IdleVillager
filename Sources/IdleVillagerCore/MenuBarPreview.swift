@@ -13,18 +13,14 @@ extension StoreSnapshot {
         case .counts: allSessions
         case .fewCharacters: Array(allSessions.prefix(MenuBarCharacterMode.defaultFewCharactersThreshold - 1))
         }
-        let entries = sessions.map { session in
-            let result = StateNormalizer.normalize(session)
-            return StoreSession(session: session, normalizedState: result.state, conflictNote: result.conflictNote)
-        }
-        var counts = StateCounts()
-        for entry in entries { counts[entry.normalizedState] += 1 }
+        // 預覽是固定的示範資料，不做過期判定。
+        let result = normalizedEntries(from: sessions) { _ in false }
         return StoreSnapshot(
             connectionState: .connected,
             sourceDescription: SourceDescription.demo,
-            lastUpdatedAt: entries.map(\.session.updatedAt).max(),
-            sessions: entries,
-            counts: counts
+            lastUpdatedAt: result.sessions.map(\.session.updatedAt).max(),
+            sessions: result.sessions,
+            counts: result.counts
         )
     }
 }
