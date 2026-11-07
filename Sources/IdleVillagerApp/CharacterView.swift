@@ -57,6 +57,10 @@ private struct CharacterCanvas: View {
     private var layers: CharacterLayers { presentation.layers }
     private var lying: Bool { presentation.pose == .lyingDown }
 
+    /// 完整構圖時本體佔邊長的比例。本體是畫面主角；手、腳、表情隨本體放大並貼近輪廓，
+    /// 道具與特效則較小並往本體靠，避免搶走視線。只畫本體的小尺寸不使用這個比例。
+    private static let bodyRatio: CGFloat = 0.54
+
     var body: some View {
         if detail.drawsOuterLayers {
             fullCharacter
@@ -83,23 +87,23 @@ private struct CharacterCanvas: View {
             if let feet = layers.feet {
                 ForEach([-1.0, 1.0], id: \.self) { side in
                     LayerView(layer: feet, width: self.side * 0.1, height: self.side * 0.14, style: bodyStyle)
-                        .position(point(CGPoint(x: 0.4 + side * 0.09, y: 0.82)))
+                        .position(point(CGPoint(x: 0.4 + side * 0.1, y: 0.84)))
                 }
             }
             if let hands = layers.hands {
                 handsView(hands)
             }
             ZStack {
-                bodyLayer(diameter: side * 0.48)
+                bodyLayer(diameter: side * Self.bodyRatio)
                 if let face = layers.face, presentation.brandBody == .generic {
-                    LayerView(layer: face, width: side * 0.26, height: faceHeight(face), style: AnyShapeStyle(.background))
+                    LayerView(layer: face, width: side * 0.29, height: faceHeight(face), style: AnyShapeStyle(.background))
                 }
             }
             // 躺平時本體靠在床頭上；本體不旋轉，品牌標誌因此不變形。
             .position(point(lying ? CGPoint(x: 0.3, y: 0.5) : CGPoint(x: 0.4, y: 0.48)))
             if let effect = layers.effect {
-                LayerView(layer: effect, width: side * 0.3, height: side * 0.3, style: effectStyle)
-                    .position(point(CGPoint(x: 0.8, y: 0.2)))
+                LayerView(layer: effect, width: side * 0.24, height: side * 0.24, style: effectStyle)
+                    .position(point(CGPoint(x: 0.78, y: 0.2)))
             }
         }
         .frame(width: side, height: side)
@@ -109,32 +113,32 @@ private struct CharacterCanvas: View {
     private func handsView(_ hands: CharacterLayer) -> some View {
         if case .sfSymbol = hands {
             // 舉手：一隻手高舉在頭的右上方。
-            LayerView(layer: hands, width: side * 0.26, height: side * 0.26, style: bodyStyle)
-                .position(point(CGPoint(x: 0.66, y: 0.24)))
+            LayerView(layer: hands, width: side * 0.22, height: side * 0.22, style: bodyStyle)
+                .position(point(CGPoint(x: 0.64, y: 0.2)))
         } else {
             ForEach([-1.0, 1.0], id: \.self) { side in
                 LayerView(layer: hands, width: self.side * 0.08, height: self.side * 0.16, style: bodyStyle)
                     .rotationEffect(.degrees(side * 30))
-                    .position(point(CGPoint(x: 0.4 + side * 0.27, y: 0.58)))
+                    .position(point(CGPoint(x: 0.4 + side * 0.29, y: 0.6)))
             }
         }
     }
 
     private var propPosition: CGPoint {
         switch presentation.pose {
-        case .lyingDown: return CGPoint(x: 0.5, y: 0.78)
-        case .delivering: return CGPoint(x: 0.8, y: 0.6)
-        default: return CGPoint(x: 0.8, y: 0.62)
+        case .lyingDown: return CGPoint(x: 0.5, y: 0.76)
+        case .delivering: return CGPoint(x: 0.76, y: 0.6)
+        default: return CGPoint(x: 0.76, y: 0.64)
         }
     }
 
     private var propSize: CGSize {
-        lying ? CGSize(width: side * 0.9, height: side * 0.42) : CGSize(width: side * 0.34, height: side * 0.34)
+        lying ? CGSize(width: side * 0.84, height: side * 0.38) : CGSize(width: side * 0.28, height: side * 0.28)
     }
 
     private func faceHeight(_ face: CharacterLayer) -> CGFloat {
-        if case .shape = face { return side * 0.05 }
-        return side * 0.26
+        if case .shape = face { return side * 0.056 }
+        return side * 0.29
     }
 
     private func point(_ unit: CGPoint) -> CGPoint {

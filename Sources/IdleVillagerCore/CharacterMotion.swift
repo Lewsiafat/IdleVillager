@@ -2,7 +2,7 @@ import Foundation
 
 /// 角色在某個姿勢下持續播放的循環動作。只描述「要播什麼、節奏多快」，動畫本身由 App 層實作。
 public enum CharacterLoop: String, CaseIterable, Hashable, Sendable {
-    /// 幹活：微幅上下跳動並左右擺動，像在敲鍵盤或揮工具。平穩循環。
+    /// 幹活：微幅上下跳動並左右擺動，像在敲鍵盤或揮工具。平穩循環，整個週期都在動（motionDuration 等於 period）。
     case workingBob
     /// 舉手：每隔一段時間小幅晃一下，大部分時間靜止。稀疏節奏、不閃爍。
     case raisedHandSway
@@ -13,11 +13,11 @@ public enum CharacterLoop: String, CaseIterable, Hashable, Sendable {
     public var parameters: CharacterLoopParameters {
         switch self {
         case .workingBob:
-            return CharacterLoopParameters(period: 1.2, motionDuration: 1.2, offset: 0.03, rotationDegrees: 4)
+            return CharacterLoopParameters(period: 1.6, motionDuration: 1.6, offset: 0.03, rotationDegrees: 3)
         case .raisedHandSway:
             return CharacterLoopParameters(period: 4, motionDuration: 0.6, offset: 0, rotationDegrees: 6)
         case .idleZzz:
-            return CharacterLoopParameters(period: 6, motionDuration: 1.5, offset: 0.2, rotationDegrees: 0)
+            return CharacterLoopParameters(period: 6, motionDuration: 1.5, offset: 0.15, rotationDegrees: 0)
         }
     }
 }

@@ -96,6 +96,30 @@ public struct StoreSnapshot: Hashable, Sendable {
         self.sessions = sessions
         self.counts = counts
     }
+
+    /// 把 Adapter 給的 Session 逐一正規化成 Store 的 Session，並算出六種狀態的計數。
+    ///
+    /// Session Store 與設定視窗的選單列預覽共用這個純函式，正規化與計數規則只寫在這裡。
+    /// - Parameters:
+    ///   - sessions: Adapter 原始的 Session 清單，順序原樣保留。
+    ///   - isStale: 判定單一 Session 是否過期。
+    static func normalizedEntries(
+        from sessions: [AgentSession],
+        isStale: (AgentSession) -> Bool
+    ) -> (sessions: [StoreSession], counts: StateCounts) {
+        let entries = sessions.map { session in
+            let result = StateNormalizer.normalize(session)
+            return StoreSession(
+                session: session,
+                normalizedState: result.state,
+                conflictNote: result.conflictNote,
+                isStale: isStale(session)
+            )
+        }
+        var counts = StateCounts()
+        for entry in entries { counts[entry.normalizedState] += 1 }
+        return (entries, counts)
+    }
 }
 
 /// 以 agentSessionID 為主鍵維護即時 Session 清單，對外提供可觀察的 `snapshot`。
@@ -225,18 +249,8 @@ public final class SessionStore {
     }
 
     private func replaceSessions(with sessions: [AgentSession], at time: Date) {
-        let entries = sessions.map { session in
-            let result = StateNormalizer.normalize(session)
-            return StoreSession(
-                session: session,
-                normalizedState: result.state,
-                conflictNote: result.conflictNote,
-                isStale: isStale(session, at: time)
-            )
-        }
-        var counts = StateCounts()
-        for entry in entries { counts[entry.normalizedState] += 1 }
-        snapshot.sessions = entries
-        snapshot.counts = counts
+        let result = StoreSnapshot.normalizedEntries(from: sessions) { isStale($0, at: time) }
+        snapshot.sessions = result.sessions
+        snapshot.counts = result.counts
     }
 }

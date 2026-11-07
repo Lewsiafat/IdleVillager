@@ -7,13 +7,13 @@ import IdleVillagerCore
 /// 完全依 `MenuBarCharacterItem` 繪製，不自行推論狀態或排序。角色固定 16 pt（`CharacterDetail` 為只畫本體），
 /// 不播放動畫；狀態圖示（⚒ ✋ ✓ 💤 ! ?）與角色並列，因此狀態不只靠角色或顏色辨識。
 ///
-/// `MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排內容先以 `ImageRenderer` 畫成一張圖片。
+/// `MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排內容先以 `MenuBarImageRendering` 畫成一張圖片。
 /// 沒有使用品牌素材時以 template 圖片呈現，讓系統依選單列外觀自動套用明暗色；
 /// 有品牌素材時保留原色，避免改動品牌標誌。
 ///
-/// 低干擾提醒進行中時（`menuBarAlertEmphasis` 為 `.emphasized`），待核准的角色在產圖時加上圓角外框、
-/// 狀態圖示改為粗體；哪些角色要強調由 `MenuBarCharacterItem.isHighlighted(during:)` 決定。
-/// 外框只是額外提示，狀態仍由 ✋ 圖示表達。
+/// 低干擾提醒進行中時（`menuBarAlertEmphasis` 為 `.emphasized`），待核准的角色在產圖時加上圓角底色
+/// （`menuBarEmphasisBackground`，與數量模式共用）、狀態圖示改為粗體；哪些角色要強調由
+/// `MenuBarCharacterItem.isHighlighted(during:)` 決定。底色只是額外提示，狀態仍由 ✋ 圖示表達。
 struct MenuBarCharactersLabel: View {
     let items: [MenuBarCharacterItem]
 
@@ -29,11 +29,11 @@ struct MenuBarCharactersLabel: View {
     }
 
     private var renderedImage: NSImage {
-        let renderer = ImageRenderer(content: MenuBarCharactersRow(items: items, emphasis: emphasis))
-        renderer.scale = displayScale
-        let image = renderer.nsImage ?? NSImage()
-        image.isTemplate = !usesBrandAsset
-        return image
+        MenuBarImageRendering.image(
+            of: MenuBarCharactersRow(items: items, emphasis: emphasis),
+            scale: displayScale,
+            isTemplate: !usesBrandAsset
+        )
     }
 
     private var usesBrandAsset: Bool {
@@ -76,14 +76,7 @@ private struct MenuBarCharactersRow: View {
                     Text(item.icon)
                         .font(.system(size: 12, weight: highlighted ? .bold : .regular))
                 }
-                // 固定保留外框的空間，強調開始與結束時寬度不變，選單列不會跳動。
-                .padding(.horizontal, 2)
-                .overlay {
-                    if highlighted {
-                        RoundedRectangle(cornerRadius: 4)
-                            .strokeBorder(.primary, lineWidth: 1.5)
-                    }
-                }
+                .menuBarEmphasisBackground(highlighted)
             }
         }
         .frame(height: 18)
