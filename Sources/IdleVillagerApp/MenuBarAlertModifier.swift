@@ -1,12 +1,12 @@
 import SwiftUI
 import IdleVillagerCore
 
-/// 低干擾提醒的選單列強調：待核准數量增加且設定開啟時，選單列文字短暫加粗，
-/// 其中的 SF Symbol（例如斷線圖示）跳動一次；到期後恢復原樣。
+/// 低干擾提醒的選單列強調：待核准數量增加且設定開啟時，選單列短暫強調待核准項目，到期後恢復原樣。
 ///
-/// 數量模式與少量角色模式的選單列都是 `ImageRenderer` 畫出的圖片，加粗與跳動對它們無效，
-/// 所以強調程度也透過 `menuBarAlertEmphasis` 環境值交給 `MenuBarCountsLabel` 與 `MenuBarCharactersLabel`，
-/// 由它們在產圖時以 `menuBarEmphasisBackground` 畫出同一種圓角底色。
+/// 數量模式與少量角色模式的選單列都是 `ImageRenderer` 畫出的圖片，所以強調程度透過 `menuBarAlertEmphasis`
+/// 環境值交給 `MenuBarCountsLabel` 與 `MenuBarCharactersLabel`，由它們在產圖時以 `menuBarEmphasisBackground`
+/// 畫出同一種圓角底色：數量模式強調等核准那一格，角色模式強調待核准角色。
+/// 這裡另外套用的加粗與 SF Symbol 跳動只對未產圖的文字或圖示有效，數量模式與角色模式都不依賴它們。
 ///
 /// 何時強調完全由 `ApprovalAlertTracker` 決定，這裡只負責套用與到期還原。不閃爍、不循環、不使用音效或系統通知。
 struct MenuBarAlertModifier: ViewModifier {
