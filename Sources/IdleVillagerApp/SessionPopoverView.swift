@@ -31,11 +31,11 @@ struct SessionPopoverView: View {
     @Environment(FocusCoordinator.self) private var focusCoordinator
     @Environment(AppSettings.self) private var settings
 
-    static let width: CGFloat = 360
+    static let width: CGFloat = 400
     /// 列的最小高度；系統字體放大時列可以長高，不截字。
     static let rowHeight: CGFloat = 36
     /// 清單區的最大高度；內容超過就捲動。
-    static let maxListHeight: CGFloat = 480
+    static let maxListHeight: CGFloat = 560
 
     var body: some View {
         let model = SessionListModel(snapshot: snapshot, settings: settings)
@@ -79,7 +79,10 @@ struct SessionPopoverView: View {
     }
 
     private func header(_ model: SessionListModel) -> some View {
-        HStack {
+        HStack(spacing: 8) {
+            // 標題旁的小村民只是裝飾，固定靜態，不播動畫。
+            CharacterView(state: .working, size: 24, animationsEnabled: false)
+                .accessibilityHidden(true)
             Text(model.title)
                 .font(.headline)
             Spacer()
@@ -99,12 +102,13 @@ struct SessionPopoverView: View {
                 .padding(.vertical, 24)
         } else {
             ScrollView {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(model.workspaces) { workspace in
                         WorkspaceSection(workspace: workspace, viewModel: viewModel)
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
                 // ScrollView 自己回報的理想高度會比內容少幾個 pt，最後一列的下緣因此被 footer 的分隔線蓋到。
                 // 改成量內容的實際高度，直接指定 ScrollView 的高度；內容超過上限時仍可捲動。
                 .onGeometryChange(for: CGFloat.self) { proxy in
@@ -118,8 +122,9 @@ struct SessionPopoverView: View {
         }
     }
 
+    /// footer 分兩列：第一列是來源、連線與更新時間，第二列是「設定…」與「結束 IdleVillager」。
     private func footer(_ footer: SessionListModel.Footer) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Image(systemName: footer.connectionState == .connected ? "link" : "exclamationmark.triangle")
                     .accessibilityHidden(true)
@@ -140,12 +145,17 @@ struct SessionPopoverView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Button("結束 IdleVillager") {
-                NSApplication.shared.terminate(nil)
+            HStack {
+                SettingsEntryButton()
+                Spacer()
+                Button("結束 IdleVillager") {
+                    NSApplication.shared.terminate(nil)
+                }
             }
+            .controlSize(.small)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 }
 
@@ -164,7 +174,7 @@ private struct WorkspaceSection: View {
                     .font(.subheadline.weight(.semibold))
                     .lineLimit(1)
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .accessibilityAddTraits(.isHeader)
 
@@ -172,6 +182,9 @@ private struct WorkspaceSection: View {
                 TabSection(tab: tab, viewModel: viewModel)
             }
         }
+        .padding(.vertical, 4)
+        // 每個 Workspace 一個圓角底色區塊，Tab 與 Session 列都在區塊內。
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
@@ -202,8 +215,8 @@ private struct TabSection: View {
                     }
                     Spacer()
                 }
-                .padding(.leading, 24)
-                .padding(.trailing, 12)
+                .padding(.leading, 20)
+                .padding(.trailing, 8)
                 .frame(minHeight: 28)
                 .contentShape(Rectangle())
             }
@@ -224,19 +237,15 @@ private struct TabSection: View {
 /// 一列 Agent Session：狀態圖示、顯示名稱、Pane 識別與狀態文字。整列可點擊，直接以穩定 ID 觸發 Focus，不需確認。
 private struct SessionRowView: View {
     let row: SessionListModel.Row
-    @Environment(\.colorSchemeContrast) private var contrast
     @Environment(FocusCoordinator.self) private var focusCoordinator
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
+    @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 8) {
             CharacterView(state: row.state, agentKind: row.agentKind,
                           animationsEnabled: settings.animationsEnabled)
-            Text(row.icon)
-                .font(.body.weight(.bold))
-                .foregroundStyle(iconStyle)
-                .frame(width: 22, alignment: .center)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(row.displayName) · \(row.paneLabel)")
                     .lineLimit(1)
@@ -248,15 +257,35 @@ private struct SessionRowView: View {
                 }
             }
             Spacer(minLength: 8)
-            Text(row.stateText)
-                .font(.callout.weight(contrast == .increased ? .semibold : .regular))
-                .foregroundStyle(contrast == .increased ? AnyShapeStyle(.primary) : AnyShapeStyle(.secondary))
+            StatusCapsule(row: row)
         }
-        .padding(.leading, 42)
-        .padding(.trailing, 12)
+        .padding(.leading, 34)
+        .padding(.trailing, 8)
         .frame(minHeight: SessionPopoverView.rowHeight)
+        .background {
+            // hover 時以淡淡的選取色標示目前指到的列。
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(isHovered ? AnyShapeStyle(.selection.opacity(0.25)) : AnyShapeStyle(.clear))
+                .padding(.horizontal, 4)
+        }
         .contentShape(Rectangle())
         .onTapGesture { focus() }
+        .onHover { hovering in
+            guard hovering != isHovered else { return }
+            isHovered = hovering
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .onDisappear {
+            // 列在 hover 中消失（例如 Popover 關閉或清單更新）時，把游標還原。
+            if isHovered {
+                isHovered = false
+                NSCursor.pop()
+            }
+        }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(.isButton)
@@ -275,21 +304,48 @@ private struct SessionRowView: View {
         }
     }
 
-    /// 顏色只是輔助；狀態一定同時有圖示與文字。高對比時一律使用主要前景色。
-    private var iconStyle: AnyShapeStyle {
-        if contrast == .increased { return AnyShapeStyle(.primary) }
-        switch row.state {
-        case .working: return AnyShapeStyle(.green)
-        case .needsApproval: return AnyShapeStyle(.orange)
-        case .done: return AnyShapeStyle(.yellow)
-        case .error: return AnyShapeStyle(.red)
-        case .idle, .unknown: return AnyShapeStyle(.secondary)
-        }
-    }
-
     private var accessibilityText: String {
         var parts = [row.displayName, row.paneLabel, row.stateText]
         if let detail = row.detail { parts.append(detail) }
         return parts.joined(separator: "，")
+    }
+}
+
+/// 列右側的狀態膠囊：圖示加狀態文字（含「（過期）」等字樣）置於圓角膠囊。
+/// 顏色只是輔助，底色依 `NormalizedState.tint`；高對比時改成實線框加主要前景色文字。
+private struct StatusCapsule: View {
+    let row: SessionListModel.Row
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    var body: some View {
+        let highContrast = contrast == .increased
+        HStack(spacing: 4) {
+            Text(row.icon)
+                .fontWeight(.bold)
+            Text(row.stateText)
+        }
+        .font(.caption.weight(highContrast ? .semibold : .medium))
+        .lineLimit(1)
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background {
+            if highContrast {
+                Capsule().strokeBorder(.primary, lineWidth: 1)
+            } else {
+                Capsule().fill(tintColor.opacity(0.22))
+            }
+        }
+        .fixedSize()
+    }
+
+    private var tintColor: Color {
+        switch row.state.tint {
+        case .green: .green
+        case .orange: .orange
+        case .yellow: .yellow
+        case .red: .red
+        case .gray: .gray
+        }
     }
 }
