@@ -39,7 +39,6 @@ struct IdleVillagerMenuBarApp: App {
             LiveSessionPopover(store: store)
                 .environment(focusCoordinator)
                 .environment(settings)
-            SettingsEntryButton()
         } label: {
             LiveMenuBarLabel(store: store, settings: settings)
         }

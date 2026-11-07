@@ -118,8 +118,9 @@ struct SessionPopoverView: View {
         }
     }
 
+    /// footer 分兩列：第一列是來源、連線與更新時間，第二列是「設定…」與「結束 IdleVillager」。
     private func footer(_ footer: SessionListModel.Footer) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
                 Image(systemName: footer.connectionState == .connected ? "link" : "exclamationmark.triangle")
                     .accessibilityHidden(true)
@@ -140,12 +141,17 @@ struct SessionPopoverView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Button("結束 IdleVillager") {
-                NSApplication.shared.terminate(nil)
+            HStack {
+                SettingsEntryButton()
+                Spacer()
+                Button("結束 IdleVillager") {
+                    NSApplication.shared.terminate(nil)
+                }
             }
+            .controlSize(.small)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 }
 

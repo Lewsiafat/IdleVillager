@@ -24,7 +24,7 @@ struct SettingsView: View {
     }
 }
 
-/// Popover 底部的設定入口。App 只出現在選單列，沒有應用程式選單，因此開啟設定前先把 App 帶到前景。
+/// Popover footer 的設定入口，與「結束 IdleVillager」並排。App 只出現在選單列，沒有應用程式選單，因此開啟設定前先把 App 帶到前景。
 struct SettingsEntryButton: View {
     @Environment(\.openSettings) private var openSettings
 
@@ -34,7 +34,5 @@ struct SettingsEntryButton: View {
             openSettings()
         }
         .keyboardShortcut(",", modifiers: .command)
-        .padding([.horizontal, .bottom], 12)
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 }
