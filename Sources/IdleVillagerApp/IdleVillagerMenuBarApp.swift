@@ -89,7 +89,10 @@ struct MenuBarLabel: View {
                 // 斷線或重連中只顯示斷線圖示，不顯示任何數字。
                 if let symbolName = MenuBarSummaryFormatter.symbolName(for: summary) {
                     Image(systemName: symbolName)
+                } else if summary.mode == .normal {
+                    MenuBarCountsLabel(summary: summary)
                 } else {
+                    // 零 Agent 模式維持文字。
                     Text(MenuBarSummaryFormatter.text(for: summary))
                 }
             }
@@ -111,5 +114,63 @@ struct MenuBarLabel: View {
             }
             return parts.joined(separator: "，")
         }
+    }
+}
+
+/// 數量模式的選單列內容：最左一個 16 pt 小村民，後面依序是各類別的 SF Symbol 與數量，有隱藏狀態時尾端加小標記。
+///
+/// 類別、數量與是否顯示完全取自 `MenuBarSummary.items`，這裡不自行計數。
+/// 與少量角色模式相同，`MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排先以 `ImageRenderer`
+/// 畫成 template 圖片，讓系統依選單列外觀自動套用明暗色。無障礙文字由外層 `MenuBarLabel` 提供。
+///
+/// 低干擾提醒進行中時（`menuBarAlertEmphasis` 為 `.emphasized`），等核准類別加上與角色模式相同的圓角底色並改粗體。
+struct MenuBarCountsLabel: View {
+    let summary: MenuBarSummary
+
+    @Environment(\.displayScale) private var displayScale
+    @Environment(\.menuBarAlertEmphasis) private var emphasis
+
+    var body: some View {
+        Image(nsImage: renderedImage)
+    }
+
+    private var renderedImage: NSImage {
+        let renderer = ImageRenderer(content: MenuBarCountsRow(summary: summary, emphasis: emphasis))
+        renderer.scale = displayScale
+        let image = renderer.nsImage ?? NSImage()
+        image.isTemplate = true
+        return image
+    }
+}
+
+/// 實際排版的一排村民、狀態圖示與數量，只供 `ImageRenderer` 繪製。
+private struct MenuBarCountsRow: View {
+    let summary: MenuBarSummary
+    let emphasis: MenuBarAlertEmphasis
+
+    var body: some View {
+        HStack(spacing: 2) {
+            // 村民只是品牌識別，不代表任何 Session 的狀態；選用站姿的 Working 外觀，選單列不播動畫。
+            CharacterView(
+                state: .working,
+                size: MenuBarCharactersLabel.characterSize,
+                animationsEnabled: false
+            )
+            ForEach(summary.items.filter(\.isVisible), id: \.state) { item in
+                let highlighted = emphasis == .emphasized && item.state == .needsApproval
+                HStack(spacing: 2) {
+                    Image(systemName: item.state.symbolName)
+                        .font(.system(size: 11, weight: highlighted ? .bold : .semibold))
+                    Text("\(item.count)")
+                        .font(.system(size: 13, weight: highlighted ? .bold : .regular).monospacedDigit())
+                }
+                .menuBarEmphasisBackground(highlighted)
+            }
+            if summary.hasHiddenStates {
+                Text(MenuBarSummaryFormatter.hiddenStatesMarker)
+                    .font(.system(size: 13))
+            }
+        }
+        .frame(height: 18)
     }
 }
