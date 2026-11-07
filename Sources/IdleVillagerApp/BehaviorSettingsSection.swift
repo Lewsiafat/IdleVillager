@@ -15,7 +15,8 @@ struct BehaviorSettingsSection: View {
             Toggle("播放角色動畫", isOn: $settings.animationsEnabled)
             Toggle(isOn: $settings.lowDistractionAlerts) {
                 Text("低干擾提醒")
-                Text("待核准數量增加時，選單列短暫強調後恢復（數量模式文字加粗，少量角色模式待核准角色加框）；不使用音效或系統通知。")
+                Text("待核准數量增加時，選單列短暫以圓角底色強調待核准項目後恢復；不使用音效或系統通知。")
+                    .font(.caption)
             }
         }
     }
