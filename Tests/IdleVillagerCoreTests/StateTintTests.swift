@@ -12,5 +12,6 @@ struct StateTintTests {
     ])
     func eachStateMapsToItsCapsuleTint(state: NormalizedState, tint: StateTint) {
         #expect(state.tint == tint)
+        #expect(state.presentation.tint == tint)
     }
 }

@@ -11,7 +11,9 @@ struct StatePresentationTests {
         (.unknown, "?", "訊號不足", "Unknown"),
     ])
     func tableHoldsIconShortTextAndEnglishName(state: NormalizedState, icon: String, shortText: String, englishName: String) {
-        #expect(state.presentation == StatePresentation(icon: icon, shortText: shortText, englishName: englishName))
+        #expect(state.presentation.icon == icon)
+        #expect(state.presentation.shortText == shortText)
+        #expect(state.presentation.englishName == englishName)
         #expect(state.icon == icon)
         #expect(state.shortText == shortText)
     }
@@ -26,6 +28,7 @@ struct StatePresentationTests {
     ])
     func symbolNameMapsEachStateToItsSFSymbol(state: NormalizedState, symbolName: String) {
         #expect(state.symbolName == symbolName)
+        #expect(state.presentation.symbolName == symbolName)
     }
 
     @Test func priorityOrderCoversEveryStateOnce() {
