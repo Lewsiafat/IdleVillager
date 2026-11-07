@@ -241,6 +241,9 @@ private struct SessionRowView: View {
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
     @State private var isHovered = false
+    /// 這一列是否已把手指游標 push 進 `NSCursor` 堆疊。`onHover` 事件可能漏發或重複，
+    /// 只依這個旗標在真正轉換時 push 或 pop，確保堆疊不失衡。
+    @State private var hasPushedCursor = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -271,26 +274,30 @@ private struct SessionRowView: View {
         .contentShape(Rectangle())
         .onTapGesture { focus() }
         .onHover { hovering in
-            guard hovering != isHovered else { return }
             isHovered = hovering
-            if hovering {
-                NSCursor.pointingHand.push()
-            } else {
-                NSCursor.pop()
-            }
+            setPointingHandCursor(hovering)
         }
         .onDisappear {
             // 列在 hover 中消失（例如 Popover 關閉或清單更新）時，把游標還原。
-            if isHovered {
-                isHovered = false
-                NSCursor.pop()
-            }
+            isHovered = false
+            setPointingHandCursor(false)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint("切回這個 Pane")
         .accessibilityAction { focus() }
+    }
+
+    /// 依需要 push 或 pop 手指游標；狀態沒有改變時不動作。
+    private func setPointingHandCursor(_ wantsPointingHand: Bool) {
+        guard wantsPointingHand != hasPushedCursor else { return }
+        if wantsPointingHand {
+            NSCursor.pointingHand.push()
+        } else {
+            NSCursor.pop()
+        }
+        hasPushedCursor = wantsPointingHand
     }
 
     /// 成功就關閉 Popover；失敗時原因由 Popover 頂部顯示，不關閉。

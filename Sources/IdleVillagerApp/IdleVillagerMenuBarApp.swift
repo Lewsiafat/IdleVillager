@@ -119,7 +119,7 @@ struct MenuBarLabel: View {
 /// 數量模式的選單列內容：最左一個 16 pt 小村民，後面依序是各類別的 SF Symbol 與數量，有隱藏狀態時尾端加小標記。
 ///
 /// 類別、數量與是否顯示完全取自 `MenuBarSummary.items`，這裡不自行計數。
-/// 與少量角色模式相同，`MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排先以 `ImageRenderer`
+/// 與少量角色模式相同，`MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排先以 `MenuBarImageRendering`
 /// 畫成 template 圖片，讓系統依選單列外觀自動套用明暗色。無障礙文字由外層 `MenuBarLabel` 提供。
 ///
 /// 低干擾提醒進行中時（`menuBarAlertEmphasis` 為 `.emphasized`），等核准類別加上與角色模式相同的圓角底色並改粗體。
@@ -134,11 +134,7 @@ struct MenuBarCountsLabel: View {
     }
 
     private var renderedImage: NSImage {
-        let renderer = ImageRenderer(content: MenuBarCountsRow(summary: summary, emphasis: emphasis))
-        renderer.scale = displayScale
-        let image = renderer.nsImage ?? NSImage()
-        image.isTemplate = true
-        return image
+        MenuBarImageRendering.image(of: MenuBarCountsRow(summary: summary, emphasis: emphasis), scale: displayScale)
     }
 }
 

@@ -7,7 +7,7 @@ import IdleVillagerCore
 /// 完全依 `MenuBarCharacterItem` 繪製，不自行推論狀態或排序。角色固定 16 pt（`CharacterDetail` 為只畫本體），
 /// 不播放動畫；狀態圖示（⚒ ✋ ✓ 💤 ! ?）與角色並列，因此狀態不只靠角色或顏色辨識。
 ///
-/// `MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排內容先以 `ImageRenderer` 畫成一張圖片。
+/// `MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排內容先以 `MenuBarImageRendering` 畫成一張圖片。
 /// 沒有使用品牌素材時以 template 圖片呈現，讓系統依選單列外觀自動套用明暗色；
 /// 有品牌素材時保留原色，避免改動品牌標誌。
 ///
@@ -29,11 +29,11 @@ struct MenuBarCharactersLabel: View {
     }
 
     private var renderedImage: NSImage {
-        let renderer = ImageRenderer(content: MenuBarCharactersRow(items: items, emphasis: emphasis))
-        renderer.scale = displayScale
-        let image = renderer.nsImage ?? NSImage()
-        image.isTemplate = !usesBrandAsset
-        return image
+        MenuBarImageRendering.image(
+            of: MenuBarCharactersRow(items: items, emphasis: emphasis),
+            scale: displayScale,
+            isTemplate: !usesBrandAsset
+        )
     }
 
     private var usesBrandAsset: Bool {
