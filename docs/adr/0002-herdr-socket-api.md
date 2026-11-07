@@ -65,6 +65,8 @@ ID 為伺服器範圍內唯一且穩定（`w1`、`w1:t1`、`w1:p1`），關閉�
 
 Socket 路徑固定。伺服器停止時 socket 檔案消失或連線被拒；重啟後路徑不變，重新連線即可。`ping` 回傳的 `protocol` 可用來偵測不相容版本（目前 22）。
 
+實測 `herdr server stop` 會把 pane 裡正在跑的 Agent 一起結束；重啟後 Agent 是新的程序，`terminal_id` 全部換新，沒有任何 ID 延續。因此重連後 Adapter 對帳快照時，舊 Session 全部送 `sessionRemoved`、新 Session 全部送 `sessionAdded`，App 顯示的是一整批新的 Session，不會錯把舊狀態套到新 Agent 上。
+
 ## 決策
 
 1. 真實 Adapter 以 Unix domain socket 直接使用 newline-delimited JSON 協定，不透過 `herdr` CLI 子程序。
