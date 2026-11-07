@@ -54,10 +54,10 @@ struct CharacterMotionTests {
     @Test func workingBobIsASteadyLoop() {
         let parameters = CharacterLoop.workingBob.parameters
 
-        #expect(parameters.period == 1.2)
-        #expect(parameters.motionDuration == 1.2)
+        #expect(parameters.period == 1.6)
+        #expect(parameters.motionDuration == 1.6)
         #expect(parameters.offset == 0.03)
-        #expect(parameters.rotationDegrees == 4)
+        #expect(parameters.rotationDegrees == 3)
     }
 
     @Test func raisedHandSwayIsSparse() {
@@ -82,7 +82,7 @@ struct CharacterMotionTests {
 
         #expect(parameters.period == 6)
         #expect(parameters.motionDuration == 1.5)
-        #expect(parameters.offset == 0.2)
+        #expect(parameters.offset == 0.15)
         #expect(parameters.rotationDegrees == 0)
     }
 
