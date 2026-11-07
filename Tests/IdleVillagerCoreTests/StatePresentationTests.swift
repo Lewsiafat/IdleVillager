@@ -16,6 +16,18 @@ struct StatePresentationTests {
         #expect(state.shortText == shortText)
     }
 
+    @Test(arguments: [
+        (NormalizedState.working, "hammer.fill"),
+        (.needsApproval, "hand.raised.fill"),
+        (.idle, "zzz"),
+        (.done, "checkmark"),
+        (.error, "exclamationmark"),
+        (.unknown, "questionmark"),
+    ])
+    func symbolNameMapsEachStateToItsSFSymbol(state: NormalizedState, symbolName: String) {
+        #expect(state.symbolName == symbolName)
+    }
+
     @Test func priorityOrderCoversEveryStateOnce() {
         #expect(NormalizedState.priorityOrder == [.needsApproval, .error, .done, .working, .idle, .unknown])
         #expect(Set(NormalizedState.priorityOrder) == Set(NormalizedState.allCases))

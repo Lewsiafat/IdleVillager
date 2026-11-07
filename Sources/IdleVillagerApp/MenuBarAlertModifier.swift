@@ -4,8 +4,9 @@ import IdleVillagerCore
 /// 低干擾提醒的選單列強調：待核准數量增加且設定開啟時，選單列文字短暫加粗，
 /// 其中的 SF Symbol（例如斷線圖示）跳動一次；到期後恢復原樣。
 ///
-/// 少量角色模式的選單列是 `ImageRenderer` 畫出的圖片，加粗與跳動對它無效，
-/// 所以強調程度也透過 `menuBarAlertEmphasis` 環境值交給 `MenuBarCharactersLabel`，由它在產圖時畫出外框。
+/// 數量模式與少量角色模式的選單列都是 `ImageRenderer` 畫出的圖片，加粗與跳動對它們無效，
+/// 所以強調程度也透過 `menuBarAlertEmphasis` 環境值交給 `MenuBarCountsLabel` 與 `MenuBarCharactersLabel`，
+/// 由它們在產圖時以 `menuBarEmphasisBackground` 畫出同一種圓角底色。
 ///
 /// 何時強調完全由 `ApprovalAlertTracker` 決定，這裡只負責套用與到期還原。不閃爍、不循環、不使用音效或系統通知。
 struct MenuBarAlertModifier: ViewModifier {
@@ -51,7 +52,7 @@ private struct MenuBarAlertEmphasisKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    /// 目前選單列的提醒強調程度，由 `MenuBarAlertModifier` 設定；少量角色模式產圖時讀取。
+    /// 目前選單列的提醒強調程度，由 `MenuBarAlertModifier` 設定；數量模式與少量角色模式產圖時讀取。
     var menuBarAlertEmphasis: MenuBarAlertEmphasis {
         get { self[MenuBarAlertEmphasisKey.self] }
         set { self[MenuBarAlertEmphasisKey.self] = newValue }
@@ -62,5 +63,30 @@ extension View {
     /// 套用低干擾提醒（見 `MenuBarAlertModifier`）。
     func approvalAlert(needsApprovalCount: Int, settings: AppSettings) -> some View {
         modifier(MenuBarAlertModifier(needsApprovalCount: needsApprovalCount, settings: settings))
+    }
+}
+
+/// 選單列提醒強調的共用樣式：圓角底色填滿（primary 色、低透明度）。
+private struct MenuBarEmphasisBackground: ViewModifier {
+    let highlighted: Bool
+
+    /// 底色的不透明度；選單列圖片是 template，最終顏色由系統依明暗外觀決定。
+    static let fillOpacity: Double = 0.25
+
+    func body(content: Content) -> some View {
+        content
+            // 不論是否強調都固定保留內距，強調開始與結束時寬度不變，選單列不會跳動。
+            .padding(.horizontal, 2)
+            .background {
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(.primary.opacity(highlighted ? Self.fillOpacity : 0))
+            }
+    }
+}
+
+extension View {
+    /// 套用選單列提醒強調的圓角底色（見 `MenuBarEmphasisBackground`）；數量模式與少量角色模式共用。
+    func menuBarEmphasisBackground(_ highlighted: Bool) -> some View {
+        modifier(MenuBarEmphasisBackground(highlighted: highlighted))
     }
 }
