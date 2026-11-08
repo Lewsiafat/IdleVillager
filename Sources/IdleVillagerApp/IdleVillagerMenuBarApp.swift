@@ -116,7 +116,7 @@ struct MenuBarLabel: View {
     }
 }
 
-/// 數量模式的選單列內容：最左一個 16 pt 小村民，後面依序是各類別的 SF Symbol 與數量，有隱藏狀態時尾端加小標記。
+/// 數量模式的選單列內容：最左一個 16 pt IdleVillager 選單列標誌（`VillagerSymbolShape`），後面依序是各類別的 SF Symbol 與數量，有隱藏狀態時尾端加小標記。
 ///
 /// 類別、數量與是否顯示完全取自 `MenuBarSummary.items`，這裡不自行計數。
 /// 與少量角色模式相同，`MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排先以 `MenuBarImageRendering`
@@ -138,19 +138,19 @@ struct MenuBarCountsLabel: View {
     }
 }
 
-/// 實際排版的一排村民、狀態圖示與數量，只供 `ImageRenderer` 繪製。
+/// 實際排版的一排選單列標誌、狀態圖示與數量，只供 `ImageRenderer` 繪製。
 private struct MenuBarCountsRow: View {
     let summary: MenuBarSummary
     let emphasis: MenuBarAlertEmphasis
 
     var body: some View {
         HStack(spacing: 2) {
-            // 村民只是品牌識別，不代表任何 Session 的狀態；選用站姿的 Working 外觀，選單列不播動畫。
-            CharacterView(
-                state: .working,
-                size: MenuBarCharactersLabel.characterSize,
-                animationsEnabled: false
-            )
+            // IdleVillager 自有標誌（斗笠村民半身），只是產品識別，不代表任何 Session 的狀態。
+            // 以前這裡放 16 pt 的 Generic 村民，但 16 pt 只畫本體，看起來是一顆實心圓，容易被誤認為狀態標記（Issue #40）。
+            VillagerSymbolShape()
+                .fill(.primary)
+                .frame(width: IdleVillagerMark.menuBarSize, height: IdleVillagerMark.menuBarSize)
+                .padding(.trailing, IdleVillagerMark.menuBarTrailingGap)
             ForEach(summary.items.filter(\.isVisible), id: \.state) { item in
                 let highlighted = emphasis == .emphasized && item.state == .needsApproval
                 HStack(spacing: 2) {
