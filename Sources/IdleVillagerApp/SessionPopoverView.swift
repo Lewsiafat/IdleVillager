@@ -80,8 +80,10 @@ struct SessionPopoverView: View {
 
     private func header(_ model: SessionListModel) -> some View {
         HStack(spacing: 8) {
-            // 標題旁的小村民只是裝飾，固定靜態，不播動畫。
-            CharacterView(state: .working, size: 24, animationsEnabled: false)
+            // 標題旁的 IdleVillager 標誌（斗笠瞇眼臉）只是裝飾，固定靜態。
+            SleepyVillagerMarkShape()
+                .fill(.primary)
+                .frame(width: IdleVillagerMark.popoverSize, height: IdleVillagerMark.popoverSize)
                 .accessibilityHidden(true)
             Text(model.title)
                 .font(.headline)

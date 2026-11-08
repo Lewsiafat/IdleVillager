@@ -31,8 +31,8 @@
 - **Menu Bar Summary**：由 Store 的計數與連線狀態推導出的純值摘要模型（`MenuBarSummary`），再由 `MenuBarSummaryFormatter` 轉成選單列文字，例如 `⚒ 3  ✋ 2  💤 1`。文字不含任何 Session 名稱。
 - **摘要模式（Summary Mode）**：`normal`（顯示數量）、`disconnected`（斷線或重連中，只顯示斷線表示，不含任何數字）、`zeroAgents`（已連線但沒有 Agent Session，顯示「0 個 Agent」）。斷線模式的文字版為 `⚠ 斷線`；App 的選單列改用 `MenuBarSummaryFormatter.symbolName(for:)` 提供的 SF Symbol（`exclamationmark.triangle`）呈現斷線圖示，其他模式該值為 nil、顯示文字。
 - **隱藏狀態提示（Hidden States）**：Done、Error、Unknown 不在選單列預設數量中；任一大於 0 時摘要模型的 `hasHiddenStates` 為 true，選單列尾端加上小標記 `•`。開啟 Done 小計數後，Done 不再算作隱藏狀態，Error 與 Unknown 仍然算。
-- **選單列模式（Menu Bar Mode）**：使用者在設定中選擇的選單列呈現方式（`MenuBarMode`），分為數量模式（`counts`，預設，顯示數量模式小村民與各類別的 SF Symbol 和數量）與少量角色模式（`fewCharacters`）。
-- **數量模式小村民（Counts Mode Villager）**：數量模式選單列最左邊的一個 16 pt 靜態小村民（站姿、只畫本體、不播放動畫）。它只是 IdleVillager 的識別圖示，不代表任何 Session 的狀態；各類別的狀態仍由後面的 SF Symbol 與數量表達。
+- **選單列模式（Menu Bar Mode）**：使用者在設定中選擇的選單列呈現方式（`MenuBarMode`），分為數量模式（`counts`，預設，顯示選單列標誌與各類別的 SF Symbol 和數量）與少量角色模式（`fewCharacters`）。
+- **選單列標誌（Menu Bar Symbol）**：數量模式選單列最左邊的 16 pt IdleVillager 自有標誌（斗笠村民半身，`VillagerSymbolShape`）。它只是產品識別，不代表任何 Session 的狀態；各類別的狀態仍由後面的 SF Symbol 與數量表達。Popover 標題列使用同造型、細節較多的 24 pt「斗笠瞇眼臉」（`SleepyVillagerMarkShape`）。素材與來源登記見 `docs/07-brand-identity.md`。以前這個位置放的是 16 pt 的 Generic 小村民（舊稱「數量模式小村民」），但看起來是一顆實心圓，因此在 Issue #40 換掉。
 - **少量角色模式（Few Characters Mode）**：Session 很少時，選單列改為每個 Session 顯示一個靜態小村民角色（16 pt，只畫本體，不播放動畫），後面接狀態圖示（⚒ ✋ ✓ 💤 ! ?），讓狀態不只靠角色或顏色辨識。角色依清單優先度排列，不含任何 Session 名稱。是否真的顯示角色由純值模型 `MenuBarCharacterMode` 決定，輸出 `MenuBarDisplay`：`.counts` 或 `.characters([MenuBarCharacterItem])`。
 - **少量角色門檻（Few Characters Threshold）**：決定少量角色模式何時改回數量模式的 Session 數量（`fewCharactersThreshold`，預設 4，可注入）。Session 數量至少 1 個、**低於**門檻（嚴格小於，預設即最多 3 個）且已連線時才顯示角色；達到或超過門檻、沒有 Session、斷線或重連中時自動回到數量模式。
 - **Done 小計數（Done Count）**：設定開啟後，選單列在 Idle 之後多顯示 `✓ n`，例如 `⚒ 3  ✋ 2  💤 1  ✓ 2`；數量為 0 時與其他類別一樣依「固定顯示 0 數量」決定是否顯示。
