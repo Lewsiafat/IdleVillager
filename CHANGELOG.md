@@ -6,6 +6,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-09
+
 ### Added
 - Popover 底部顯示目前的 App 版號（例如 `v0.1.0`）；以 `swift run` 執行的開發版顯示「開發版」。
 
@@ -30,5 +32,6 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
 
-[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.1.0

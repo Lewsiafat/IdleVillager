@@ -4,7 +4,7 @@
 # plugin 本身不畫任何 UI，App 交給 macOS 的 open 指令啟動，不是 Herdr 的子程序。
 id = "idlevillager"
 name = "IdleVillager"
-version = "0.1.0"
+version = "0.1.1"
 min_herdr_version = "0.9.5"
 description = "Menu bar app showing which Herdr agents are working, waiting for approval, or idle"
 platforms = ["macos"]
