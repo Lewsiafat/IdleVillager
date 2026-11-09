@@ -6,6 +6,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-10
+
 ### Added
 - 介面支援英文。App 跟隨 macOS 的偏好語言：第一個支援的語言是繁體中文時顯示繁體中文（與先前相同），是英文時顯示英文；兩者都不是時以英文顯示。選單列、Popover 清單、狀態名稱、設定視窗、錯誤與連線訊息都已翻譯。目前沒有 App 內的語言切換，可在 macOS「系統設定」的「語言與地區」為 IdleVillager 個別指定語言。
 - 選單列展開的清單可改用半透明背景，透出模糊的桌面與後方視窗。在設定視窗的「外觀」區段開啟，預設關閉（維持原本的不透明外觀），切換後立即生效，重開 App 後保留。系統開啟「降低透明度」時一律維持不透明。
@@ -39,6 +41,7 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
 
-[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.1.0
