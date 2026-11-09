@@ -6,7 +6,7 @@ English | [繁體中文](README.zh-TW.md)
 > See [`CHANGELOG.md`](CHANGELOG.md) for versions and changes.  
 > This repo does not ship any third-party brand logos.
 
-<!-- hero screenshot (#46): menu bar counts + expanded list -->
+<p align="center"><img src="docs/images/hero.png" alt="IdleVillager menu bar counts and the expanded agent list" width="410"></p>
 
 ## Project identity
 
@@ -55,7 +55,7 @@ An update rebuilds the app, then automatically quits the old version and opens t
 
 If you can't see the icon in the menu bar after installing, the menu bar is usually out of space: MacBooks with a notch silently hide menu bar icons that don't fit. Hold ⌘ and drag other rarely used icons out of the menu bar to make room. For distribution research and details, see [`docs/08-distribution.md`](docs/08-distribution.md) (in Traditional Chinese).
 
-<!-- demo GIF (#46): click a session to jump back to Herdr -->
+<p align="center"><img src="docs/images/demo.gif" alt="Click a session in the list to jump back to it in Herdr" width="410"></p>
 
 ## First release scope
 
