@@ -6,8 +6,9 @@ public struct StatePresentation: Hashable, Sendable {
     /// 狀態圖示：⚒ ✋ ✓ 💤 ! ?。
     public let icon: String
     /// 狀態短文字（GLOSSARY 的用字），清單、選單列與無障礙文字共用，例如「幹活中」「訊號不足」。
+    /// 依目前的介面語言（`L10n.current`）取自字串表，英文介面為 Working、Unknown 等。
     public let shortText: String
-    /// 正規化狀態的英文名稱（GLOSSARY 的標題），例如「Needs Approval」，用於衝突描述。
+    /// 正規化狀態的英文名稱（GLOSSARY 的標題），例如「Needs Approval」，用於衝突描述。不隨介面語言改變。
     public let englishName: String
     /// 選單列數量模式使用的 SF Symbol 名稱。與 `icon` 同義，只是改用系統圖示，
     /// 讓選單列的狀態圖示大小一致、能跟著選單列的明暗色變化。
@@ -31,17 +32,17 @@ extension NormalizedState {
     public var presentation: StatePresentation {
         switch self {
         case .working:
-            StatePresentation(icon: "⚒", shortText: "幹活中", englishName: "Working", symbolName: "hammer.fill", tint: .green)
+            StatePresentation(icon: "⚒", shortText: L10n.text(.stateWorking), englishName: "Working", symbolName: "hammer.fill", tint: .green)
         case .needsApproval:
-            StatePresentation(icon: "✋", shortText: "等核准", englishName: "Needs Approval", symbolName: "hand.raised.fill", tint: .orange)
+            StatePresentation(icon: "✋", shortText: L10n.text(.stateNeedsApproval), englishName: "Needs Approval", symbolName: "hand.raised.fill", tint: .orange)
         case .done:
-            StatePresentation(icon: "✓", shortText: "完成", englishName: "Done", symbolName: "checkmark", tint: .yellow)
+            StatePresentation(icon: "✓", shortText: L10n.text(.stateDone), englishName: "Done", symbolName: "checkmark", tint: .yellow)
         case .idle:
-            StatePresentation(icon: "💤", shortText: "閒置", englishName: "Idle", symbolName: "zzz", tint: .gray)
+            StatePresentation(icon: "💤", shortText: L10n.text(.stateIdle), englishName: "Idle", symbolName: "zzz", tint: .gray)
         case .error:
-            StatePresentation(icon: "!", shortText: "錯誤", englishName: "Error", symbolName: "exclamationmark", tint: .red)
+            StatePresentation(icon: "!", shortText: L10n.text(.stateError), englishName: "Error", symbolName: "exclamationmark", tint: .red)
         case .unknown:
-            StatePresentation(icon: "?", shortText: "訊號不足", englishName: "Unknown", symbolName: "questionmark", tint: .gray)
+            StatePresentation(icon: "?", shortText: L10n.text(.stateUnknown), englishName: "Unknown", symbolName: "questionmark", tint: .gray)
         }
     }
 

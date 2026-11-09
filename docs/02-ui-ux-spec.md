@@ -71,6 +71,15 @@ IdleVillager            6 Agents
 需要使用者操作 > 發生錯誤 > 已完成未查看 > 工作中 > 閒置 > 未知（未知須額外標示，不可隱藏）。
 
 
+## 6. 介面語言
+
+- 支援繁體中文與英文，本文件的範例文字都是繁體中文介面的用字；英文介面的對應用字見 `Sources/IdleVillagerCore/Resources/en.lproj/Localizable.strings`。
+- 介面語言跟隨 macOS 的偏好語言清單：依序取第一個支援的語言（英文或繁體中文）；清單中都不是這兩種語言時用英文。繁體中文包含 `zh-Hant`，以及沒寫文字代碼但地區是台灣、香港或澳門的中文。簡體中文目前不支援，會顯示英文。
+- 不提供 App 內的語言切換。使用者若想讓 IdleVillager 使用與系統不同的語言，可以在「系統設定 → 一般 → 語言與地區 → App」為它個別指定（需要以 `make-app.sh` 打包的 `.app`，因為這個清單依 `Info.plist` 的 `CFBundleLocalizations` 列出語言；尚未實測）。
+- 語言在 App 啟動時決定一次，切換系統語言後需要重新開啟 App。
+- 不翻譯的文字：產品名稱 `IdleVillager`、Agent 名稱（Claude Code、Codex、Gemini CLI）、Herdr、來源提供的 Workspace／Tab／Pane 名稱與等待原因，以及衝突描述裡的正規化狀態英文名稱（例如「訊號衝突：Working、Idle」）。
+- 英文介面的數量文字會區分單複數，例如 `1 Agent`、`2 Agents`、`1 minute ago`。
+
 ## 品牌顯示要求
 
 - Popover 標題固定為 **IdleVillager**；Herdr 只出現在來源/連線資訊。

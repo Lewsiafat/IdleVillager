@@ -16,11 +16,11 @@ public struct FocusFailure: Hashable, Sendable {
     /// 使用者可讀的失敗原因。
     public var message: String {
         switch reason {
-        case .targetNotFound: "目標已不存在"
-        case .unsupported: "來源不支援聚焦到這個 Pane"
-        case .disconnected: "來源已斷線"
-        case .windowNotBroughtToFront: "未能把來源視窗帶到前景"
-        case .demoMode: "示範模式無法切回"
+        case .targetNotFound: L10n.text(.focusTargetNotFound)
+        case .unsupported: L10n.text(.focusUnsupported)
+        case .disconnected: L10n.text(.focusDisconnected)
+        case .windowNotBroughtToFront: L10n.text(.focusWindowNotBroughtToFront)
+        case .demoMode: L10n.text(.focusDemoMode)
         }
     }
 
@@ -31,7 +31,7 @@ public struct FocusFailure: Hashable, Sendable {
     public var bannerText: String {
         switch reason {
         case .demoMode: message
-        default: "無法切回：\(message)"
+        default: L10n.text(.focusBanner, ["reason": message])
         }
     }
 }

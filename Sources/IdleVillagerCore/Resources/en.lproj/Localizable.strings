@@ -1,0 +1,101 @@
+/* IdleVillager UI strings, English (also the fallback language). Keys are listed in L10nKey.swift. */
+/* {name} placeholders are replaced at runtime; keep them identical to zh-Hant.lproj. */
+
+/* Normalized state short texts */
+"state.working" = "Working";
+"state.needsApproval" = "Needs Approval";
+"state.done" = "Done";
+"state.idle" = "Idle";
+"state.error" = "Error";
+"state.unknown" = "Unknown";
+
+/* Separators */
+"separator.list" = ", ";
+"separator.clause" = ", ";
+
+/* Session list and stale data */
+"row.staleSuffix" = " (stale)";
+"row.conflictNote" = "Signal conflict: {states}";
+"count.agents.one" = "{count} Agent";
+"count.agents.other" = "{count} Agents";
+"empty.connected" = "No Agent sessions";
+"empty.disconnected" = "Not connected. No session data to show.";
+
+/* Connection */
+"connection.connected" = "Connected";
+"connection.notConnected" = "Not connected";
+"connection.disconnected" = "Disconnected";
+"connection.reconnecting" = "Reconnecting";
+
+/* Footer */
+"footer.source" = "Source: {source} · {connection}";
+"footer.neverUpdated" = "Not updated yet";
+"footer.lastUpdated" = "Last updated: {time}";
+"footer.staleNotice" = "Data may be out of date. The list above is from the last successful update.";
+"footer.quit" = "Quit IdleVillager";
+"footer.settings" = "Settings…";
+"time.justNow" = "just now";
+"time.secondsAgo.one" = "{count} second ago";
+"time.secondsAgo.other" = "{count} seconds ago";
+"time.minutesAgo.one" = "{count} minute ago";
+"time.minutesAgo.other" = "{count} minutes ago";
+"time.hoursAgo.one" = "{count} hour ago";
+"time.hoursAgo.other" = "{count} hours ago";
+"time.daysAgo.one" = "{count} day ago";
+"time.daysAgo.other" = "{count} days ago";
+
+/* Menu bar */
+"menuBar.disconnected" = "⚠ Disconnected";
+"menuBar.zeroAgents" = "0 Agents";
+"menuBar.accessibility.noAgents" = "No Agents";
+"menuBar.accessibility.stateCount" = "{state}: {count}";
+"menuBar.accessibility.hiddenErrorUnknown" = "Also Agents with errors or unknown status";
+"menuBar.accessibility.hiddenDoneErrorUnknown" = "Also Agents that are done, have errors, or have unknown status";
+"menuBar.accessibility.character" = "{kind}: {state}";
+
+/* Popover */
+"popover.dismissFailure" = "Dismiss";
+"popover.tab.accessibility.one" = "{name}, {count} Agent";
+"popover.tab.accessibility.other" = "{name}, {count} Agents";
+"popover.tab.collapsed" = "Collapsed";
+"popover.tab.expanded" = "Expanded";
+"popover.tab.toggleHint" = "Expands or collapses the tab";
+"popover.row.focusHint" = "Switches to this pane";
+
+/* Focus failures */
+"focus.targetNotFound" = "The target no longer exists";
+"focus.unsupported" = "The source can't focus this pane";
+"focus.disconnected" = "The source is disconnected";
+"focus.windowNotBroughtToFront" = "Couldn't bring the source window to the front";
+"focus.demoMode" = "Can't switch back in demo mode";
+"focus.banner" = "Couldn't switch back: {reason}";
+
+/* Source and version */
+"source.demo" = "Demo data";
+"version.development" = "Development build";
+"version.accessibility.development" = "IdleVillager development build";
+"version.accessibility.release" = "IdleVillager version {version}";
+
+/* Demo data */
+"demo.tab.api" = "API Development";
+"demo.tab.tests" = "Tests";
+"demo.tab.ui" = "UI Development";
+"demo.waitingReason" = "Waiting for approval to run a command";
+
+/* Settings */
+"settings.menuBar.section" = "Menu Bar";
+"settings.menuBar.mode" = "Menu bar mode";
+"settings.menuBar.mode.counts" = "Counts";
+"settings.menuBar.mode.fewCharacters" = "Few characters";
+"settings.menuBar.alwaysShowZeroCounts" = "Always show categories with a count of 0";
+"settings.menuBar.showDoneCount" = "Show Done count";
+"settings.preview.header" = "Menu Bar Preview";
+"settings.preview.footer" = "Shown with demo data. Actual content depends on the Agents Herdr reports.";
+"settings.behavior.section" = "List & Alerts";
+"settings.behavior.sortRule" = "Sort order";
+"settings.behavior.sortRule.priority" = "By priority";
+"settings.behavior.sortRule.workspaceName" = "By Workspace name";
+"settings.behavior.sortRule.fixed" = "Fixed order";
+"settings.behavior.animations" = "Play character animations";
+"settings.behavior.lowDistractionAlerts" = "Subtle alerts";
+"settings.behavior.lowDistractionAlerts.detail" = "When more Agents need approval, the menu bar briefly highlights them with a rounded background, then returns to normal. No sounds or system notifications.";

@@ -57,7 +57,8 @@ public enum StateNormalizer {
         if states.contains(.needsApproval) { states.remove(.idle) }
         guard states.count > 1 else { return NormalizationResult(state: states.first ?? .unknown) }
         let names = NormalizedState.allCases.filter(states.contains).map(\.presentation.englishName)
-        return NormalizationResult(state: .unknown, conflictNote: "訊號衝突：" + names.joined(separator: "、"))
+        let list = names.joined(separator: L10n.text(.listSeparator))
+        return NormalizationResult(state: .unknown, conflictNote: L10n.text(.conflictNote, ["states": list]))
     }
 
     /// rawState 內多個訊號的分隔字元。

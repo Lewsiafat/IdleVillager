@@ -9,13 +9,13 @@ struct SettingsView: View {
     var body: some View {
         Form {
             MenuBarPreviewSection(settings: settings)
-            Section("選單列") {
-                Picker("選單列模式", selection: $settings.menuBarMode) {
-                    Text("數量模式").tag(MenuBarMode.counts)
-                    Text("少量角色模式").tag(MenuBarMode.fewCharacters)
+            Section(L10n.text(.settingsMenuBarSection)) {
+                Picker(L10n.text(.settingsMenuBarMode), selection: $settings.menuBarMode) {
+                    Text(L10n.text(.settingsModeCounts)).tag(MenuBarMode.counts)
+                    Text(L10n.text(.settingsModeFewCharacters)).tag(MenuBarMode.fewCharacters)
                 }
-                Toggle("固定顯示數量為 0 的類別", isOn: $settings.alwaysShowZeroCounts)
-                Toggle("顯示完成小計數", isOn: $settings.showDoneCount)
+                Toggle(L10n.text(.settingsAlwaysShowZeroCounts), isOn: $settings.alwaysShowZeroCounts)
+                Toggle(L10n.text(.settingsShowDoneCount), isOn: $settings.showDoneCount)
             }
             BehaviorSettingsSection(settings: settings)
         }
@@ -45,9 +45,9 @@ private struct MenuBarPreviewSection: View {
             }
             .padding(.vertical, 4)
         } header: {
-            Text("選單列預覽")
+            Text(L10n.text(.settingsPreviewHeader))
         } footer: {
-            Text("以示範資料呈現，實際內容依 Herdr 回報的 Agent 而定。")
+            Text(L10n.text(.settingsPreviewFooter))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -59,7 +59,7 @@ struct SettingsEntryButton: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        Button("設定…") {
+        Button(L10n.text(.footerSettings)) {
             NSApplication.shared.activate()
             openSettings()
         }

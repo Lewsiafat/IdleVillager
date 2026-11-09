@@ -9,6 +9,10 @@ struct IdleVillagerMenuBarApp: App {
     @State private var settings = AppSettings(store: UserDefaultsSettingsStore())
 
     init() {
+        // 先決定介面語言，之後建立的模型與畫面文字（含示範資料與來源名稱）才會用對語言。
+        // 只跟隨 macOS 的偏好語言：第一個支援的語言（英文或繁體中文）優先，都不支援時用英文。
+        L10n.useSystemLanguage()
+
         // 以 Swift Package 執行檔啟動時沒有 Info.plist 的 LSUIElement，改用程式設定成只出現在選單列。
         NSApplication.shared.setActivationPolicy(.accessory)
 
@@ -102,16 +106,18 @@ struct MenuBarLabel: View {
     private func accessibilityText(for summary: MenuBarSummary) -> String {
         switch summary.mode {
         case .disconnected:
-            return snapshot.connectionState == .reconnecting ? "重新連線中" : "未連線"
+            return L10n.text(snapshot.connectionState == .reconnecting ? .connectionReconnecting : .connectionNotConnected)
         case .zeroAgents:
-            return "沒有 Agent"
+            return L10n.text(.menuBarNoAgentsAccessibility)
         case .normal:
-            var parts = summary.items.filter(\.isVisible).map { "\($0.state.shortText) \($0.count) 個" }
+            var parts = summary.items.filter(\.isVisible).map {
+                L10n.text(.menuBarStateCountAccessibility, ["state": $0.state.shortText, "count": String($0.count)])
+            }
             if summary.hasHiddenStates {
                 let showsDone = summary.items.contains { $0.state == .done }
-                parts.append(showsDone ? "另有錯誤或訊號不足的 Agent" : "另有完成、錯誤或訊號不足的 Agent")
+                parts.append(L10n.text(showsDone ? .menuBarHiddenWithDoneShownAccessibility : .menuBarHiddenAccessibility))
             }
-            return parts.joined(separator: "，")
+            return parts.joined(separator: L10n.text(.clauseSeparator))
         }
     }
 }

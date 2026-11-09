@@ -20,7 +20,7 @@
 - **Error**：已確認任務失敗或異常。
 - **Unknown**：訊號不足、無法對應或訊號互相衝突時的狀態，必須明確顯示而不是被隱藏。
 
-- **狀態呈現對照表（State Presentation）**：每種正規化狀態的呈現事實（`StatePresentation`）：圖示（⚒ ✋ ✓ 💤 ! ?）、狀態短文字（幹活中、等核准、完成、閒置、錯誤、訊號不足，同時作為無障礙文字）、英文名稱（Working 等，用於衝突描述）、選單列數量模式用的 SF Symbol 名稱（`hammer.fill`、`hand.raised.fill`、`checkmark`、`zzz`、`exclamationmark`、`questionmark`）與狀態色調。只定義在 `NormalizedState.presentation` 一處，Popover 清單、選單列摘要、少量角色模式與無障礙文字都從這裡讀取，捷徑為 `NormalizedState.icon`、`NormalizedState.shortText`、`NormalizedState.symbolName` 與 `NormalizedState.tint`。
+- **狀態呈現對照表（State Presentation）**：每種正規化狀態的呈現事實（`StatePresentation`）：圖示（⚒ ✋ ✓ 💤 ! ?）、狀態短文字（繁體中文介面為幹活中、等核准、完成、閒置、錯誤、訊號不足；英文介面為 Working、Needs Approval、Done、Idle、Error、Unknown；同時作為無障礙文字）、英文名稱（Working 等，不隨介面語言改變，用於衝突描述）、選單列數量模式用的 SF Symbol 名稱（`hammer.fill`、`hand.raised.fill`、`checkmark`、`zzz`、`exclamationmark`、`questionmark`）與狀態色調。只定義在 `NormalizedState.presentation` 一處，Popover 清單、選單列摘要、少量角色模式與無障礙文字都從這裡讀取，捷徑為 `NormalizedState.icon`、`NormalizedState.shortText`、`NormalizedState.symbolName` 與 `NormalizedState.tint`。
 - **狀態色調（StateTint）**：狀態在畫面上的輔助色語意（`StateTint`），例如 Popover 狀態膠囊的底色：Working 綠、Needs Approval 橘、Done 黃、Error 紅、Idle 與 Unknown 灰。對照只定義在狀態呈現對照表（`StatePresentation.tint`）。顏色只是輔助，狀態一定同時有圖示與文字；高對比模式下畫面改用主要前景色或實線框，不依賴色調。
 - **等待原因（Waiting Reason）**：來源提供、說明 Agent Session 為何在等的可選極短 metadata（`AgentSession.waitingReason`），例如「等待執行指令核准」。可由快照或 `sessionStateChanged` 事件的 `waitingReason` 帶入；狀態變更事件會連同等待原因一起取代，事件沒帶時清空，避免舊原因留在新狀態上。只能是簡短狀態說明，不得包含對話內容、Prompt、指令全文、密碼或 API Key；來源給不出符合條件的短說明時為 nil。空白字串視為沒有。顯示在列的補充說明，但衝突描述優先。
 - **State Normalizer**：把 Adapter 給的 `rawState` 與 `stateSource` 轉成上述六種狀態之一的純函式（`StateNormalizer`）。只有明確事件能得到非 Unknown 的狀態；`rawState` 的對應表只定義在 `StateNormalizer.rawStateTable` 一處。
@@ -74,6 +74,7 @@
 
 ## 其他
 
+- **介面語言（UI Language）**：畫面文字使用的語言（`AppLanguage`），目前有英文（`en`）與繁體中文（`zh-Hant`）。App 啟動時由 `L10n.useSystemLanguage()` 依 macOS 偏好語言清單取第一個支援的語言，都不支援時用英文；不提供 App 內切換。所有給使用者看的文字都經 `L10n` 從 Core 資源 bundle 的 `<語言>.lproj/Localizable.strings` 取得，key 列在 `L10nKey`。呼叫 `useSystemLanguage()` 之前（例如自動化測試）一律是繁體中文；測試要用英文時以 `L10n.withStrings(_:_:)` 只在目前的 task 內切換。
 - **isStale**：表示某個 Session 的資料已經不新鮮的旗標（`StoreSession.isStale`）。以該 Session 的 `updatedAt` 與上次成功讀取快照的時間兩者較晚者為基準，超過過期門檻（`staleThreshold`，預設 60 秒，可注入）時為 true；Adapter 回報斷線或重連中時，所有 Session 一律為 true。Store 在處理每個事件時重算，沒有事件時由 App 定期呼叫 `refreshStaleness()`。過期的列在狀態短文字後加上「（過期）」，例如「幹活中（過期）」，並帶 `isStale` 欄位。
 - **重連同步（Reconnect Resync）**：Adapter 送出 `connectionChanged(.connected)` 時，Session Store 重新讀取一次完整快照，以補上斷線期間錯過的變更；讀取成功才轉為 connected 並更新最後成功更新時間，失敗則維持 disconnected、保留上次清單且全部過期。
 - **事件訂閱優先、輪詢備援**：Adapter 取得變更的方式。來源支援事件訂閱時優先訂閱，否則由 Adapter 內部輪詢並合成同樣的事件；選擇與輪詢間隔都封裝在 Adapter 內，Store 以上不感知差異。

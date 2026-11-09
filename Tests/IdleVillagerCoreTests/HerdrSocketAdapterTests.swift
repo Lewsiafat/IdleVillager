@@ -3,8 +3,13 @@ import Testing
 @testable import IdleVillagerCore
 
 /// 真實 Herdr socket 不進自動化測試；這裡以固定 JSON 樣本測試解碼、對應、對帳與訂閱集合等純邏輯。
+///
+/// Fixtures are read from the source tree instead of `Bundle.module`: IdleVillagerCore now has resources too, so with
+/// `@testable import` its internal `Bundle.module` is visible here and could make the test target's own accessor ambiguous.
 private func fixtureData(_ name: String) throws -> Data {
-    let url = try #require(Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures"))
+    let url = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appendingPathComponent("Fixtures/\(name).json")
     return try Data(contentsOf: url)
 }
 
