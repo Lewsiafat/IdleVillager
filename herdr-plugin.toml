@@ -9,9 +9,10 @@ min_herdr_version = "0.9.5"
 description = "Menu bar app showing which Herdr agents are working, waiting for approval, or idle"
 platforms = ["macos"]
 
-# 只有 `herdr plugin install` 會執行；`herdr plugin link` 不會。產物在 plugin 根目錄的 dist/。
+# 只有 `herdr plugin install` 與 `update` 會執行；`herdr plugin link` 不會。產物在 plugin 根目錄的 dist/。
+# 每次安裝都是全新 checkout，建置完就刪掉 .build 快取（約 186 MB）。
 [[build]]
-command = ["sh", "distribution/make-app.sh"]
+command = ["env", "IDLEVILLAGER_CLEAN_BUILD=1", "sh", "distribution/make-app.sh"]
 
 # Herdr server 啟動且 API socket 就緒後執行一次。launch.sh 啟動 App 後立即結束。
 [[startup]]
