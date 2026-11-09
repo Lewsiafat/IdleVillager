@@ -23,8 +23,8 @@ public enum AdapterEvent: Hashable, Sendable {
 public enum SourceDescription {
     /// 只有在使用者環境實際驗證過 Herdr API 的 Adapter 才回報這個名稱。
     public static let herdr = "Herdr"
-    /// 記憶體內的示範資料，不代表已連上 Herdr。
-    public static let demo = "示範資料"
+    /// 記憶體內的示範資料，不代表已連上 Herdr。依介面語言顯示，例如「示範資料」或「Demo data」。
+    public static var demo: String { L10n.text(.sourceDemo) }
 }
 
 /// Focus 失敗的明確原因。

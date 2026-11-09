@@ -102,8 +102,9 @@ manifest 是 repo 根目錄的 `herdr-plugin.toml`，啟動腳本是 `distributi
 `distribution/make-app.sh` 會從 SwiftPM 的 release 建置產物組出 `IdleVillager.app`：
 
 - `Contents/MacOS/IdleVillager`：執行檔。
-- `Contents/Info.plist`：`CFBundleIdentifier` 設為 `io.github.lewsiafat.IdleVillager`，加上 `LSUIElement = true`，讓 App 不出現在 Dock。程式裡原本就有 `setActivationPolicy(.accessory)`，兩者並存沒有問題。
-- `Contents/Resources/IdleVillager_IdleVillagerApp.bundle`：SwiftPM 的資源 bundle。
+- `Contents/Info.plist`：`CFBundleIdentifier` 設為 `io.github.lewsiafat.IdleVillager`，加上 `LSUIElement = true`，讓 App 不出現在 Dock。程式裡原本就有 `setActivationPolicy(.accessory)`，兩者並存沒有問題。另外宣告 `CFBundleDevelopmentRegion = en` 與 `CFBundleLocalizations = [en, zh-Hant]`，讓系統元件（例如設定視窗標題）與介面使用同一種語言，也讓「語言與地區」設定能為 IdleVillager 個別指定語言。
+- `Contents/Resources/IdleVillager_IdleVillagerApp.bundle`：App 的資源 bundle（品牌素材）。
+- `Contents/Resources/IdleVillager_IdleVillagerCore.bundle`：Core 的資源 bundle，內含介面字串表 `en.lproj/Localizable.strings` 與 `zh-Hant.lproj/Localizable.strings`。少了它介面會顯示字串 key，所以 `make-app.sh` 在缺檔時直接失敗。
 - 最後用 `codesign --force --deep -s -` 做 ad-hoc 簽章。
 
 **已實測**：資源 bundle 放在 `.app` 根目錄時，codesign 會失敗並顯示 `unsealed contents present in the bundle root`，連 ad-hoc 簽章都過不了。改放 `Contents/Resources` 後，`codesign --verify --deep --strict` 就能通過。
@@ -139,6 +140,13 @@ macOS 15（Sequoia）起，Control 點按或右鍵選「打開」已經無法繞
 - **已實測**：`ResourceBundleLocatorTests` 的 6 個測試通過，涵蓋查找順序、`Contents/Resources` 優先、找不到時回傳 nil、同名一般檔案不算 bundle，以及 `swift run` 時的去重複。完整測試共 236 個，全部通過。
 - **已實測**：資源 bundle 放在 `Contents/Resources` 的 `.app` 通過 `codesign --verify --deep --strict`。
 - **尚未實測**：在 `.app` 裡打開 Popover 畫角色。這台電腦沒有開放「輔助使用」權限給終端機，沒辦法用 AppleScript 自動點開 Popover，需要手動確認。
+
+## 介面字串的資源格式
+
+介面字串放在 `Sources/IdleVillagerCore/Resources/<語言>.lproj/Localizable.strings`，不使用 Xcode 15 起的 String Catalog（`.xcstrings`）。理由如下：
+
+- **推論**：SwiftPM 建置 `.xcstrings` 時要呼叫 Xcode 內附的 `xcstringstool` 把它編譯成 `.strings`。Herdr plugin 的使用者可能只裝了 Command Line Tools，沒有這個工具時建置會失敗；`.strings` 只會被原樣複製，不需要額外工具。尚未在只有 Command Line Tools 的電腦上實測 `.xcstrings`。
+- 字串表由 `L10n`（`Sources/IdleVillagerCore/Localization.swift`）自行讀取：先用 `ResourceBundleLocator` 找到 Core 的資源 bundle，再依選定的語言讀取對應的 `.lproj` 檔。這樣不依賴 `Bundle.module`（理由同上一節），也不依賴 Foundation 依主程式 `Info.plist` 挑選語言的規則，所以 `swift run`、`swift test` 與打包後的 `.app` 都用同一套邏輯。
 
 ## 後續任務
 

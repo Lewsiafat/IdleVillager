@@ -1,0 +1,101 @@
+/* IdleVillager UI strings, Traditional Chinese. Keys are listed in L10nKey.swift. */
+/* {name} placeholders are replaced at runtime; keep them identical to en.lproj. */
+
+/* Normalized state short texts */
+"state.working" = "幹活中";
+"state.needsApproval" = "等核准";
+"state.done" = "完成";
+"state.idle" = "閒置";
+"state.error" = "錯誤";
+"state.unknown" = "訊號不足";
+
+/* Separators */
+"separator.list" = "、";
+"separator.clause" = "，";
+
+/* Session list and stale data */
+"row.staleSuffix" = "（過期）";
+"row.conflictNote" = "訊號衝突：{states}";
+"count.agents.one" = "{count} 個 Agent";
+"count.agents.other" = "{count} 個 Agent";
+"empty.connected" = "目前沒有 Agent Session";
+"empty.disconnected" = "未連線，沒有可顯示的 Session 資料";
+
+/* Connection */
+"connection.connected" = "已連線";
+"connection.notConnected" = "未連線";
+"connection.disconnected" = "已斷線";
+"connection.reconnecting" = "重新連線中";
+
+/* Footer */
+"footer.source" = "來源：{source} · {connection}";
+"footer.neverUpdated" = "尚未成功更新";
+"footer.lastUpdated" = "最後更新：{time}";
+"footer.staleNotice" = "資料可能已過期，以上清單為最後一次成功更新的內容。";
+"footer.quit" = "結束 IdleVillager";
+"footer.settings" = "設定…";
+"time.justNow" = "剛剛";
+"time.secondsAgo.one" = "{count} 秒前";
+"time.secondsAgo.other" = "{count} 秒前";
+"time.minutesAgo.one" = "{count} 分鐘前";
+"time.minutesAgo.other" = "{count} 分鐘前";
+"time.hoursAgo.one" = "{count} 小時前";
+"time.hoursAgo.other" = "{count} 小時前";
+"time.daysAgo.one" = "{count} 天前";
+"time.daysAgo.other" = "{count} 天前";
+
+/* Menu bar */
+"menuBar.disconnected" = "⚠ 斷線";
+"menuBar.zeroAgents" = "0 個 Agent";
+"menuBar.accessibility.noAgents" = "沒有 Agent";
+"menuBar.accessibility.stateCount" = "{state} {count} 個";
+"menuBar.accessibility.hiddenErrorUnknown" = "另有錯誤或訊號不足的 Agent";
+"menuBar.accessibility.hiddenDoneErrorUnknown" = "另有完成、錯誤或訊號不足的 Agent";
+"menuBar.accessibility.character" = "{kind} {state}";
+
+/* Popover */
+"popover.dismissFailure" = "關閉提示";
+"popover.tab.accessibility.one" = "{name}，{count} 個 Agent";
+"popover.tab.accessibility.other" = "{name}，{count} 個 Agent";
+"popover.tab.collapsed" = "已收合";
+"popover.tab.expanded" = "已展開";
+"popover.tab.toggleHint" = "切換收合";
+"popover.row.focusHint" = "切回這個 Pane";
+
+/* Focus failures */
+"focus.targetNotFound" = "目標已不存在";
+"focus.unsupported" = "來源不支援聚焦到這個 Pane";
+"focus.disconnected" = "來源已斷線";
+"focus.windowNotBroughtToFront" = "未能把來源視窗帶到前景";
+"focus.demoMode" = "示範模式無法切回";
+"focus.banner" = "無法切回：{reason}";
+
+/* Source and version */
+"source.demo" = "示範資料";
+"version.development" = "開發版";
+"version.accessibility.development" = "IdleVillager 開發版";
+"version.accessibility.release" = "IdleVillager 版本 {version}";
+
+/* Demo data */
+"demo.tab.api" = "API 開發";
+"demo.tab.tests" = "測試";
+"demo.tab.ui" = "UI 開發";
+"demo.waitingReason" = "等待執行指令核准";
+
+/* Settings */
+"settings.menuBar.section" = "選單列";
+"settings.menuBar.mode" = "選單列模式";
+"settings.menuBar.mode.counts" = "數量模式";
+"settings.menuBar.mode.fewCharacters" = "少量角色模式";
+"settings.menuBar.alwaysShowZeroCounts" = "固定顯示數量為 0 的類別";
+"settings.menuBar.showDoneCount" = "顯示完成小計數";
+"settings.preview.header" = "選單列預覽";
+"settings.preview.footer" = "以示範資料呈現，實際內容依 Herdr 回報的 Agent 而定。";
+"settings.behavior.section" = "清單與提醒";
+"settings.behavior.sortRule" = "排序規則";
+"settings.behavior.sortRule.priority" = "依優先度";
+"settings.behavior.sortRule.workspaceName" = "依 Workspace 名稱";
+"settings.behavior.sortRule.fixed" = "固定順序";
+"settings.behavior.animations" = "播放角色動畫";
+"settings.behavior.lowDistractionAlerts" = "低干擾提醒";
+"settings.behavior.lowDistractionAlerts.detail" = "待核准數量增加時，選單列短暫以圓角底色強調待核准項目後恢復；不使用音效或系統通知。";
