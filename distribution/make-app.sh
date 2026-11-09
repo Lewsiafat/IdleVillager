@@ -4,9 +4,15 @@
 set -eu
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT=${1:-"$ROOT/dist"}
-VERSION=${IDLEVILLAGER_VERSION:-0.2.0}
 
 cd "$ROOT"
+# 版號唯一來源是 herdr-plugin.toml 的 version；可用 IDLEVILLAGER_VERSION 覆寫（例如測試用）。
+MANIFEST_VERSION=$(sed -n 's/^version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' herdr-plugin.toml | head -1)
+VERSION=${IDLEVILLAGER_VERSION:-$MANIFEST_VERSION}
+if [ -z "$VERSION" ]; then
+    echo "Cannot read version from herdr-plugin.toml" >&2
+    exit 1
+fi
 swift build -c release --product IdleVillagerApp
 BIN=$(swift build -c release --show-bin-path)
 
