@@ -61,6 +61,18 @@ manifest 是 repo 根目錄的 `herdr-plugin.toml`，啟動腳本是 `distributi
 - **已實測**：建置出來的 App 沒有 `com.apple.quarantine` 標記，只有 `com.apple.provenance`。後者是 macOS 13 起記錄「檔案由哪個程式產生」的標記，不會觸發 Gatekeeper。`spctl` 對這個 App 的評估仍是 `rejected`，但因為沒有 quarantine 標記，Gatekeeper 不會在開啟時檢查。
 - **已實測**：`launch` action 從安裝目錄成功啟動 App，沒有出現任何 Gatekeeper 對話框。
 - **已實測**：`herdr plugin log list` 只記錄 action 與 startup 的執行，不包含 `[[build]]` 的輸出。
+- **已實測**：安裝後的 App 在沒有建置路徑的情況下（`.build` 已刪除，等同別人的電腦）正常顯示選單列與 Popover，使用者確認沒有閃退。這也驗證了 `ResourceBundleLocator` 的修正。
+
+**更新與移除**
+
+- **已實測**：`herdr plugin update idlevillager --yes` 會 checkout 到一個新的安裝目錄，再從頭執行 `[[build]]`，耗時約 81 秒，不會沿用舊目錄的建置快取。舊的安裝目錄不會立刻刪除。
+- **已實測，已修正**：更新後舊版 App 仍在舊目錄執行。`open` 只會沿用同一路徑的實例，所以原本的 `launch.sh` 會再開一個新版，選單列出現兩個 IdleVillager。現在 `launch.sh` 會先結束其他路徑的 `IdleVillager.app`，同一路徑已在執行就不動作；三種情況（只有舊版、新舊都在、都沒有）都實測過。`swift run` 啟動的開發版不是 `.app`，不受影響。
+- **已實測，已修正**：每份安裝目錄約 189 MB，其中 186 MB 是 `.build`。因為每次安裝都是全新 checkout，`[[build]]` 改為設定 `IDLEVILLAGER_CLEAN_BUILD=1`，建置完就刪掉 `.build`，每份安裝目錄降到約 3 MB。
+- **已實測**：`herdr plugin uninstall idlevillager` 之後，Herdr 不再列出這個 plugin，但所有安裝目錄與空的 config 目錄都留在原處，正在執行的 App 也不會被結束。這和官方 CLI 文件「保留檔案讓執行中的 plugin 能結束」的說法一致；檔案何時清除沒有文件說明。README 的移除說明已提醒使用者自己結束 App。
+
+**已知限制：瀏海遮住選單列圖示**
+
+數量模式的選單列圖示寬約 96 pt。在有瀏海的 MacBook 上，選單列圖示太多時，macOS 會把最新加入的圖示藏起來，而且不會有任何提示。實測時開發版與 plugin 版同時執行，plugin 版的圖示就被藏起來了：系統回報它的位置在 x=849，`onScreen=false`。結束開發版後，plugin 版就出現了。README 應該提醒使用者：裝好後看不到圖示時，先移除其他選單列圖示騰出空間。
 
 ### 尚未驗證的部分
 
@@ -123,13 +135,16 @@ macOS 15（Sequoia）起，Control 點按或右鍵選「打開」已經無法繞
 
 ## 後續任務
 
-1. 手動打開打包後 App 的 Popover，確認畫角色時不會閃退。
-2. 把 `herdr-plugin.toml` 移到 repo 根目錄，推上 GitHub，實際測試 `herdr plugin install`：`[[build]]` 能否成功、建置產物有沒有 quarantine 標記、需要多久。
-3. 下次重開 Herdr server 時，確認 `[[startup]]` 會自動開啟 App。
+已完成：打包後 App 的 Popover 實測、把 manifest 移到 repo 根目錄、實測 `herdr plugin install`、README 安裝說明。
+
+1. merge 進 main 後，在 GitHub repo 加上 `herdr-plugin` topic，上架 Herdr plugin 列表。
+2. 下次重開 Herdr server 時，確認 `[[startup]]` 會自動開啟 App，並觀察舊安裝目錄會不會被清掉。
+3. 在沒有 Xcode Command Line Tools 的電腦上測安裝，確認錯誤訊息看得懂；必要時讓 `make-app.sh` 先檢查 `swift` 是否存在，並印出安裝指引。
 4. 在 macOS 15 以上實測未簽章 zip 的放行步驟。
 5. 加上 GitHub Actions：打 tag 時自動執行 `make-app.sh`，並把 zip 上傳到 Releases。
-6. 補上 App 圖示（`.icns`）與 README 的安裝說明。
-7. 之後若申請 Developer 帳號，再加上 Developer ID 簽章、notarization、DMG 與 Homebrew Cask。
+6. 補上 App 圖示（`.icns`）。
+7. 考慮縮短數量模式的選單列寬度，降低在瀏海機型上被藏起來的機會。
+8. 之後若申請 Developer 帳號，再加上 Developer ID 簽章、notarization、DMG 與 Homebrew Cask。
 
 ## 參考來源
 

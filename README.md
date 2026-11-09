@@ -47,7 +47,9 @@ herdr plugin update idlevillager
 herdr plugin uninstall idlevillager
 ```
 
-移除 plugin 不會關閉正在執行的 App，請從選單列的「結束 IdleVillager」關閉。發佈方式的研究與細節見 `docs/08-distribution.md`。
+移除 plugin 不會關閉正在執行的 App，請從選單列的「結束 IdleVillager」關閉。Herdr 移除 plugin 時會保留安裝檔案，位置在 `~/.config/herdr/plugins/github-installations/`。
+
+裝好後在選單列看不到圖示時，通常是空間不夠：有瀏海的 MacBook 會把放不下的選單列圖示藏起來，而且不會有提示。請按住 ⌘ 把其他不常用的圖示拖出選單列，騰出空間。發佈方式的研究與細節見 `docs/08-distribution.md`。
 
 ## 首版範圍
 
