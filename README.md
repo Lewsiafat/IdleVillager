@@ -1,109 +1,122 @@
+English | [繁體中文](README.zh-TW.md)
+
 # IdleVillager
 
-> macOS 選單列中的 AI Agent「小村民」狀態監控工具。  
-> 版本與變更紀錄見 [`CHANGELOG.md`](CHANGELOG.md)。  
-> 本 repo 不附帶第三方品牌標誌。
+> **Your AI Agents at a Glance** — a macOS menu bar monitor for your AI agent "villagers".  
+> See [`CHANGELOG.md`](CHANGELOG.md) for versions and changes.  
+> This repo does not ship any third-party brand logos.
 
-## 專案識別
+<!-- hero screenshot (#46): menu bar counts + expanded list -->
 
-- **產品名稱**：IdleVillager
-- **英文副標**：Your AI Agents at a Glance
-- **中文定位**：AI 村民工作狀態列
-- **命名靈感**：《世紀帝國》的閒置村民提示；不隸屬或代表遊戲官方。
-- **首個資料來源**：Herdr（僅整合目標，不是產品名稱）。
+## Project identity
 
-## 一句話定位
+- **Product name**: IdleVillager
+- **English tagline**: Your AI Agents at a Glance
+- **Chinese positioning**: AI 村民工作狀態列 (a status bar for your AI villagers)
+- **Name inspiration**: the idle villager alert in *Age of Empires*; not affiliated with or endorsed by the game's publishers.
+- **First data source**: Herdr (an integration target only, not the product name).
 
-**看數量 → 找到 Workspace / Tab / Pane → 一鍵切回原 Session。**
+## In one sentence
 
-選單列平時用極簡狀態數量呈現正在工作、等待處理及閒置的 Agent；展開後用品牌辨識的小角色及輕動畫呈現細節。工具以 Herdr 為主要整合目標。
+**See the counts → find the Workspace / Tab / Pane → jump back to the original session in one click.**
 
-## 安裝
+Day to day, the menu bar shows minimal counts of agents that are working, waiting for you, or idle. Expand it to see the details, with small brand-recognizable characters and light animation. Herdr is the primary integration target.
 
-IdleVillager 以 Herdr plugin 的形式發佈。安裝時會在你的電腦上由原始碼建置 App，所以不需要處理 macOS 對未簽章 App 的阻擋。
+## Install
 
-前置需求：
+IdleVillager is distributed as a Herdr plugin. Installing it builds the app from source on your own Mac, so you don't have to deal with macOS blocking unsigned apps.
 
-- macOS 14 以上。
-- Herdr 0.9.5 以上，並且正在使用 Herdr TUI。
-- Xcode Command Line Tools（提供 Swift 6 編譯器）。還沒安裝的話，執行 `xcode-select --install`。
+Requirements:
 
-安裝：
+- macOS 14 or later.
+- Herdr 0.9.5 or later, with the Herdr TUI in use.
+- Xcode Command Line Tools (provides the Swift 6 compiler). If you don't have them yet, run `xcode-select --install`.
+
+Install:
 
 ```sh
 herdr plugin install Lewsiafat/IdleVillager
 ```
 
-Herdr 會先顯示 plugin 的內容並請你確認，接著建置 App，大約需要一到兩分鐘。建置完成後 IdleVillager 會自動開啟，之後每次 Herdr server 啟動也會自動開啟。關掉之後想再開啟，可以執行：
+Herdr first shows you what the plugin contains and asks for confirmation, then builds the app, which takes about one to two minutes. When the build finishes, IdleVillager opens automatically, and it also opens every time the Herdr server starts. To reopen it after you've quit it, run:
 
 ```sh
 herdr plugin action invoke launch --plugin idlevillager
 ```
 
-更新與移除：
+Update and uninstall:
 
 ```sh
 herdr plugin update idlevillager
 herdr plugin uninstall idlevillager
 ```
 
-更新會重新建置，完成後自動結束舊版、開啟新版；即使你更新前已經關掉 App，更新完也會再開啟。移除 plugin 不會關閉正在執行的 App，請從選單列的「結束 IdleVillager」關閉。Herdr 移除 plugin 時會保留安裝檔案，位置在 `~/.config/herdr/plugins/github-installations/`。
+An update rebuilds the app, then automatically quits the old version and opens the new one; it reopens the app even if you had quit it before updating. Uninstalling the plugin does not quit the running app; quit it with **結束 IdleVillager** (Quit IdleVillager) in the menu bar popover. Herdr keeps the installed files when it removes a plugin, under `~/.config/herdr/plugins/github-installations/`.
 
-裝好後在選單列看不到圖示時，通常是空間不夠：有瀏海的 MacBook 會把放不下的選單列圖示藏起來，而且不會有提示。請按住 ⌘ 把其他不常用的圖示拖出選單列，騰出空間。發佈方式的研究與細節見 `docs/08-distribution.md`。
+If you can't see the icon in the menu bar after installing, the menu bar is usually out of space: MacBooks with a notch silently hide menu bar icons that don't fit. Hold ⌘ and drag other rarely used icons out of the menu bar to make room. For distribution research and details, see [`docs/08-distribution.md`](docs/08-distribution.md) (in Traditional Chinese).
 
-## 首版範圍
+<!-- demo GIF (#46): click a session to jump back to Herdr -->
 
-- 選單列：各狀態數量與簡單視覺符號
-- 清單：Workspace / Tab / Pane / Agent 階層
-- 操作：點選 Session 後定位並切回 Herdr
-- 角色：Claude、Codex、Gemini、Generic 的辨識與動畫資源規範
-- 狀態：Working、Needs Approval、Done、Idle、Unknown / Error
+## First release scope
 
-## 文件導覽
+- Menu bar: a count for each state, with simple visual symbols
+- List: Workspace / Tab / Pane / Agent hierarchy
+- Action: click a session to locate it and switch back to Herdr
+- Characters: recognition and animation asset specs for Claude, Codex, Gemini, and Generic
+- States: Working, Needs Approval, Done, Idle, Unknown / Error
+- UI language: currently Traditional Chinese
 
-- `docs/01-product-requirements.md`：產品需求、範圍與驗收條件
-- `docs/02-ui-ux-spec.md`：選單列和展開清單視覺與操作
-- `docs/03-agent-states.md`：狀態定義及計數規則
-- `docs/04-assets-animation.md`：圖片缺口、資源規格與動畫動作
-- `docs/05-herdr-integration.md`：整合邊界、待驗證 API、切換流程
-- `docs/06-architecture-decisions.md`：技術方向、限制與決策
-- `docs/07-brand-identity.md`：IdleVillager 品牌、圖示、名稱與視覺語彙
-- `docs/08-distribution.md`：發佈方式研究（Herdr plugin、GitHub Releases、Homebrew Cask）
-- `docs/09-release-process.md`：版號規則、CHANGELOG 寫法與發版步驟
-- `CHANGELOG.md`：各版本的變更紀錄
-- `planning/roadmap.md`：P0/P1/P2 開發階段與完成條件
-- `planning/open-questions.md`：尚未確認的環境與技術問題
+## Documentation
 
-## 目錄結構
+The documents below are written in Traditional Chinese.
+
+- [`docs/01-product-requirements.md`](docs/01-product-requirements.md): product requirements, scope, and acceptance criteria
+- [`docs/02-ui-ux-spec.md`](docs/02-ui-ux-spec.md): visuals and interaction for the menu bar and the expanded list
+- [`docs/03-agent-states.md`](docs/03-agent-states.md): state definitions and counting rules
+- [`docs/04-assets-animation.md`](docs/04-assets-animation.md): missing artwork, asset specs, and animation actions
+- [`docs/05-herdr-integration.md`](docs/05-herdr-integration.md): integration boundaries, APIs still to be verified, and the switching flow
+- [`docs/06-architecture-decisions.md`](docs/06-architecture-decisions.md): technical direction, constraints, and decisions
+- [`docs/07-brand-identity.md`](docs/07-brand-identity.md): IdleVillager brand, icons, naming, and visual vocabulary
+- [`docs/08-distribution.md`](docs/08-distribution.md): distribution research (Herdr plugin, GitHub Releases, Homebrew Cask)
+- [`docs/09-release-process.md`](docs/09-release-process.md): versioning rules, how to write the CHANGELOG, and release steps
+- [`CHANGELOG.md`](CHANGELOG.md): changes in each version
+- [`planning/roadmap.md`](planning/roadmap.md): P0/P1/P2 development phases and completion criteria
+- [`planning/open-questions.md`](planning/open-questions.md): environment and technical questions not yet settled
+
+## Repository layout
 
 ```text
-IdleVillager-starter/
-├── README.md
-├── docs/
-│   ├── 01-product-requirements.md
-│   ├── 02-ui-ux-spec.md
-│   ├── 03-agent-states.md
-│   ├── 04-assets-animation.md
-│   ├── 05-herdr-integration.md
-│   ├── 06-architecture-decisions.md
-│   ├── 07-brand-identity.md
-│   ├── 08-distribution.md
-│   └── 09-release-process.md
+IdleVillager/
+├── README.md                  # English README
+├── README.zh-TW.md            # Traditional Chinese README
+├── CHANGELOG.md
+├── CLAUDE.md                  # project instructions for development agents
+├── GLOSSARY.md                # project glossary
+├── Package.swift              # Swift Package definition
+├── herdr-plugin.toml          # Herdr plugin manifest and the single source of the version number
+├── Sources/
+│   ├── IdleVillagerCore/      # core logic such as state normalization and the Herdr adapter
+│   └── IdleVillagerApp/       # SwiftUI menu bar app
+│       └── Resources/Brands/  # where third-party brand logos go (only a README by default)
+├── Tests/
+│   └── IdleVillagerCoreTests/
 ├── assets/
-│   ├── brands/             # 預留官方品牌向量圖
-│   ├── props/              # 預留手腳、工具、枕頭等道具
-│   └── effects/            # 預留 Zzz、驚嘆號、星光等特效
-├── design/
-│   └── references/         # 預留 UI 靈感與參考素材
-└── planning/
-    ├── roadmap.md
-    └── open-questions.md
+│   └── brand/                 # IdleVillager's own menu bar and popover marks (SVG)
+├── distribution/              # make-app.sh, launch.sh, release-notes.sh
+├── docs/
+│   ├── 01-product-requirements.md … 09-release-process.md
+│   ├── adr/                   # architecture decision records
+│   └── agents/                # workflow notes for development agents
+├── planning/
+│   ├── roadmap.md
+│   └── open-questions.md
+└── specs/                     # per-feature specs and walkthroughs
 ```
 
-## 給開發 Agent 的起始指示
+## Notes for development agents
 
-閱讀所有 `docs/` 與 `planning/` 文件，先驗證目標 Herdr 版本、可取得的 Session 狀態與 Focus/定位機制，再建置核心監控。不得以 CPU / 停止輸出等單一訊號假定 Agent 已閒置；不得聲稱 API 已驗證，除非在使用者環境完成測試。
+Before you start, read `CLAUDE.md` and the documents in `docs/` and `planning/`. Run the tests with `swift test` and the development build with `swift run IdleVillagerApp`. Never assume an agent is idle based on a single signal such as low CPU or stopped output, and never claim an API is verified unless it has been tested in the user's environment.
 
-## 素材與商標
+## Assets and trademarks
 
-官方標誌由後續實作者依來源、版本及使用條款取得。此資料包**沒有附帶第三方品牌素材**；`assets/` 為空資料夾，供實作時填入。
+This repo **does not ship any third-party brand assets**. `assets/brand/` contains only IdleVillager's own marks. Official Claude, Codex, and Gemini logos must be obtained separately, following each one's source, version, and terms of use; see [`Sources/IdleVillagerApp/Resources/Brands/README.md`](Sources/IdleVillagerApp/Resources/Brands/README.md) (in Traditional Chinese) for where to put them and what format they need. Without a logo, the character automatically falls back to the Generic villager.

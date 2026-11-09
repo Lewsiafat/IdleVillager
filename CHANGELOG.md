@@ -6,6 +6,9 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+### Changed
+- README 預設改為英文，繁體中文版移到 `README.zh-TW.md`；兩份檔案頂端都有語言切換連結。
+
 ## [0.1.1] - 2026-11-09
 
 ### Added
