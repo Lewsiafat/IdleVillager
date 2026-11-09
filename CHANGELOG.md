@@ -6,6 +6,10 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-09
+
+第一個可安裝的版本。
+
 ### Added
 - 選單列狀態摘要：以數量顯示幹活中、等待核准、閒置等狀態，狀態圖示使用 SF Symbol，並可切換為「少量角色」模式。
 - Popover 清單：依 Workspace、Tab、Pane 分組列出所有 Agent Session，點一下就切回對應的 Herdr Pane，並把終端機 App 帶到前景。
@@ -22,3 +26,6 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - Popover 最後一列被裁切：清單高度改依實際內容計算。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
+
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.1.0
