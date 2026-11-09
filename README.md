@@ -34,7 +34,7 @@ IdleVillager 以 Herdr plugin 的形式發佈。安裝時會在你的電腦上�
 herdr plugin install Lewsiafat/IdleVillager
 ```
 
-Herdr 會先顯示 plugin 的內容並請你確認，接著建置 App，第一次大約需要一到兩分鐘。之後每次 Herdr server 啟動，都會自動開啟 IdleVillager。想立刻開啟，可以執行：
+Herdr 會先顯示 plugin 的內容並請你確認，接著建置 App，大約需要一到兩分鐘。建置完成後 IdleVillager 會自動開啟，之後每次 Herdr server 啟動也會自動開啟。關掉之後想再開啟，可以執行：
 
 ```sh
 herdr plugin action invoke launch --plugin idlevillager
@@ -47,7 +47,7 @@ herdr plugin update idlevillager
 herdr plugin uninstall idlevillager
 ```
 
-移除 plugin 不會關閉正在執行的 App，請從選單列的「結束 IdleVillager」關閉。Herdr 移除 plugin 時會保留安裝檔案，位置在 `~/.config/herdr/plugins/github-installations/`。
+更新會重新建置，完成後自動結束舊版、開啟新版；即使你更新前已經關掉 App，更新完也會再開啟。移除 plugin 不會關閉正在執行的 App，請從選單列的「結束 IdleVillager」關閉。Herdr 移除 plugin 時會保留安裝檔案，位置在 `~/.config/herdr/plugins/github-installations/`。
 
 裝好後在選單列看不到圖示時，通常是空間不夠：有瀏海的 MacBook 會把放不下的選單列圖示藏起來，而且不會有提示。請按住 ⌘ 把其他不常用的圖示拖出選單列，騰出空間。發佈方式的研究與細節見 `docs/08-distribution.md`。
 

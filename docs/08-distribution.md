@@ -70,6 +70,13 @@ manifest 是 repo 根目錄的 `herdr-plugin.toml`，啟動腳本是 `distributi
 - **已實測，已修正**：每份安裝目錄約 189 MB，其中 186 MB 是 `.build`。因為每次安裝都是全新 checkout，`[[build]]` 改為設定 `IDLEVILLAGER_CLEAN_BUILD=1`，建置完就刪掉 `.build`，每份安裝目錄降到約 3 MB。
 - **已實測**：`herdr plugin uninstall idlevillager` 之後，Herdr 不再列出這個 plugin，但所有安裝目錄與空的 config 目錄都留在原處，正在執行的 App 也不會被結束。這和官方 CLI 文件「保留檔案讓執行中的 plugin 能結束」的說法一致；檔案何時清除沒有文件說明。README 的移除說明已提醒使用者自己結束 App。
 
+**安裝後自動開啟**
+
+- **已實測**：安裝完成後 App 不會出現。`[[startup]]` 只在 Herdr server 啟動時執行，install 與 update 都不會觸發，使用者裝完會以為沒裝好。
+- **已修正，本機模擬**：`herdr-plugin.toml` 加上第二個 `[[build]]`，執行 `sh -c "sh distribution/launch.sh || true"`，建置完立即開啟 App；update 時 `launch.sh` 會結束舊版、開啟新版。在複製的 repo 中、不設定 `HERDR_PLUGIN_ROOT`，依序執行兩個 build 指令，確認 App 成功啟動、舊路徑的實例被結束、`.build` 被刪除；找不到 App 時第二步仍回傳 0，不會讓安裝失敗。
+- **尚未實測**：透過 Herdr 實際執行（多個 `[[build]]` 是否依序執行、工作目錄是否為 plugin 根目錄）。merge 並推上 main 後，以 `herdr plugin update idlevillager` 驗證。
+- 副作用：使用者刻意關掉 App 後執行 update，App 會被重新開啟。README 已說明。
+
 **已知限制：瀏海遮住選單列圖示**
 
 數量模式的選單列圖示寬約 96 pt。在有瀏海的 MacBook 上，選單列圖示太多時，macOS 會把最新加入的圖示藏起來，而且不會有任何提示。實測時開發版與 plugin 版同時執行，plugin 版的圖示就被藏起來了：系統回報它的位置在 x=849，`onScreen=false`。結束開發版後，plugin 版就出現了。README 應該提醒使用者：裝好後看不到圖示時，先移除其他選單列圖示騰出空間。
