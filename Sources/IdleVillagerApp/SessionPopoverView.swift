@@ -48,6 +48,8 @@ struct SessionPopoverView: View {
             footer(model.footer)
         }
         .frame(width: Self.width)
+        // Translucent or opaque background, decided in Core from the setting and system Reduce Transparency.
+        .popoverBackground(settings: settings)
         // 重新打開 Popover 時不再顯示上一次的失敗訊息。
         .onDisappear { focusCoordinator.clearFailure() }
     }
@@ -173,6 +175,7 @@ struct SessionPopoverView: View {
 private struct WorkspaceSection: View {
     let workspace: SessionListModel.WorkspaceGroup
     let viewModel: SessionPopoverViewModel
+    @Environment(\.popoverBackgroundStyle) private var backgroundStyle
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -194,7 +197,17 @@ private struct WorkspaceSection: View {
         }
         .padding(.vertical, 4)
         // 每個 Workspace 一個圓角底色區塊，Tab 與 Session 列都在區塊內。
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background {
+            let shape = RoundedRectangle(cornerRadius: 8, style: .continuous)
+            ZStack {
+                // On the translucent background, a partly opaque window-background backing keeps rows,
+                // characters and state capsules readable over a busy desktop, in light and dark mode.
+                if let backing = backgroundStyle.workspaceCardBackingOpacity {
+                    shape.fill(.background.opacity(backing))
+                }
+                shape.fill(.quaternary)
+            }
+        }
     }
 }
 

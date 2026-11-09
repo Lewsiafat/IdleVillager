@@ -39,9 +39,10 @@
 
 ## 設定
 
-- **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`），以及選單列模式（`menuBarMode`）。模型只透過 `MenuBarSummary(snapshot:settings:)`、`SessionListModel(snapshot:settings:)` 與 `ApprovalAlertTracker.observe(needsApprovalCount:settings:now:)` 接收設定值，不自行讀取偏好儲存。
+- **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`）、半透明背景（`translucentPopoverBackground`），以及選單列模式（`menuBarMode`）。模型只透過 `MenuBarSummary(snapshot:settings:)`、`SessionListModel(snapshot:settings:)` 與 `ApprovalAlertTracker.observe(needsApprovalCount:settings:now:)` 接收設定值，不自行讀取偏好儲存。
 - **動畫開關（Animations Enabled）**：關閉後 Popover 角色只畫靜態姿勢，`CharacterMotion` 的循環與過渡一律為 nil，效果等同系統 Reduce Motion。預設開。
 - **低干擾提醒（Low-Distraction Alert）**：設定開啟時，待核准（Needs Approval）數量比上一次觀察**增加**，選單列短暫強調約 3 秒後恢復，不閃爍、不循環、不使用音效或系統通知。兩種模式的選單列都是預先畫好的圖片，因此都改為在產圖時以同一種圓角底色（`menuBarEmphasisBackground`）強調待核准項目：數量模式強調等核准那一格並把圖示與數量改粗體；少量角色模式強調待核准角色並把 ✋ 改粗體（`MenuBarCharacterItem.isHighlighted(during:)`）。底色只是額外提示，狀態仍由圖示表達。強調程度為 `MenuBarAlertEmphasis`（`none` 或 `emphasized`），由 `ApprovalAlertTracker.emphasis(at:)` 依同一個計時決定。數量減少或不變不觸發；設定關閉時永不觸發並清除進行中的強調；第一次觀察只記下基準數量。判斷由純值 `ApprovalAlertTracker` 負責（輸出 `alertUntil`，時間可注入），App 的 `MenuBarAlertModifier` 只負責套用與到期還原。預設開。
+- **半透明背景（Translucent Popover Background）**：設定開啟後，Popover 清單改用半透明背景，透出模糊的桌面與後方視窗（`translucentPopoverBackground`，預設關，也就是維持原本的不透明外觀）。實際採用哪一種背景由純值 `PopoverBackgroundStyle.resolve(translucentEnabled:reduceTransparency:)` 決定，結果是 `opaque` 或 `translucent`：只有使用者開啟、而且系統「降低透明度」（Reduce Transparency）沒有開啟時才是 `translucent`。畫面透過 `AppSettings.popoverBackgroundStyle(reduceTransparency:)` 取得結果，不自行判斷。目前只有開關，沒有透明度滑桿；日後若加入滑桿，透明度會成為同一個判斷函式的另一個輸入。
 - **選單列預覽（Menu Bar Preview）**：設定視窗頂部依目前設定即時畫出的選單列 label，直接重用選單列的畫面，不另寫排版或狀態判定。資料是固定的示範快照（`StoreSnapshot.menuBarPreview(for:)`，取自 `SessionSnapshot.demo`，經與 Session Store 相同的正規化與計數）：數量模式使用完整示範；少量角色模式只取低於少量角色門檻的前幾個 Session，讓預覽確實畫出角色而不是退回數量模式。預覽不做過期判定，也不代表使用者實際的 Agent。
 - **Settings Store**：設定的鍵值儲存介面（`SettingsStore`）。正式環境用 `UserDefaultsSettingsStore`（macOS 標準使用者偏好），測試用 `InMemorySettingsStore`；設定改動即時寫入，`AppSettings` 初始化時從中讀回，因此重啟後保留。
 

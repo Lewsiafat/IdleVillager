@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import IdleVillagerCore
 
-/// 設定視窗內容，使用 macOS 標準的分組表單樣式。分組順序為選單列預覽、選單列、清單與提醒。
+/// 設定視窗內容，使用 macOS 標準的分組表單樣式。分組順序為選單列預覽、選單列、清單與提醒、外觀。
 struct SettingsView: View {
     @Bindable var settings: AppSettings
 
@@ -18,6 +18,7 @@ struct SettingsView: View {
                 Toggle(L10n.text(.settingsShowDoneCount), isOn: $settings.showDoneCount)
             }
             BehaviorSettingsSection(settings: settings)
+            AppearanceSettingsSection(settings: settings)
         }
         .formStyle(.grouped)
         .frame(width: 420)

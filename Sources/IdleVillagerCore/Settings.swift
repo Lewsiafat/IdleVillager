@@ -56,6 +56,7 @@ public final class AppSettings {
         public static let sortRule = "sortRule"
         public static let animationsEnabled = "animationsEnabled"
         public static let lowDistractionAlerts = "lowDistractionAlerts"
+        public static let translucentPopoverBackground = "translucentPopoverBackground"
     }
 
     /// 值為 0 的類別也固定顯示在選單列。預設關。
@@ -88,6 +89,12 @@ public final class AppSettings {
         didSet { store.set(lowDistractionAlerts, forKey: Key.lowDistractionAlerts) }
     }
 
+    /// Translucent popover background. Off by default (keeps the opaque look). The style actually drawn also
+    /// depends on the system "Reduce transparency" setting; see `popoverBackgroundStyle(reduceTransparency:)`.
+    public var translucentPopoverBackground: Bool {
+        didSet { store.set(translucentPopoverBackground, forKey: Key.translucentPopoverBackground) }
+    }
+
     @ObservationIgnored private let store: any SettingsStore
 
     /// 從 `store` 讀回已儲存的設定；沒有儲存過或值無法辨識的欄位使用預設值。
@@ -99,6 +106,7 @@ public final class AppSettings {
         sortRule = store.string(forKey: Key.sortRule).flatMap(SortRule.init(rawValue:)) ?? .priority
         animationsEnabled = store.bool(forKey: Key.animationsEnabled) ?? true
         lowDistractionAlerts = store.bool(forKey: Key.lowDistractionAlerts) ?? true
+        translucentPopoverBackground = store.bool(forKey: Key.translucentPopoverBackground) ?? false
     }
 }
 
