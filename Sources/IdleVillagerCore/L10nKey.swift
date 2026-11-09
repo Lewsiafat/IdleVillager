@@ -103,4 +103,8 @@ public enum L10nKey: String, CaseIterable, Hashable, Sendable {
     case settingsAnimations = "settings.behavior.animations"
     case settingsLowDistractionAlerts = "settings.behavior.lowDistractionAlerts"
     case settingsLowDistractionAlertsDetail = "settings.behavior.lowDistractionAlerts.detail"
+    case settingsAppearanceSection = "settings.appearance.section"
+    case settingsTranslucentPopover = "settings.appearance.translucentPopover"
+    case settingsTranslucentPopoverDetail = "settings.appearance.translucentPopover.detail"
+    case settingsTranslucentPopoverReduced = "settings.appearance.translucentPopover.reducedBySystem"
 }
