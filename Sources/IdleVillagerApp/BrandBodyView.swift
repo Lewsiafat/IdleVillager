@@ -23,11 +23,19 @@ enum BrandAssetCatalog {
         return image
     }
 
+    /// SwiftPM 為 `IdleVillagerApp` target 產生的 resource bundle 名稱，格式為 `<package>_<target>.bundle`。
+    private static let resourceBundleName = "IdleVillager_IdleVillagerApp.bundle"
+
+    /// 不用 `Bundle.module`：它在打包後的 `.app` 裡找不到資源時會 `fatalError`（見 `ResourceBundleLocator`）。
+    /// 找不到 resource bundle 時為 nil，所有角色改畫 Generic 本體。
+    private static let resourceBundle = ResourceBundleLocator.bundle(named: resourceBundleName)
+
     /// `.process` 規則可能把子目錄攤平，因此先找 bundle 根目錄，再找 `Brands` 子目錄。
     private static func url(named name: String) -> URL? {
+        guard let resourceBundle else { return nil }
         for ext in extensions {
             for subdirectory in [nil, "Brands"] {
-                if let url = Bundle.module.url(forResource: name, withExtension: ext, subdirectory: subdirectory) {
+                if let url = resourceBundle.url(forResource: name, withExtension: ext, subdirectory: subdirectory) {
                     return url
                 }
             }

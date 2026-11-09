@@ -35,6 +35,7 @@
 - `docs/05-herdr-integration.md`：整合邊界、待驗證 API、切換流程
 - `docs/06-architecture-decisions.md`：技術方向、限制與決策
 - `docs/07-brand-identity.md`：IdleVillager 品牌、圖示、名稱與視覺語彙
+- `docs/08-distribution.md`：發佈方式研究（Herdr plugin、GitHub Releases、Homebrew Cask）
 - `planning/roadmap.md`：P0/P1/P2 開發階段與完成條件
 - `planning/open-questions.md`：尚未確認的環境與技術問題
 
@@ -50,7 +51,8 @@ IdleVillager-starter/
 │   ├── 04-assets-animation.md
 │   ├── 05-herdr-integration.md
 │   ├── 06-architecture-decisions.md
-│   └── 07-brand-identity.md
+│   ├── 07-brand-identity.md
+│   └── 08-distribution.md
 ├── assets/
 │   ├── brands/             # 預留官方品牌向量圖
 │   ├── props/              # 預留手腳、工具、枕頭等道具

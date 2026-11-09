@@ -30,3 +30,14 @@
 - [ ] 優化不同 macOS 外觀與字體大小。
 
 完成條件：不增加操作負擔，維持簡潔。
+
+## 發佈
+
+研究結論見 `docs/08-distribution.md`。先做不需要 Apple Developer 帳號的方式。
+
+- [x] 修正資源 bundle 查找，讓打包後的 `.app` 在別人的電腦上不會閃退。
+- [ ] 以 Herdr plugin 發佈：安裝時由原始碼建置，Herdr 啟動時自動開啟 App。
+- [ ] GitHub Releases 提供未簽章的 zip 檔，並附上 Gatekeeper 放行步驟。
+- [ ] 申請 Developer 帳號後，再加上簽章、notarization、DMG 與 Homebrew Cask。
+
+完成條件：沒用過這個專案的人，照 README 步驟能在 10 分鐘內裝好並看到選單列狀態。

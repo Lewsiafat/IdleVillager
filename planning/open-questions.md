@@ -21,4 +21,11 @@
 - [ ] 選單列動畫是否只於有少量 Session 時開啟？
 - [ ] Done / Error / Unknown 是否常駐顯示獨立小計數？
 
+## 發佈
+
+- [ ] `herdr plugin install` 的 `[[build]]` 在使用者電腦上能否成功建置？產物有沒有 quarantine 標記？
+- [ ] `[[startup]]` 是否在 Herdr server 重啟後自動開啟 App？
+- [ ] macOS 15 以上，ad-hoc 簽章的 App 是否仍會出現「強制打開」按鈕？
+- [ ] 是否要申請 Apple Developer Program（年費 99 美元）以支援簽章與 notarization？
+
 請先用實際 Herdr 環境確認以上內容；不要因為尚未確認而阻塞規格閱讀或其他可獨立開發的部分。
