@@ -2,7 +2,7 @@ English | [繁體中文](README.zh-TW.md)
 
 # IdleVillager
 
-> **Your AI Agents at a Glance** — a macOS menu bar monitor for your AI agent "villagers".  
+> **Your AI Agents at a Glance** — a macOS menu bar status monitor for your AI agent "villagers".  
 > See [`CHANGELOG.md`](CHANGELOG.md) for versions and changes.  
 > This repo does not ship any third-party brand logos.
 
@@ -13,14 +13,14 @@ English | [繁體中文](README.zh-TW.md)
 - **Product name**: IdleVillager
 - **English tagline**: Your AI Agents at a Glance
 - **Chinese positioning**: AI 村民工作狀態列 (a status bar for your AI villagers)
-- **Name inspiration**: the idle villager alert in *Age of Empires*; not affiliated with or endorsed by the game's publishers.
+- **Name inspiration**: the idle villager alert in *Age of Empires*; not affiliated with or representing the game's publishers.
 - **First data source**: Herdr (an integration target only, not the product name).
 
 ## In one sentence
 
 **See the counts → find the Workspace / Tab / Pane → jump back to the original session in one click.**
 
-Day to day, the menu bar shows minimal counts of agents that are working, waiting for you, or idle. Expand it to see the details, with small brand-recognizable characters and light animation. Herdr is the primary integration target.
+Normally, the menu bar shows minimalist status counts for agents that are working, waiting for you, or idle. Expand it and the details appear as small characters you can recognize by brand, with light animation. Herdr is the primary integration target.
 
 ## Install
 
@@ -51,7 +51,7 @@ herdr plugin update idlevillager
 herdr plugin uninstall idlevillager
 ```
 
-An update rebuilds the app, then automatically quits the old version and opens the new one; it reopens the app even if you had quit it before updating. Uninstalling the plugin does not quit the running app; quit it with **結束 IdleVillager** (Quit IdleVillager) in the menu bar popover. Herdr keeps the installed files when it removes a plugin, under `~/.config/herdr/plugins/github-installations/`.
+An update rebuilds the app, then automatically quits the old version and opens the new one; it reopens the app even if you had quit it before updating. Uninstalling the plugin does not quit the running app; quit it from the menu bar popover with **Quit IdleVillager** (「結束 IdleVillager」 when the interface is Traditional Chinese). Herdr keeps the installed files when it removes a plugin, under `~/.config/herdr/plugins/github-installations/`.
 
 If you can't see the icon in the menu bar after installing, the menu bar is usually out of space: MacBooks with a notch silently hide menu bar icons that don't fit. Hold ⌘ and drag other rarely used icons out of the menu bar to make room. For distribution research and details, see [`docs/08-distribution.md`](docs/08-distribution.md) (in Traditional Chinese).
 
@@ -62,9 +62,9 @@ If you can't see the icon in the menu bar after installing, the menu bar is usua
 - Menu bar: a count for each state, with simple visual symbols
 - List: Workspace / Tab / Pane / Agent hierarchy
 - Action: click a session to locate it and switch back to Herdr
-- Characters: recognition and animation asset specs for Claude, Codex, Gemini, and Generic
-- States: Working, Needs Approval, Done, Idle, Unknown / Error
-- UI language: currently Traditional Chinese
+- Characters: asset specs for identifying and animating Claude, Codex, Gemini, and Generic
+- States: Working, Needs Approval, Done, Idle, Error, Unknown
+- UI language: English and Traditional Chinese (Simplified Chinese is not supported). At launch, the app follows the macOS preferred-language list and uses the first language it supports; if neither is listed, it uses English. The language is chosen once at launch, so reopen the app after you change the system language. There is no in-app language switch.
 
 ## Documentation
 
@@ -119,4 +119,4 @@ Before you start, read `CLAUDE.md` and the documents in `docs/` and `planning/`.
 
 ## Assets and trademarks
 
-This repo **does not ship any third-party brand assets**. `assets/brand/` contains only IdleVillager's own marks. Official Claude, Codex, and Gemini logos must be obtained separately, following each one's source, version, and terms of use; see [`Sources/IdleVillagerApp/Resources/Brands/README.md`](Sources/IdleVillagerApp/Resources/Brands/README.md) (in Traditional Chinese) for where to put them and what format they need. Without a logo, the character automatically falls back to the Generic villager.
+This repo **does not ship any third-party brand assets**. `assets/brand/` contains only IdleVillager's own marks. Official Claude, Codex, and Gemini logos must be obtained separately, following each one's source, version, and terms of use; see [`Sources/IdleVillagerApp/Resources/Brands/README.md`](Sources/IdleVillagerApp/Resources/Brands/README.md) (in Traditional Chinese) for where to put them and the specs they must meet. Without a logo, the character automatically falls back to the Generic villager.
