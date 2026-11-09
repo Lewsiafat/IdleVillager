@@ -99,3 +99,7 @@
 "settings.behavior.animations" = "Play character animations";
 "settings.behavior.lowDistractionAlerts" = "Subtle alerts";
 "settings.behavior.lowDistractionAlerts.detail" = "When more Agents need approval, the menu bar briefly highlights them with a rounded background, then returns to normal. No sounds or system notifications.";
+"settings.appearance.section" = "Appearance";
+"settings.appearance.translucentPopover" = "Translucent list background";
+"settings.appearance.translucentPopover.detail" = "The list under the menu bar lets the desktop show through, blurred. Takes effect immediately.";
+"settings.appearance.translucentPopover.reducedBySystem" = "Reduce transparency is on in System Settings, so the list stays opaque.";

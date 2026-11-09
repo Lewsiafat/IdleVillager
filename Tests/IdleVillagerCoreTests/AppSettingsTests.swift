@@ -48,6 +48,7 @@ struct AppSettingsTests {
         #expect(settings.sortRule == .priority)
         #expect(settings.animationsEnabled == true)
         #expect(settings.lowDistractionAlerts == true)
+        #expect(settings.translucentPopoverBackground == false)
     }
 
     @Test func changedSettingsSurviveARestartWithTheSameStore() {
@@ -59,6 +60,7 @@ struct AppSettingsTests {
         beforeRestart.sortRule = .workspaceName
         beforeRestart.animationsEnabled = false
         beforeRestart.lowDistractionAlerts = false
+        beforeRestart.translucentPopoverBackground = true
 
         let afterRestart = AppSettings(store: store)
 
@@ -68,6 +70,7 @@ struct AppSettingsTests {
         #expect(afterRestart.sortRule == .workspaceName)
         #expect(afterRestart.animationsEnabled == false)
         #expect(afterRestart.lowDistractionAlerts == false)
+        #expect(afterRestart.translucentPopoverBackground == true)
     }
 
     @Test func turningAlwaysShowZeroCountsOnAndOffChangesTheMenuBarTextImmediately() async {
