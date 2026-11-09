@@ -124,7 +124,10 @@ struct SessionPopoverView: View {
         }
     }
 
-    /// footer 分兩列：第一列是來源、連線與更新時間，第二列是「設定…」與「結束 IdleVillager」。
+    /// `Info.plist` 的 `CFBundleShortVersionString`；`swift run` 執行時沒有，為 nil。
+    private static let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+
+    /// footer 分兩列：第一列是來源、連線與更新時間，第二列是「設定…」、版號與「結束 IdleVillager」。
     private func footer(_ footer: SessionListModel.Footer) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
@@ -149,6 +152,11 @@ struct SessionPopoverView: View {
 
             HStack {
                 SettingsEntryButton()
+                Spacer()
+                Text(AppVersionLabel.text(shortVersion: Self.shortVersion))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel(AppVersionLabel.accessibilityText(shortVersion: Self.shortVersion))
                 Spacer()
                 Button("結束 IdleVillager") {
                     NSApplication.shared.terminate(nil)
