@@ -1,0 +1,23 @@
+# IdleVillager 的 Herdr plugin。整個 repo 就是 plugin 根目錄。
+# 安裝：herdr plugin install Lewsiafat/IdleVillager（需要 Xcode Command Line Tools）
+# 作用：安裝時在本機把原始碼編成 IdleVillager.app；Herdr 啟動時自動開啟這個選單列 App。
+# plugin 本身不畫任何 UI，App 交給 macOS 的 open 指令啟動，不是 Herdr 的子程序。
+id = "idlevillager"
+name = "IdleVillager"
+version = "0.2.0"
+min_herdr_version = "0.9.5"
+description = "Menu bar app showing which Herdr agents are working, waiting for approval, or idle"
+platforms = ["macos"]
+
+# 只有 `herdr plugin install` 會執行；`herdr plugin link` 不會。產物在 plugin 根目錄的 dist/。
+[[build]]
+command = ["sh", "distribution/make-app.sh"]
+
+# Herdr server 啟動且 API socket 就緒後執行一次。launch.sh 啟動 App 後立即結束。
+[[startup]]
+command = ["sh", "distribution/launch.sh"]
+
+[[actions]]
+id = "launch"
+title = "Launch IdleVillager"
+command = ["sh", "distribution/launch.sh"]
