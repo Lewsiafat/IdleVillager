@@ -6,16 +6,16 @@ struct BehaviorSettingsSection: View {
     @Bindable var settings: AppSettings
 
     var body: some View {
-        Section("清單與提醒") {
-            Picker("排序規則", selection: $settings.sortRule) {
+        Section(L10n.text(.settingsBehaviorSection)) {
+            Picker(L10n.text(.settingsSortRule), selection: $settings.sortRule) {
                 ForEach(SortRule.allCases, id: \.self) { rule in
                     Text(Self.title(of: rule)).tag(rule)
                 }
             }
-            Toggle("播放角色動畫", isOn: $settings.animationsEnabled)
+            Toggle(L10n.text(.settingsAnimations), isOn: $settings.animationsEnabled)
             Toggle(isOn: $settings.lowDistractionAlerts) {
-                Text("低干擾提醒")
-                Text("待核准數量增加時，選單列短暫以圓角底色強調待核准項目後恢復；不使用音效或系統通知。")
+                Text(L10n.text(.settingsLowDistractionAlerts))
+                Text(L10n.text(.settingsLowDistractionAlertsDetail))
                     .font(.caption)
             }
         }
@@ -23,9 +23,9 @@ struct BehaviorSettingsSection: View {
 
     private static func title(of rule: SortRule) -> String {
         switch rule {
-        case .priority: "依優先度"
-        case .workspaceName: "依 Workspace 名稱"
-        case .fixed: "固定順序"
+        case .priority: L10n.text(.settingsSortPriority)
+        case .workspaceName: L10n.text(.settingsSortWorkspaceName)
+        case .fixed: L10n.text(.settingsSortFixed)
         }
     }
 }

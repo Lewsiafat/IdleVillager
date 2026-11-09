@@ -26,7 +26,12 @@ cp "$BIN/IdleVillagerApp" "$APP/Contents/MacOS/IdleVillager"
 # App 不使用 SwiftPM 產生的 Bundle.module（它不查 Contents/Resources，找不到就 fatalError），
 # 改用 IdleVillagerCore 的 ResourceBundleLocator 尋找這個位置（見 docs/08-distribution.md）。
 cp -R "$BIN/IdleVillager_IdleVillagerApp.bundle" "$APP/Contents/Resources/"
+# IdleVillagerCore 的 resource bundle 放介面字串表（en.lproj、zh-Hant.lproj），同樣放在 Contents/Resources，
+# 由 L10n 透過 ResourceBundleLocator 找到。少了它介面會顯示字串 key，所以缺檔時 cp 失敗、建置中止。
+cp -R "$BIN/IdleVillager_IdleVillagerCore.bundle" "$APP/Contents/Resources/"
 
+# CFBundleLocalizations 宣告 App 支援的介面語言，讓系統元件（例如設定視窗標題）跟著同一個語言，
+# 也讓 macOS「語言與地區」可以為 IdleVillager 個別指定語言；不支援的系統語言以 CFBundleDevelopmentRegion（英文）呈現。
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -36,6 +41,12 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleName</key><string>IdleVillager</string>
   <key>CFBundleExecutable</key><string>IdleVillager</string>
   <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh-Hant</string>
+  </array>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>

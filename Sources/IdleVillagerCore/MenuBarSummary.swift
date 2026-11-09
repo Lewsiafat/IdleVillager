@@ -113,10 +113,10 @@ public enum MenuBarSummaryFormatter {
     public static let disconnectedSymbolName = "exclamationmark.triangle"
 
     /// 斷線模式的固定文字，不含任何數字。App 改以 `symbolName(for:)` 的圖示呈現時，這段文字作為無障礙與備援用。
-    public static let disconnectedText = "⚠ 斷線"
+    public static var disconnectedText: String { L10n.text(.menuBarDisconnected) }
 
     /// 零 Agent 模式的固定文字。
-    public static let zeroAgentsText = "0 個 Agent"
+    public static var zeroAgentsText: String { L10n.text(.menuBarZeroAgents) }
 
     /// 有隱藏狀態（Error、Unknown，或未顯示小計數的 Done）時接在尾端的小標記。
     public static let hiddenStatesMarker = "•"

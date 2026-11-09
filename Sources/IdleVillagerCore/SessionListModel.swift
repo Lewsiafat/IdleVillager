@@ -1,6 +1,8 @@
 import Foundation
 
 /// Popover 清單的純值模型，由 Store snapshot 推導。
+///
+/// 所有給使用者看的文字都經 `L10n` 依介面語言產生；下方註解以繁體中文介面的用字舉例。
 public struct SessionListModel: Hashable, Sendable {
     /// Popover 底部的來源與連線資訊區。來源名稱來自 Adapter 的來源描述，只出現在這裡。
     public struct Footer: Hashable, Sendable {
@@ -22,23 +24,23 @@ public struct SessionListModel: Hashable, Sendable {
         /// 未滿 10 秒（含時鐘誤差造成的未來時間）為「剛剛」，之後依序為秒、分鐘、小時、天，皆無條件捨去；
         /// 從未成功更新時為「尚未成功更新」。
         public func lastUpdatedText(now: Date) -> String {
-            guard let lastUpdatedAt else { return "尚未成功更新" }
+            guard let lastUpdatedAt else { return L10n.text(.footerNeverUpdated) }
             let elapsed = Int(now.timeIntervalSince(lastUpdatedAt))
             let relative: String
             switch elapsed {
-            case ..<10: relative = "剛剛"
-            case ..<60: relative = "\(elapsed) 秒前"
-            case ..<3_600: relative = "\(elapsed / 60) 分鐘前"
-            case ..<86_400: relative = "\(elapsed / 3_600) 小時前"
-            default: relative = "\(elapsed / 86_400) 天前"
+            case ..<10: relative = L10n.text(.timeJustNow)
+            case ..<60: relative = L10n.countText(one: .timeSecondsAgoOne, other: .timeSecondsAgoOther, count: elapsed)
+            case ..<3_600: relative = L10n.countText(one: .timeMinutesAgoOne, other: .timeMinutesAgoOther, count: elapsed / 60)
+            case ..<86_400: relative = L10n.countText(one: .timeHoursAgoOne, other: .timeHoursAgoOther, count: elapsed / 3_600)
+            default: relative = L10n.countText(one: .timeDaysAgoOne, other: .timeDaysAgoOther, count: elapsed / 86_400)
             }
-            return "最後更新：" + relative
+            return L10n.text(.footerLastUpdated, ["time": relative])
         }
 
         /// 斷線或重連中、且清單仍保留上次內容時的過期提示；已連線或沒有清單可提示時為 nil。
         public var staleNotice: String? {
             guard connectionState != .connected, lastUpdatedAt != nil else { return nil }
-            return "資料可能已過期，以上清單為最後一次成功更新的內容。"
+            return L10n.text(.footerStaleNotice)
         }
     }
 
@@ -178,9 +180,9 @@ public struct SessionListModel: Hashable, Sendable {
     /// 從未連上為「未連線」，曾連上後斷線為「已斷線」，重連中為「重新連線中」。斷線時不顯示任何數字，避免 0 或過期的舊數量。
     public var headerStatusText: String {
         switch footer.connectionState {
-        case .connected: "\(agentCount) 個 Agent"
-        case .disconnected: footer.lastUpdatedAt == nil ? "未連線" : "已斷線"
-        case .reconnecting: "重新連線中"
+        case .connected: L10n.countText(one: .agentCountOne, other: .agentCountOther, count: agentCount)
+        case .disconnected: L10n.text(footer.lastUpdatedAt == nil ? .connectionNotConnected : .connectionDisconnected)
+        case .reconnecting: L10n.text(.connectionReconnecting)
         }
     }
 
@@ -189,7 +191,7 @@ public struct SessionListModel: Hashable, Sendable {
     /// 已連線時是明確的零 Agent 狀態，斷線或重連中則說明沒有可顯示的資料，兩者文字不同。
     public var emptyStateText: String? {
         guard workspaces.isEmpty else { return nil }
-        return footer.connectionState == .connected ? "目前沒有 Agent Session" : "未連線，沒有可顯示的 Session 資料"
+        return L10n.text(footer.connectionState == .connected ? .emptyConnected : .emptyDisconnected)
     }
 
     /// 依優先度排序（`SortRule.priority`）建立清單。
@@ -245,14 +247,14 @@ public struct SessionListModel: Hashable, Sendable {
         return workspaces
     }
 
-    /// 資料過期的列在狀態短文字後加上的標示。
-    public static let staleSuffix = "（過期）"
+    /// 資料過期的列在狀態短文字後加上的標示，例如「（過期）」或英文介面的「 (stale)」。
+    public static var staleSuffix: String { L10n.text(.staleSuffix) }
 
     private static func connectionText(_ state: ConnectionState) -> String {
         switch state {
-        case .connected: "已連線"
-        case .disconnected: "已斷線"
-        case .reconnecting: "重新連線中"
+        case .connected: L10n.text(.connectionConnected)
+        case .disconnected: L10n.text(.connectionDisconnected)
+        case .reconnecting: L10n.text(.connectionReconnecting)
         }
     }
 }

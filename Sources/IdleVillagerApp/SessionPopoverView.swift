@@ -69,7 +69,7 @@ struct SessionPopoverView: View {
                     Image(systemName: "xmark")
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("關閉提示")
+                .accessibilityLabel(L10n.text(.dismissFocusFailure))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -133,7 +133,7 @@ struct SessionPopoverView: View {
             HStack(spacing: 6) {
                 Image(systemName: footer.connectionState == .connected ? "link" : "exclamationmark.triangle")
                     .accessibilityHidden(true)
-                Text("來源：\(footer.sourceName) · \(footer.connectionText)")
+                Text(L10n.text(.footerSource, ["source": footer.sourceName, "connection": footer.connectionText]))
                 Spacer()
                 // 相對時間由 Core 依當下時間產生，定期重繪讓「N 分鐘前」持續正確。
                 TimelineView(.periodic(from: .now, by: 10)) { context in
@@ -158,7 +158,7 @@ struct SessionPopoverView: View {
                     .foregroundStyle(.secondary)
                     .accessibilityLabel(AppVersionLabel.accessibilityText(shortVersion: Self.shortVersion))
                 Spacer()
-                Button("結束 IdleVillager") {
+                Button(L10n.text(.footerQuit)) {
                     NSApplication.shared.terminate(nil)
                 }
             }
@@ -231,9 +231,11 @@ private struct TabSection: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(tab.name)，\(tab.rows.count) 個 Agent")
-            .accessibilityValue(collapsed ? "已收合" : "已展開")
-            .accessibilityHint("切換收合")
+            .accessibilityLabel(L10n.countText(
+                one: .tabAccessibilityOne, other: .tabAccessibilityOther, count: tab.rows.count, ["name": tab.name]
+            ))
+            .accessibilityValue(L10n.text(collapsed ? .tabCollapsed : .tabExpanded))
+            .accessibilityHint(L10n.text(.tabToggleHint))
 
             if !collapsed {
                 ForEach(tab.rows) { row in
@@ -295,7 +297,7 @@ private struct SessionRowView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint("切回這個 Pane")
+        .accessibilityHint(L10n.text(.rowFocusHint))
         .accessibilityAction { focus() }
     }
 
@@ -324,7 +326,7 @@ private struct SessionRowView: View {
     private var accessibilityText: String {
         var parts = [row.displayName, row.paneLabel, row.stateText]
         if let detail = row.detail { parts.append(detail) }
-        return parts.joined(separator: "，")
+        return parts.joined(separator: L10n.text(.clauseSeparator))
     }
 }
 
