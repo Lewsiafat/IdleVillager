@@ -6,7 +6,7 @@
 > 版本與變更紀錄見 [`CHANGELOG.md`](CHANGELOG.md)。  
 > 本 repo 不附帶第三方品牌標誌。
 
-<!-- hero screenshot (#46): menu bar counts + expanded list -->
+<p align="center"><img src="docs/images/hero.png" alt="IdleVillager 選單列各狀態數量與展開的 agent 列表" width="410"></p>
 
 ## 專案識別
 
@@ -55,7 +55,7 @@ herdr plugin uninstall idlevillager
 
 裝好後在選單列看不到圖示時，通常是空間不夠：有瀏海的 MacBook 會把放不下的選單列圖示藏起來，而且不會有提示。請按住 ⌘ 把其他不常用的圖示拖出選單列，騰出空間。發佈方式的研究與細節見 [`docs/08-distribution.md`](docs/08-distribution.md)。
 
-<!-- demo GIF (#46): click a session to jump back to Herdr -->
+<p align="center"><img src="docs/images/demo.gif" alt="點列表裡的 session 跳回 Herdr 對應的 pane" width="410"></p>
 
 ## 首版範圍
 
