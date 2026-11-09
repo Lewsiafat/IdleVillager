@@ -10,9 +10,16 @@ macOS 選單列工具：監控多個 AI Agent（Claude Code、Codex、Gemini）�
 
 ## 目前狀態
 
-- 版本 0.2，**只有規格文件，沒有任何程式碼、Xcode 專案或圖片素材**。`assets/` 與 `design/` 是空的預留目錄。
+- 已有可執行的 App：Swift Package（`Package.swift`），`IdleVillagerCore` 放邏輯與測試，`IdleVillagerApp` 放 SwiftUI 畫面。以 `swift test` 執行測試、`swift run IdleVillagerApp` 執行開發版。
+- 以 Herdr plugin 發佈：repo 根目錄的 `herdr-plugin.toml`，安裝時由 `distribution/make-app.sh` 在使用者電腦上建置 `.app`。細節見 `docs/08-distribution.md`。
 - 首個資料來源是 Herdr（終端多工工具），但 Herdr 只是整合目標，不是產品名稱。
 - 技術方向：SwiftUI + MenuBarExtra，本機執行，無帳號與雲端。
+
+## 版號與發版
+
+- 版號唯一來源是 `herdr-plugin.toml` 的 `version`；`make-app.sh` 建置時自動寫入 App 的 `Info.plist`，不要在其他地方寫死版號。
+- 使用者看得到的變更，merge 前要寫進 `CHANGELOG.md` 的 `[Unreleased]`。
+- 發版步驟、版號規則與 release note 腳本（`distribution/release-notes.sh`）見 `docs/09-release-process.md`。
 
 ## 文件導覽（先讀 README.md）
 

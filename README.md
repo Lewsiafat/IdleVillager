@@ -1,8 +1,8 @@
-# IdleVillager — 專案初始資料包
+# IdleVillager
 
-> 版本：0.2（IdleVillager 命名版；文件與目錄骨架）  
-> 目標：macOS 選單列中的 AI Agent「小村民」狀態監控工具  
-> **本資料包不包含程式碼、Xcode 專案、可執行檔、圖片或品牌標誌。**
+> macOS 選單列中的 AI Agent「小村民」狀態監控工具。  
+> 版本與變更紀錄見 [`CHANGELOG.md`](CHANGELOG.md)。  
+> 本 repo 不附帶第三方品牌標誌。
 
 ## 專案識別
 
@@ -69,6 +69,8 @@ herdr plugin uninstall idlevillager
 - `docs/06-architecture-decisions.md`：技術方向、限制與決策
 - `docs/07-brand-identity.md`：IdleVillager 品牌、圖示、名稱與視覺語彙
 - `docs/08-distribution.md`：發佈方式研究（Herdr plugin、GitHub Releases、Homebrew Cask）
+- `docs/09-release-process.md`：版號規則、CHANGELOG 寫法與發版步驟
+- `CHANGELOG.md`：各版本的變更紀錄
 - `planning/roadmap.md`：P0/P1/P2 開發階段與完成條件
 - `planning/open-questions.md`：尚未確認的環境與技術問題
 
@@ -85,7 +87,8 @@ IdleVillager-starter/
 │   ├── 05-herdr-integration.md
 │   ├── 06-architecture-decisions.md
 │   ├── 07-brand-identity.md
-│   └── 08-distribution.md
+│   ├── 08-distribution.md
+│   └── 09-release-process.md
 ├── assets/
 │   ├── brands/             # 預留官方品牌向量圖
 │   ├── props/              # 預留手腳、工具、枕頭等道具
