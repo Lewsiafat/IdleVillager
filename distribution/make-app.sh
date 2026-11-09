@@ -39,4 +39,10 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 codesign --force --deep -s - "$APP"
+
+# Herdr plugin 安裝與更新每次都是全新 checkout，.build 快取不會再被用到，刪掉可省下約 186 MB。
+# 由 herdr-plugin.toml 的 [[build]] 設定 IDLEVILLAGER_CLEAN_BUILD=1；本機開發時不刪。
+if [ "${IDLEVILLAGER_CLEAN_BUILD:-0}" = "1" ]; then
+    rm -rf "$ROOT/.build"
+fi
 echo "$APP"

@@ -18,6 +18,39 @@
 
 選單列平時用極簡狀態數量呈現正在工作、等待處理及閒置的 Agent；展開後用品牌辨識的小角色及輕動畫呈現細節。工具以 Herdr 為主要整合目標。
 
+## 安裝
+
+IdleVillager 以 Herdr plugin 的形式發佈。安裝時會在你的電腦上由原始碼建置 App，所以不需要處理 macOS 對未簽章 App 的阻擋。
+
+前置需求：
+
+- macOS 14 以上。
+- Herdr 0.9.5 以上，並且正在使用 Herdr TUI。
+- Xcode Command Line Tools（提供 Swift 6 編譯器）。還沒安裝的話，執行 `xcode-select --install`。
+
+安裝：
+
+```sh
+herdr plugin install Lewsiafat/IdleVillager
+```
+
+Herdr 會先顯示 plugin 的內容並請你確認，接著建置 App，第一次大約需要一到兩分鐘。之後每次 Herdr server 啟動，都會自動開啟 IdleVillager。想立刻開啟，可以執行：
+
+```sh
+herdr plugin action invoke launch --plugin idlevillager
+```
+
+更新與移除：
+
+```sh
+herdr plugin update idlevillager
+herdr plugin uninstall idlevillager
+```
+
+移除 plugin 不會關閉正在執行的 App，請從選單列的「結束 IdleVillager」關閉。Herdr 移除 plugin 時會保留安裝檔案，位置在 `~/.config/herdr/plugins/github-installations/`。
+
+裝好後在選單列看不到圖示時，通常是空間不夠：有瀏海的 MacBook 會把放不下的選單列圖示藏起來，而且不會有提示。請按住 ⌘ 把其他不常用的圖示拖出選單列，騰出空間。發佈方式的研究與細節見 `docs/08-distribution.md`。
+
 ## 首版範圍
 
 - 選單列：各狀態數量與簡單視覺符號

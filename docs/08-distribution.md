@@ -40,45 +40,45 @@ Herdr plugin 也可以搭配下載好的 App 使用：plugin 的啟動腳本會�
 
 ### 實測結果
 
-實測用的原型放在 `distribution/herdr-plugin/`，包含 `herdr-plugin.toml`、`launch.sh` 與 `build.sh`。測試完已經用 `herdr plugin unlink` 移除，並刪除 Herdr 留下的空設定目錄。
+manifest 是 repo 根目錄的 `herdr-plugin.toml`，啟動腳本是 `distribution/launch.sh`，建置腳本是 `distribution/make-app.sh`。整個 repo 就是 plugin 根目錄。
 
-- **已實測**：Herdr 0.9.5 有 `herdr plugin` 指令，只是沒有列在 `herdr --help` 的指令清單裡。子指令有 `install`、`link`、`unlink`、`enable`、`disable`、`list`、`action`、`log`、`pane` 等。
-- **已實測**：`herdr plugin link <目錄>` 可以註冊本機的 plugin。manifest 指定 `platforms = ["macos"]` 與 `min_herdr_version = "0.9.5"` 時沒有任何警告。
-- **已實測**：`herdr plugin action invoke launch --plugin idlevillager` 會執行 `launch.sh`。腳本以 `open -g` 啟動 App，大約 0.1 秒結束，`herdr plugin log list --plugin idlevillager` 記錄了 exit code 與 stdout。
+**本機 link（第一次研究時的原型，當時放在 `distribution/herdr-plugin/`）**
+
+- **已實測**：Herdr 0.9.5 有 `herdr plugin` 指令，只是沒有列在 `herdr --help` 的指令清單裡。子指令有 `install`、`update`、`uninstall`、`link`、`unlink`、`enable`、`disable`、`list`、`action`、`log`、`pane` 等。
+- **已實測**：`herdr plugin link <目錄>` 可以註冊本機的 plugin。manifest 指定 `platforms = ["macos"]` 與 `min_herdr_version = "0.9.5"` 時沒有任何警告；manifest 移到 repo 根目錄後再 link 一次，同樣沒有警告。
+- **已實測**：`herdr plugin action invoke launch --plugin idlevillager` 會執行啟動腳本。腳本以 `open -g` 啟動 App，大約 0.1 秒結束，`herdr plugin log list --plugin idlevillager` 記錄了 exit code 與 stdout。
 - **已實測**：由 `open` 啟動的 App，父程序是 launchd（PPID 為 1），不是 Herdr 的子程序。這符合官方文件「startup hook 是一次性指令，不是常駐的 daemon」的要求。
 - **已實測**：App 已經在執行時再呼叫一次 action，`open` 會沿用既有的實例，不會開出第二個。
 - **已實測**：`herdr plugin unlink` 之後 App 繼續執行，Herdr 不會結束它。
 - **已實測**：從 `.app` 啟動的 App 有建立 unix socket 連線（fd 3）。macOS 不會顯示 client 端 socket 的路徑，所以無法確認連到的就是 `herdr.sock`，但應用程式只會連這一個 socket。
 
+**從 GitHub 安裝（`herdr plugin install Lewsiafat/IdleVillager --ref feat/herdr-plugin-install --yes`）**
+
+- **已實測**：私有 repo 無法安裝。Herdr 用 HTTPS 執行 git，沒有憑證時失敗並顯示 `could not read Username for 'https://github.com'`。repo 必須公開，使用者才裝得起來；repo 已在 2026-11-09 改為公開。
+- **已實測**：安裝前 Herdr 會列出 plugin 的 id、來源、ref、commit，以及所有 build、startup、action 指令讓使用者確認；`--yes` 可以略過確認。
+- **已實測**：安裝含建置共 83 秒，`[[build]]` 成功產生 `dist/IdleVillager.app`。這台電腦已有 Swift 6.0.3，沒有測「沒裝 Xcode Command Line Tools」的情況。
+- **已實測**：Herdr 把整個 repo checkout 到 `~/.config/herdr/plugins/github-installations/idlevillager-<hash>/<n>/checkout`，plugin 根目錄就是這個 checkout。安裝後占用約 189 MB，其中 186 MB 是 `.build` 的建置快取。
+- **已實測**：建置出來的 App 沒有 `com.apple.quarantine` 標記，只有 `com.apple.provenance`。後者是 macOS 13 起記錄「檔案由哪個程式產生」的標記，不會觸發 Gatekeeper。`spctl` 對這個 App 的評估仍是 `rejected`，但因為沒有 quarantine 標記，Gatekeeper 不會在開啟時檢查。
+- **已實測**：`launch` action 從安裝目錄成功啟動 App，沒有出現任何 Gatekeeper 對話框。
+- **已實測**：`herdr plugin log list` 只記錄 action 與 startup 的執行，不包含 `[[build]]` 的輸出。
+- **已實測**：安裝後的 App 在沒有建置路徑的情況下（`.build` 已刪除，等同別人的電腦）正常顯示選單列與 Popover，使用者確認沒有閃退。這也驗證了 `ResourceBundleLocator` 的修正。
+
+**更新與移除**
+
+- **已實測**：`herdr plugin update idlevillager --yes` 會 checkout 到一個新的安裝目錄，再從頭執行 `[[build]]`，耗時約 81 秒，不會沿用舊目錄的建置快取。舊的安裝目錄不會立刻刪除。
+- **已實測，已修正**：更新後舊版 App 仍在舊目錄執行。`open` 只會沿用同一路徑的實例，所以原本的 `launch.sh` 會再開一個新版，選單列出現兩個 IdleVillager。現在 `launch.sh` 會先結束其他路徑的 `IdleVillager.app`，同一路徑已在執行就不動作；三種情況（只有舊版、新舊都在、都沒有）都實測過。`swift run` 啟動的開發版不是 `.app`，不受影響。
+- **已實測，已修正**：每份安裝目錄約 189 MB，其中 186 MB 是 `.build`。因為每次安裝都是全新 checkout，`[[build]]` 改為設定 `IDLEVILLAGER_CLEAN_BUILD=1`，建置完就刪掉 `.build`，每份安裝目錄降到約 3 MB。
+- **已實測**：`herdr plugin uninstall idlevillager` 之後，Herdr 不再列出這個 plugin，但所有安裝目錄與空的 config 目錄都留在原處，正在執行的 App 也不會被結束。這和官方 CLI 文件「保留檔案讓執行中的 plugin 能結束」的說法一致；檔案何時清除沒有文件說明。README 的移除說明已提醒使用者自己結束 App。
+
+**已知限制：瀏海遮住選單列圖示**
+
+數量模式的選單列圖示寬約 96 pt。在有瀏海的 MacBook 上，選單列圖示太多時，macOS 會把最新加入的圖示藏起來，而且不會有任何提示。實測時開發版與 plugin 版同時執行，plugin 版的圖示就被藏起來了：系統回報它的位置在 x=849，`onScreen=false`。結束開發版後，plugin 版就出現了。README 應該提醒使用者：裝好後看不到圖示時，先移除其他選單列圖示騰出空間。
+
 ### 尚未驗證的部分
 
-- **`[[startup]]` 自動啟動，尚未實測。** 根據文件，startup hook 只在 Herdr server 啟動，或 live handoff（Herdr 不中斷 Session 的換版機制）時執行，link 或 enable 時都不會執行。要測試就得重啟 Herdr server，但 `herdr server stop` 會連同所有 pane 裡的 Agent 一起結束，所以這次沒有測。可以等下次自然重開 Herdr 時觀察。
-- **`[[build]]` 建置，尚未實測。** 文件寫明 `[[build]]` 只在從 GitHub 執行 `herdr plugin install` 時跑，`plugin link` 不會跑。要等 repo 推上 GitHub 才能測。
-- **plugin 放在 repo 子目錄時能不能建置，尚未確認。** 原型把 plugin 放在 `distribution/herdr-plugin/`，`build.sh` 假設上兩層就是 repo 根目錄。如果 `herdr plugin install owner/repo/subdir` 只複製子目錄，這個假設就不成立。正式版建議把 `herdr-plugin.toml` 直接放在 repo 根目錄，plugin 根目錄就是整個 repo，建置路徑最單純。
-- **由 plugin 建置的 App 沒有 quarantine 標記，屬於推論。** `git clone` 下來的檔案和本機編譯的產物，一般不會帶 quarantine 標記，但 Herdr 怎麼下載 plugin 原始碼沒有寫在文件裡。實際安裝後要用 `xattr -l` 檢查。
-- **官方文件沒有寫的事項**：各指令的逾時時間、server 停止時會不會結束 plugin 衍生的程序、`[[build]]` 的工作目錄。
-
-### 正式版 manifest 草稿
-
-```toml
-id = "idlevillager"
-name = "IdleVillager"
-version = "0.2.0"
-min_herdr_version = "0.9.5"
-description = "Launch the IdleVillager menu bar app"
-platforms = ["macos"]
-
-[[build]]
-command = ["sh", "distribution/make-app.sh", "dist"]
-
-[[startup]]
-command = ["sh", "distribution/herdr-plugin/launch.sh"]
-
-[[actions]]
-id = "launch"
-title = "Launch IdleVillager"
-command = ["sh", "distribution/herdr-plugin/launch.sh"]
-```
+- **`[[startup]]` 自動啟動，尚未實測。** 根據文件，startup hook 只在 Herdr server 啟動，或 live handoff（Herdr 不中斷 Session 的換版機制）時執行，link、install 或 enable 時都不會執行。要測試就得重啟 Herdr server，但 `herdr server stop` 會連同所有 pane 裡的 Agent 一起結束，所以沒有測。可以等下次自然重開 Herdr 時觀察。
+- **沒有 Xcode Command Line Tools 時的錯誤訊息，尚未實測。** `make-app.sh` 會在 `swift build` 失敗，安裝因此中止，但使用者實際看到的訊息還不知道。
+- **官方文件沒有寫的事項**：各指令的逾時時間、server 停止時會不會結束 plugin 衍生的程序。
 
 ### 上架 Herdr plugin 列表
 
@@ -135,13 +135,16 @@ macOS 15（Sequoia）起，Control 點按或右鍵選「打開」已經無法繞
 
 ## 後續任務
 
-1. 手動打開打包後 App 的 Popover，確認畫角色時不會閃退。
-2. 把 `herdr-plugin.toml` 移到 repo 根目錄，推上 GitHub，實際測試 `herdr plugin install`：`[[build]]` 能否成功、建置產物有沒有 quarantine 標記、需要多久。
-3. 下次重開 Herdr server 時，確認 `[[startup]]` 會自動開啟 App。
+已完成：打包後 App 的 Popover 實測、把 manifest 移到 repo 根目錄、實測 `herdr plugin install`、README 安裝說明。
+
+1. merge 進 main 後，在 GitHub repo 加上 `herdr-plugin` topic，上架 Herdr plugin 列表。
+2. 下次重開 Herdr server 時，確認 `[[startup]]` 會自動開啟 App，並觀察舊安裝目錄會不會被清掉。
+3. 在沒有 Xcode Command Line Tools 的電腦上測安裝，確認錯誤訊息看得懂；必要時讓 `make-app.sh` 先檢查 `swift` 是否存在，並印出安裝指引。
 4. 在 macOS 15 以上實測未簽章 zip 的放行步驟。
 5. 加上 GitHub Actions：打 tag 時自動執行 `make-app.sh`，並把 zip 上傳到 Releases。
-6. 補上 App 圖示（`.icns`）與 README 的安裝說明。
-7. 之後若申請 Developer 帳號，再加上 Developer ID 簽章、notarization、DMG 與 Homebrew Cask。
+6. 補上 App 圖示（`.icns`）。
+7. 考慮縮短數量模式的選單列寬度，降低在瀏海機型上被藏起來的機會。
+8. 之後若申請 Developer 帳號，再加上 Developer ID 簽章、notarization、DMG 與 Homebrew Cask。
 
 ## 參考來源
 

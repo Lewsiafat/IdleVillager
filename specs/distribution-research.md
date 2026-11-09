@@ -42,4 +42,4 @@
 - [x] `BrandAssetCatalog` 改用 `ResourceBundleLocator`，移除 `Bundle.module` 的使用
 - [x] 新增 `ResourceBundleLocatorTests`，完整測試通過
 - [x] `make-app.sh` 把資源 bundle 放進 `Contents/Resources`，codesign 驗證通過
-- [ ] 手動打開打包後 App 的 Popover，確認不會閃退
+- [x] 手動打開打包後 App 的 Popover，確認不會閃退（在 `feat/herdr-plugin-install` 任務中，以刪除 `.build` 的 plugin 安裝版確認）
