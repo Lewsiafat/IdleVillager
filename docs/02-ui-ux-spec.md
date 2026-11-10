@@ -84,9 +84,11 @@ IdleVillager            6 Agents
 ## 6. 介面語言
 
 - 支援繁體中文與英文，本文件的範例文字都是繁體中文介面的用字；英文介面的對應用字見 `Sources/IdleVillagerCore/Resources/en.lproj/Localizable.strings`。
-- 介面語言跟隨 macOS 的偏好語言清單：依序取第一個支援的語言（英文或繁體中文）；清單中都不是這兩種語言時用英文。繁體中文包含 `zh-Hant`，以及沒寫文字代碼但地區是台灣、香港或澳門的中文。簡體中文目前不支援，會顯示英文。
-- 不提供 App 內的語言切換。使用者若想讓 IdleVillager 使用與系統不同的語言，可以在「系統設定 → 一般 → 語言與地區 → App」為它個別指定（需要以 `make-app.sh` 打包的 `.app`，因為這個清單依 `Info.plist` 的 `CFBundleLocalizations` 列出語言；尚未實測）。
-- 語言在 App 啟動時決定一次，切換系統語言後需要重新開啟 App。
+- 介面語言由設定視窗「外觀」區段的「語言」選項決定，預設是英文，不跟隨 macOS 的偏好語言。選項名稱固定用該語言本身書寫（English、繁體中文），不隨目前的介面語言翻譯，讓看不懂目前語言的人也找得到自己的語言。
+- 切換後選單列、Popover 與設定視窗立即換成新語言，重開 App 後保留。簡體中文目前不支援。
+- 已知限制：
+  - 示範模式（`IDLEVILLAGER_DEMO=1`）的示範 Tab 名稱、等待原因與來源名稱「示範資料」在 App 啟動時就建立好，切換語言後要重開 App 才會換。連 Herdr 時沒有這個問題，因為這些文字來自 Herdr。
+  - macOS 系統畫的文字（例如設定視窗的標題列）依系統語言顯示，不受這個選項影響，所以可能和介面語言不同。
 - 不翻譯的文字：產品名稱 `IdleVillager`、Agent 名稱（Claude Code、Codex、Gemini CLI）、Herdr、來源提供的 Workspace／Tab／Pane 名稱與等待原因，以及衝突描述裡的正規化狀態英文名稱（例如「訊號衝突：Working、Idle」）。
 - 英文介面的數量文字會區分單複數，例如 `1 Agent`、`2 Agents`、`1 minute ago`。
 

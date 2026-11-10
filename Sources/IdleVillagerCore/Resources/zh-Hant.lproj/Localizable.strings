@@ -100,6 +100,7 @@
 "settings.behavior.lowDistractionAlerts" = "低干擾提醒";
 "settings.behavior.lowDistractionAlerts.detail" = "待核准數量增加時，選單列短暫以圓角底色強調待核准項目後恢復；不使用音效或系統通知。";
 "settings.appearance.section" = "外觀";
+"settings.appearance.language" = "語言";
 "settings.appearance.translucentPopover" = "清單使用半透明背景";
 "settings.appearance.translucentPopover.detail" = "選單列展開的清單會透出模糊的桌面與後方視窗，切換後立即生效。";
 "settings.appearance.translucentPopover.reducedBySystem" = "系統設定已開啟「降低透明度」，清單目前維持不透明。";

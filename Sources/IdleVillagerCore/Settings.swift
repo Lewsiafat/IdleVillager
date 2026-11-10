@@ -57,6 +57,7 @@ public final class AppSettings {
         public static let animationsEnabled = "animationsEnabled"
         public static let lowDistractionAlerts = "lowDistractionAlerts"
         public static let translucentPopoverBackground = "translucentPopoverBackground"
+        public static let language = "language"
     }
 
     /// 值為 0 的類別也固定顯示在選單列。預設關。
@@ -95,6 +96,14 @@ public final class AppSettings {
         didSet { store.set(translucentPopoverBackground, forKey: Key.translucentPopoverBackground) }
     }
 
+    /// Interface language. English by default, regardless of the macOS preferred languages.
+    ///
+    /// Only stores the choice. The App applies it with `L10n.use(_:)` at launch and when it changes, so Core
+    /// tests that change this value never switch the process-wide language.
+    public var language: AppLanguage {
+        didSet { store.set(language.rawValue, forKey: Key.language) }
+    }
+
     @ObservationIgnored private let store: any SettingsStore
 
     /// 從 `store` 讀回已儲存的設定；沒有儲存過或值無法辨識的欄位使用預設值。
@@ -107,6 +116,7 @@ public final class AppSettings {
         animationsEnabled = store.bool(forKey: Key.animationsEnabled) ?? true
         lowDistractionAlerts = store.bool(forKey: Key.lowDistractionAlerts) ?? true
         translucentPopoverBackground = store.bool(forKey: Key.translucentPopoverBackground) ?? false
+        language = store.string(forKey: Key.language).flatMap(AppLanguage.init(rawValue:)) ?? .english
     }
 }
 

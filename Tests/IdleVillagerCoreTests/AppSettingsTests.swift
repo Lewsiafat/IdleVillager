@@ -49,6 +49,7 @@ struct AppSettingsTests {
         #expect(settings.animationsEnabled == true)
         #expect(settings.lowDistractionAlerts == true)
         #expect(settings.translucentPopoverBackground == false)
+        #expect(settings.language == .english)
     }
 
     @Test func changedSettingsSurviveARestartWithTheSameStore() {
@@ -61,6 +62,7 @@ struct AppSettingsTests {
         beforeRestart.animationsEnabled = false
         beforeRestart.lowDistractionAlerts = false
         beforeRestart.translucentPopoverBackground = true
+        beforeRestart.language = .traditionalChinese
 
         let afterRestart = AppSettings(store: store)
 
@@ -71,6 +73,22 @@ struct AppSettingsTests {
         #expect(afterRestart.animationsEnabled == false)
         #expect(afterRestart.lowDistractionAlerts == false)
         #expect(afterRestart.translucentPopoverBackground == true)
+        #expect(afterRestart.language == .traditionalChinese)
+    }
+
+    @Test func languageIsStoredAsTheLprojNameAndUnknownValuesFallBackToEnglish() {
+        let store = InMemorySettingsStore()
+        AppSettings(store: store).language = .traditionalChinese
+        #expect(store.string(forKey: AppSettings.Key.language) == "zh-Hant")
+
+        store.set("zh-Hans", forKey: AppSettings.Key.language)
+        #expect(AppSettings(store: store).language == .english)
+    }
+
+    @Test func changingTheLanguageSettingDoesNotSwitchTheProcessWideLanguage() {
+        let settings = AppSettings(store: InMemorySettingsStore())
+        settings.language = .english
+        #expect(L10n.current.language == .traditionalChinese)
     }
 
     @Test func turningAlwaysShowZeroCountsOnAndOffChangesTheMenuBarTextImmediately() async {

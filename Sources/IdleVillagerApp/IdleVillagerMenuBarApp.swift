@@ -6,12 +6,14 @@ import IdleVillagerCore
 struct IdleVillagerMenuBarApp: App {
     @State private var store: SessionStore
     @State private var focusCoordinator: FocusCoordinator
-    @State private var settings = AppSettings(store: UserDefaultsSettingsStore())
+    @State private var settings: AppSettings
 
     init() {
         // 先決定介面語言，之後建立的模型與畫面文字（含示範資料與來源名稱）才會用對語言。
-        // 只跟隨 macOS 的偏好語言：第一個支援的語言（英文或繁體中文）優先，都不支援時用英文。
-        L10n.useSystemLanguage()
+        // 語言取自使用者在設定畫面的選擇；從未選過時是英文，不跟隨 macOS 的偏好語言。
+        let settings = AppSettings(store: UserDefaultsSettingsStore())
+        L10n.use(settings.language)
+        _settings = State(initialValue: settings)
 
         // 以 Swift Package 執行檔啟動時沒有 Info.plist 的 LSUIElement，改用程式設定成只出現在選單列。
         NSApplication.shared.setActivationPolicy(.accessory)
@@ -58,11 +60,15 @@ struct IdleVillagerMenuBarApp: App {
 ///
 /// 必須在 View 的 body 內讀取 `store.snapshot`，SwiftUI 才會在快照變動時重繪已開啟的 Popover；
 /// 若在 `App.body` 的 Scene 層讀取，Popover 開著時清單會停在開啟當下的資料，點擊舊列會得到「目標已不存在」。
+///
+/// 介面語言改變時以 `.id` 重建整個 Popover：`L10n.text` 不受 SwiftUI 追蹤，不重建的話已畫出的文字會停在舊語言。
 struct LiveSessionPopover: View {
     let store: SessionStore
+    @Environment(AppSettings.self) private var settings
 
     var body: some View {
         SessionPopoverView(snapshot: store.snapshot)
+            .id(settings.language)
     }
 }
 
@@ -72,8 +78,10 @@ struct LiveMenuBarLabel: View {
     let settings: AppSettings
 
     var body: some View {
+        // 語言改變時重建，讓無障礙文字換成新語言，理由同 `LiveSessionPopover`。
         MenuBarLabel(snapshot: store.snapshot, settings: settings)
             .approvalAlert(needsApprovalCount: store.snapshot.counts.needsApproval, settings: settings)
+            .id(settings.language)
     }
 }
 

@@ -102,7 +102,7 @@ manifest 是 repo 根目錄的 `herdr-plugin.toml`，啟動腳本是 `distributi
 `distribution/make-app.sh` 會從 SwiftPM 的 release 建置產物組出 `IdleVillager.app`：
 
 - `Contents/MacOS/IdleVillager`：執行檔。
-- `Contents/Info.plist`：`CFBundleIdentifier` 設為 `io.github.lewsiafat.IdleVillager`，加上 `LSUIElement = true`，讓 App 不出現在 Dock。程式裡原本就有 `setActivationPolicy(.accessory)`，兩者並存沒有問題。另外宣告 `CFBundleDevelopmentRegion = en` 與 `CFBundleLocalizations = [en, zh-Hant]`，讓系統元件（例如設定視窗標題）與介面使用同一種語言，也讓「語言與地區」設定能為 IdleVillager 個別指定語言。
+- `Contents/Info.plist`：`CFBundleIdentifier` 設為 `io.github.lewsiafat.IdleVillager`，加上 `LSUIElement = true`，讓 App 不出現在 Dock。程式裡原本就有 `setActivationPolicy(.accessory)`，兩者並存沒有問題。另外宣告 `CFBundleDevelopmentRegion = en` 與 `CFBundleLocalizations = [en, zh-Hant]`，讓系統元件（例如設定視窗標題）能顯示英文或繁體中文。系統元件依 macOS 的語言決定，介面文字則依 App 設定裡的語言選項決定，兩者可能不同。
 - `Contents/Resources/IdleVillager_IdleVillagerApp.bundle`：App 的資源 bundle（品牌素材）。
 - `Contents/Resources/IdleVillager_IdleVillagerCore.bundle`：Core 的資源 bundle，內含介面字串表 `en.lproj/Localizable.strings` 與 `zh-Hant.lproj/Localizable.strings`。少了它介面會顯示字串 key，所以 `make-app.sh` 在缺檔時直接失敗。
 - 最後用 `codesign --force --deep -s -` 做 ad-hoc 簽章。
