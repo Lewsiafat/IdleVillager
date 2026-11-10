@@ -6,6 +6,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-11
+
 ### Added
 - 設定視窗的「外觀」區段新增「語言」選項，可以在 English 與繁體中文之間切換。切換後選單列、清單與設定視窗立即換成新語言，重開 App 後保留。
 
@@ -53,7 +55,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
 
-[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.0...v0.1.1
