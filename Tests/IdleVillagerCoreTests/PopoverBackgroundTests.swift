@@ -107,4 +107,13 @@ struct PopoverBackgroundStyleTests {
         let backing = try #require(PopoverBackgroundStyle.translucent.workspaceCardBackingOpacity)
         #expect(backing > 0 && backing < 1)
     }
+
+    @Test func onlyTheTranslucentStyleAddsAStrongerBackingUnderTheFooter() throws {
+        #expect(PopoverBackgroundStyle.opaque.footerBackingOpacity == nil)
+        let footer = try #require(PopoverBackgroundStyle.translucent.footerBackingOpacity)
+        let card = try #require(PopoverBackgroundStyle.translucent.workspaceCardBackingOpacity)
+        // The footer buttons have a light bezel, so they need more backing than the cards to stay readable
+        // over a bright desktop.
+        #expect(footer > card && footer < 1)
+    }
 }

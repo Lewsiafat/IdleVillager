@@ -7,10 +7,14 @@ import IdleVillagerCore
 /// Why `NSVisualEffectView` instead of a SwiftUI `Material` such as `.ultraThinMaterial`:
 /// - A SwiftUI material used as `.background` blends *within* the window, i.e. it only blurs what this window
 ///   already drew underneath (the popover's own background), so the desktop never shows through.
-/// - The SwiftUI way to get behind-window blending, `.containerBackground(_:for: .window)`, needs macOS 15,
-///   and `MenuBarExtra` does not expose its window, so we cannot clear the window background either.
+/// - The SwiftUI way to get behind-window blending, `.containerBackground(_:for: .window)`, needs macOS 15.
 /// - `NSVisualEffectView` with `.behindWindow` blending samples whatever is behind the window through the
 ///   window server, independent of what the hosting window draws, and needs no private window access.
+///
+/// The effect view alone is not enough: `MenuBarExtra` (`.window` style) makes SwiftUI draw its own full-size
+/// window background as sibling views *below* the content, one of them fully opaque, so the desktop stays
+/// hidden. `TranslucentBackdropView` hides those siblings while it is on screen and restores them when removed.
+/// Verified on macOS 14.6 by dumping the view tree of the real popover window.
 ///
 /// `state` is pinned to `.active`: with the default `.followsWindowActiveState` the material turns into a flat
 /// inactive gray whenever the panel is not the key window.
@@ -19,16 +23,63 @@ struct BehindWindowMaterial: NSViewRepresentable {
     /// dark appearance. Visually verify on a real Mac before changing.
     var material: NSVisualEffectView.Material = .hudWindow
 
-    func makeNSView(context: Context) -> NSVisualEffectView {
-        let view = NSVisualEffectView()
+    func makeNSView(context: Context) -> TranslucentBackdropView {
+        let view = TranslucentBackdropView()
         view.blendingMode = .behindWindow
         view.state = .active
         view.material = material
         return view
     }
 
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+    func updateNSView(_ nsView: TranslucentBackdropView, context: Context) {
         nsView.material = material
+        nsView.hideHostBackground()
+    }
+
+    static func dismantleNSView(_ nsView: TranslucentBackdropView, coordinator: ()) {
+        nsView.restoreHostBackground()
+    }
+}
+
+/// Behind-window effect view that also hides the opaque window background SwiftUI draws under it.
+///
+/// View tree of the `MenuBarExtra` window (macOS 14.6):
+/// `NSHostingView` > [SwiftUI background views..., host of this view, popover content...].
+/// Subviews earlier in the array are drawn below later ones, so every full-size sibling before this view's
+/// host is window background covering the desktop. Only those are hidden; the popover content after the host
+/// is never touched.
+final class TranslucentBackdropView: NSVisualEffectView {
+    /// Views hidden by this instance, restored when the translucent background is turned off.
+    private var hiddenViews: [NSView] = []
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil {
+            restoreHostBackground()
+        } else {
+            hideHostBackground()
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        // SwiftUI may rebuild its background views when the popover resizes; catch new ones here.
+        hideHostBackground()
+    }
+
+    func hideHostBackground() {
+        guard let host = superview, let container = host.superview,
+              let hostIndex = container.subviews.firstIndex(of: host) else { return }
+        for view in container.subviews[..<hostIndex]
+        where !view.isHidden && view.frame == container.bounds {
+            view.isHidden = true
+            hiddenViews.append(view)
+        }
+    }
+
+    func restoreHostBackground() {
+        hiddenViews.forEach { $0.isHidden = false }
+        hiddenViews.removeAll()
     }
 }
 

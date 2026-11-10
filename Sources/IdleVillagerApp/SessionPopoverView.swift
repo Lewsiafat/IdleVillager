@@ -30,6 +30,7 @@ struct SessionPopoverView: View {
     @State private var listContentHeight: CGFloat?
     @Environment(FocusCoordinator.self) private var focusCoordinator
     @Environment(AppSettings.self) private var settings
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     static let width: CGFloat = 400
     /// 列的最小高度；系統字體放大時列可以長高，不截字。
@@ -168,6 +169,13 @@ struct SessionPopoverView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
+        // 半透明背景時墊一層較濃的底色，避免按鈕在亮色桌面上太白、看不清楚。
+        .background {
+            // 這個 View 自己設定 popoverBackgroundStyle 環境值，讀環境只會拿到上層的預設值，所以直接算。
+            if let backing = settings.popoverBackgroundStyle(reduceTransparency: reduceTransparency).footerBackingOpacity {
+                Rectangle().fill(.background.opacity(backing))
+            }
+        }
     }
 }
 

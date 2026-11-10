@@ -31,6 +31,18 @@ public enum PopoverBackgroundStyle: String, CaseIterable, Hashable, Sendable {
         case .translucent: 0.5
         }
     }
+
+    /// Opacity of the window-background-colored backing drawn under the footer (status line, Settings and Quit).
+    ///
+    /// Stronger than the card backing: the footer buttons use the system bezel, which is light and
+    /// semi-transparent, so over a bright desktop the button text became hard to read at 0.5.
+    /// nil means the footer keeps the opaque look unchanged.
+    public var footerBackingOpacity: Double? {
+        switch self {
+        case .opaque: nil
+        case .translucent: 0.85
+        }
+    }
 }
 
 extension AppSettings {
