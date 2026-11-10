@@ -18,7 +18,7 @@ Normally, the menu bar shows minimalist status counts for agents that are workin
 - **Action:** click a session to locate it and switch back to Herdr
 - **Characters:** Claude, Codex, Gemini, and Generic, with light animation
 - **States:** Working, Needs Approval, Done, Idle, Error, Unknown
-- **UI language:** English and Traditional Chinese (Simplified Chinese is not supported). At launch, the app follows the macOS preferred-language list and uses the first language it supports; if neither is listed, it uses English. The language is chosen once at launch, so reopen the app after you change the system language. There is no in-app language switch.
+- **UI language:** English and Traditional Chinese (Simplified Chinese is not supported). The default is English. To switch, open Settings and change **Language** in the Appearance section; the change takes effect immediately.
 
 ## Install
 

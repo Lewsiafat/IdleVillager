@@ -70,7 +70,7 @@ struct LocalizationResourceTests {
         }
     }
 
-    /// Tests rely on this: until the App calls `L10n.useSystemLanguage()`, Core speaks Traditional Chinese.
+    /// Tests rely on this: until the App calls `L10n.use(_:)`, Core speaks Traditional Chinese.
     @Test func processDefaultIsTraditionalChinese() {
         #expect(L10n.current.language == .traditionalChinese)
         #expect(NormalizedState.working.shortText == "幹活中")
@@ -148,6 +148,18 @@ private let resolutionCases: [([String], AppLanguage)] = [
     (["ja-JP", "zh-Hant-TW"], .traditionalChinese),
     (["fr-FR", "en-GB", "zh-Hant-TW"], .english),
 ]
+
+struct AppLanguageSwitchTests {
+    @Test func stringsForALanguageLoadThatLanguageFromTheResourceBundle() {
+        #expect(L10n.strings(for: .english).text(.settingsLanguage) == "Language")
+        #expect(L10n.strings(for: .traditionalChinese).text(.settingsLanguage) == "語言")
+    }
+
+    @Test func pickerNamesAreWrittenInTheLanguageItself() {
+        #expect(AppLanguage.english.nativeName == "English")
+        #expect(AppLanguage.traditionalChinese.nativeName == "繁體中文")
+    }
+}
 
 struct AppLanguageResolutionTests {
     @Test(arguments: resolutionCases)

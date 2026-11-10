@@ -5,6 +5,16 @@ public enum AppLanguage: String, CaseIterable, Hashable, Sendable {
     case english = "en"
     case traditionalChinese = "zh-Hant"
 
+    /// The language's name written in that language itself (English, 繁體中文), for the language picker.
+    ///
+    /// Not translated into the current UI language, so a user who cannot read the current language still finds theirs.
+    public var nativeName: String {
+        switch self {
+        case .english: "English"
+        case .traditionalChinese: "繁體中文"
+        }
+    }
+
     /// Picks the UI language from the user's ordered preferred languages (`Locale.preferredLanguages`).
     ///
     /// Follows the macOS convention: the first preferred language IdleVillager supports wins.
@@ -143,8 +153,8 @@ public struct LocalizedStrings: Hashable, Sendable {
 /// Entry point for user-facing text. Core models and App views read every string through here.
 ///
 /// The process-wide language starts as Traditional Chinese, the product's original language, so tests are
-/// deterministic regardless of the test machine's language. The App calls `useSystemLanguage()` once at launch,
-/// before any UI or model is created. Tests that need another language wrap code in `withStrings(_:_:)`,
+/// deterministic regardless of the test machine's language. The App calls `use(_:)` with the language from
+/// `AppSettings` at launch, before any UI or model is created, and again whenever the user picks another language. Tests that need another language wrap code in `withStrings(_:_:)`,
 /// which only affects the current task and therefore never leaks into tests running in parallel.
 public enum L10n {
     /// Name of the SwiftPM resource bundle that holds the `.lproj` string tables.
@@ -160,13 +170,15 @@ public enum L10n {
         scopedStrings.get() ?? processStrings.get()
     }
 
-    /// Resolves the language from the user's preferred languages (English when neither supported language is listed)
-    /// and makes it the process-wide language. Returns the chosen language.
-    @discardableResult
-    public static func useSystemLanguage(preferredLanguages: [String] = Locale.preferredLanguages) -> AppLanguage {
-        let language = AppLanguage.resolve(preferredLanguages: preferredLanguages)
-        processStrings.set(LocalizedStrings.load(language: language, resourceBundleURL: locateResourceBundle()))
-        return language
+    /// Makes `language` the process-wide language. Text read afterwards uses it; views already on screen
+    /// must be redrawn by the caller.
+    public static func use(_ language: AppLanguage) {
+        processStrings.set(strings(for: language))
+    }
+
+    /// The string table of `language` from the Core resource bundle, with English for keys the language lacks.
+    public static func strings(for language: AppLanguage) -> LocalizedStrings {
+        LocalizedStrings.load(language: language, resourceBundleURL: locateResourceBundle())
     }
 
     /// Runs `operation` with `strings` as the current strings for this task only.

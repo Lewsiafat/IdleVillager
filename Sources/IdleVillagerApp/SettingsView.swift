@@ -21,6 +21,8 @@ struct SettingsView: View {
             AppearanceSettingsSection(settings: settings)
         }
         .formStyle(.grouped)
+        // 介面語言改變時重建整個表單，所有標題與說明才會換成新語言。
+        .id(settings.language)
         .frame(width: 420)
         .fixedSize(horizontal: false, vertical: true)
     }
