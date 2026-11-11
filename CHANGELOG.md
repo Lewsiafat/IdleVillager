@@ -6,6 +6,11 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-11
+
+### Changed
+- 清單底部重新排版：「設定…」與「結束 IdleVillager」按鈕稍微放大並移到上方，來源、版號與更新時間等文字統一放在下方，兩者之間加上分隔線，按鈕上下也多留了空間，比較好點。
+
 ## [0.3.0] - 2026-11-11
 
 ### Added
@@ -55,7 +60,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
 
-[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.1.1...v0.2.0

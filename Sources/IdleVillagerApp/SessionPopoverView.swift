@@ -130,13 +130,30 @@ struct SessionPopoverView: View {
     /// `Info.plist` 的 `CFBundleShortVersionString`；`swift run` 執行時沒有，為 nil。
     private static let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
 
-    /// footer 分兩列：第一列是來源、連線與更新時間，第二列是「設定…」、版號與「結束 IdleVillager」。
+    /// footer 上方是「設定…」與「結束 IdleVillager」兩顆按鈕；文字統一放在下方：來源與連線、版號、更新時間，
+    /// 資料過期時再多一行過期提示。
     private func footer(_ footer: SessionListModel.Footer) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                SettingsEntryButton()
+                Spacer()
+                Button(L10n.text(.footerQuit)) {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
+            // 按鈕用標準尺寸，比 small 稍大、比較好點。
+            .controlSize(.regular)
+
+            // 分隔按鈕與下方的狀態文字。
+            Divider()
+
             HStack(spacing: 6) {
                 Image(systemName: footer.connectionState == .connected ? "link" : "exclamationmark.triangle")
                     .accessibilityHidden(true)
                 Text(L10n.text(.footerSource, ["source": footer.sourceName, "connection": footer.connectionText]))
+                Spacer()
+                Text(AppVersionLabel.text(shortVersion: Self.shortVersion))
+                    .accessibilityLabel(AppVersionLabel.accessibilityText(shortVersion: Self.shortVersion))
                 Spacer()
                 // 相對時間由 Core 依當下時間產生，定期重繪讓「N 分鐘前」持續正確。
                 TimelineView(.periodic(from: .now, by: 10)) { context in
@@ -152,23 +169,12 @@ struct SessionPopoverView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-
-            HStack {
-                SettingsEntryButton()
-                Spacer()
-                Text(AppVersionLabel.text(shortVersion: Self.shortVersion))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel(AppVersionLabel.accessibilityText(shortVersion: Self.shortVersion))
-                Spacer()
-                Button(L10n.text(.footerQuit)) {
-                    NSApplication.shared.terminate(nil)
-                }
-            }
-            .controlSize(.small)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        // 按鈕上方留空間，才不會貼著上面的分隔線。
+        .padding(.top, 10)
+        // 底部多留一點空間，按鈕才不會貼著清單的下緣。
+        .padding(.bottom, 10)
         // 半透明背景時墊一層較濃的底色，避免按鈕在亮色桌面上太白、看不清楚。
         .background {
             // 這個 View 自己設定 popoverBackgroundStyle 環境值，讀環境只會拿到上層的預設值，所以直接算。
