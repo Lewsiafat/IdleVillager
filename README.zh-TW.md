@@ -53,12 +53,12 @@ herdr plugin uninstall idlevillager
 
 裝好後在選單列看不到圖示時，通常是空間不夠：有瀏海的 MacBook 會把放不下的選單列圖示藏起來，而且不會有提示。請按住 ⌘ 把其他不常用的圖示拖出選單列，騰出空間。
 
-<p align="center"><img src="docs/images/demo.gif" alt="點列表裡的 session 跳回 Herdr 對應的 pane" width="410"><br>
+<p align="center"><img src="docs/images/demo.gif" alt="點列表裡的 session 跳回 Herdr 對應的 pane" width="800"><br>
 <em>點列表裡的 session 跳回 Herdr 對應的 pane。</em></p>
 
 ## 最近更新
 
-[v0.2.0](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.2.0)（2026-11-10）加入英文介面，以及展開清單可選的半透明背景。版本與變更紀錄見 [`CHANGELOG.md`](CHANGELOG.md)。
+[v0.3.0](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.0)（2026-11-11）在設定視窗加入語言切換（English／繁體中文），並把預設介面語言改為英文。原本看到中文介面的使用者，更新後請到設定視窗「Appearance」區段的「Language」改回「繁體中文」。版本與變更紀錄見 [`CHANGELOG.md`](CHANGELOG.md)。
 
 ## 商標
 

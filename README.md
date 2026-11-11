@@ -53,12 +53,12 @@ An update rebuilds the app, then automatically quits the old version and opens t
 
 If you can't see the icon in the menu bar after installing, the menu bar is usually out of space: MacBooks with a notch silently hide menu bar icons that don't fit. Hold ⌘ and drag other rarely used icons out of the menu bar to make room.
 
-<p align="center"><img src="docs/images/demo.gif" alt="Click a session in the list to jump back to it in Herdr" width="410"><br>
+<p align="center"><img src="docs/images/demo.gif" alt="Click a session in the list to jump back to it in Herdr" width="800"><br>
 <em>Click a session in the list to jump back to it in Herdr.</em></p>
 
 ## What's new
 
-[v0.2.0](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.2.0) (2026-11-10) adds an English interface and an optional translucent background for the expanded list. See [`CHANGELOG.md`](CHANGELOG.md) for versions and changes.
+[v0.3.0](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.0) (2026-11-11) adds a language switch (English / Traditional Chinese) in Settings and makes English the default interface language. If you were seeing the Traditional Chinese interface before, change **Language** in the Appearance section of Settings back to 繁體中文 after updating. See [`CHANGELOG.md`](CHANGELOG.md) for versions and changes.
 
 ## Trademarks
 
