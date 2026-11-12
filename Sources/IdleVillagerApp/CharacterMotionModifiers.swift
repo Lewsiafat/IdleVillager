@@ -1,10 +1,12 @@
+import AppKit
+import QuartzCore
 import SwiftUI
 import IdleVillagerCore
 
-/// 角色動作的 SwiftUI 實作，完全照 `CharacterMotion` 的純值播放：loop 為 nil 時不加任何動畫，transition 為 nil 時不播過渡。
+/// 角色動作的實作，完全照 `CharacterMotion` 的純值播放：loop 為 nil 時不加任何動畫，transition 為 nil 時不播過渡。
 ///
-/// 為了讓多個角色同時顯示時仍然省電，循環一律用 `PhaseAnimator`：靜止的時段以動畫的 delay 表示，
-/// 不使用持續 Timer，也不在每一幀重算狀態。過渡用 `keyframeAnimator`，只在 trigger 改變時播一次。
+/// 循環交給 Core Animation 播放（見 `LoopingHostingView`），一個週期的關鍵影格由 Core 的 `CharacterLoop.keyframes` 描述。
+/// 過渡用 `keyframeAnimator`，只在 trigger 改變時播一次。
 extension View {
     /// 套用 `CharacterMotion`：循環動作加上在 `transitionTrigger` 改變時播一次的過渡。
     func characterMotion<Trigger: Equatable>(_ motion: CharacterMotion, side: CGFloat, transitionTrigger: Trigger) -> some View {
@@ -14,7 +16,7 @@ extension View {
 
     /// 套用循環動作。`side` 是角色邊長，位移以它的比例換算。
     func characterLoop(_ loop: CharacterLoop?, side: CGFloat) -> some View {
-        modifier(CharacterLoopModifier(loop: loop, side: side))
+        CharacterLoopView(loop: loop, side: side, content: self)
     }
 
     /// 在 `trigger` 改變時播放一次 `transition`；transition 為 nil 時不做任何事。
@@ -23,93 +25,162 @@ extension View {
     }
 }
 
-private struct CharacterLoopModifier: ViewModifier {
+/// 依循環的對象，把角色本身或躺平時的小 z 交給 `LoopingLayer` 播放。
+private struct CharacterLoopView<Content: View>: View {
     let loop: CharacterLoop?
     let side: CGFloat
+    let content: Content
 
-    func body(content: Content) -> some View {
-        switch loop {
-        case .workingBob:
-            content.modifier(WorkingBob(parameters: CharacterLoop.workingBob.parameters, side: side))
-        case .raisedHandSway:
-            content.modifier(RaisedHandSway(parameters: CharacterLoop.raisedHandSway.parameters))
-        case .idleZzz:
-            content.modifier(IdleZzz(parameters: CharacterLoop.idleZzz.parameters, side: side))
-        case nil:
+    var body: some View {
+        if let loop {
+            let keyframes = loop.keyframes
+            switch keyframes.target {
+            case .character:
+                LoopingLayer(keyframes: keyframes, side: side, content: content)
+                    .frame(width: side, height: side)
+            case .zzzMarker:
+                content.overlay {
+                    LoopingLayer(keyframes: keyframes, side: side, content: ZzzMarker(side: side))
+                        .frame(width: side, height: side)
+                }
+            }
+        } else {
             content
         }
     }
 }
 
-/// 幹活：在兩個相位之間平穩來回，微幅上下跳動並左右擺動。每個方向走半個週期。
-private struct WorkingBob: ViewModifier {
-    let parameters: CharacterLoopParameters
+/// 躺平角色旁邊浮出的小 z，位置以角色邊長的比例表示。
+private struct ZzzMarker: View {
     let side: CGFloat
 
-    func body(content: Content) -> some View {
-        content.phaseAnimator([false, true]) { view, up in
-            view
-                .offset(y: up ? -parameters.offset * side : 0)
-                .rotationEffect(.degrees(up ? parameters.rotationDegrees : -parameters.rotationDegrees), anchor: .bottom)
-        } animation: { _ in
-            .easeInOut(duration: parameters.motionDuration / 2)
-        }
+    var body: some View {
+        Text("z")
+            .font(.system(size: side * 0.22, weight: .semibold, design: .rounded))
+            .foregroundStyle(.secondary)
+            .position(x: side * 0.92, y: side * 0.3)
     }
 }
 
-/// 舉手：靜止一段時間後，左右小幅晃一下再回正。整個週期只有 `motionDuration` 在動。
-private struct RaisedHandSway: ViewModifier {
-    enum Phase: CaseIterable { case rest, left, right }
+/// 把 SwiftUI 內容放進 `LoopingHostingView`，讓 Core Animation 重複播放關鍵影格。
+private struct LoopingLayer<Content: View>: NSViewRepresentable {
+    let keyframes: CharacterLoopKeyframes
+    let side: CGFloat
+    let content: Content
 
-    let parameters: CharacterLoopParameters
-
-    func body(content: Content) -> some View {
-        content.phaseAnimator(Phase.allCases) { view, phase in
-            view.rotationEffect(.degrees(angle(of: phase)), anchor: .bottom)
-        } animation: { phase in
-            let step = parameters.motionDuration / 3
-            // 動畫閉包收到的是「要前往」的相位；從靜止出發的那一步帶著整段靜止時間的 delay。
-            return phase == .left ? .easeInOut(duration: step).delay(parameters.restDuration) : .easeInOut(duration: step)
-        }
+    func makeNSView(context: Context) -> LoopingHostingView<Content> {
+        let view = LoopingHostingView(rootView: content)
+        view.sizingOptions = []
+        view.update(keyframes: keyframes, side: side)
+        return view
     }
 
-    private func angle(of phase: Phase) -> Double {
-        switch phase {
-        case .rest: 0
-        case .left: -parameters.rotationDegrees
-        case .right: parameters.rotationDegrees
-        }
+    func updateNSView(_ nsView: LoopingHostingView<Content>, context: Context) {
+        nsView.rootView = content
+        nsView.update(keyframes: keyframes, side: side)
     }
 }
 
-/// 躺平：靜止一段時間後，從靜態 Zzz 旁浮出一個小 z，往上飄並淡出。角色本身不動。
-private struct IdleZzz: ViewModifier {
-    enum Phase: CaseIterable { case hidden, shown, floated }
+/// 在自己的圖層上無限重複播放一個週期的關鍵影格。
+///
+/// 為什麼不用 SwiftUI 的 `PhaseAnimator`：它每一幀都要在主執行緒更新 view graph，並重做整個清單視窗的版面配置，
+/// 連用 delay 表示的靜止時段也一樣（2026-11-12 實測，清單開著時 CPU 約 10%）。
+/// Core Animation 的動畫由系統的繪圖程序播放，加上去之後主執行緒每一幀都不用做事。
+private final class LoopingHostingView<Content: View>: NSHostingView<Content> {
+    private static var animationKey: String { "characterLoop" }
 
-    /// 淡出後回到起點的時間，從靜止時間中扣除，讓整個週期維持 `period`。
-    private static let reset: TimeInterval = 0.05
+    private var keyframes: CharacterLoopKeyframes?
+    private var side: CGFloat = 0
+    private var needsNewAnimation = true
 
-    let parameters: CharacterLoopParameters
-    let side: CGFloat
+    required init(rootView: Content) {
+        super.init(rootView: rootView)
+        wantsLayer = true
+    }
 
-    func body(content: Content) -> some View {
-        content.overlay {
-            Text("z")
-                .font(.system(size: side * 0.22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.secondary)
-                .phaseAnimator(Phase.allCases) { view, phase in
-                    view
-                        .opacity(phase == .shown ? 1 : 0)
-                        .offset(y: phase == .floated ? -parameters.offset * side : 0)
-                } animation: { phase in
-                    switch phase {
-                    case .shown: .easeOut(duration: parameters.motionDuration * 0.3).delay(parameters.restDuration - Self.reset)
-                    case .floated: .easeIn(duration: parameters.motionDuration * 0.7)
-                    // 已經淡出，回到起點時看不見；用極短的動畫而不是 nil，確保相位一定會往下走。
-                    case .hidden: .linear(duration: Self.reset)
-                    }
-                }
-                .position(x: side * 0.92, y: side * 0.3)
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    // 只負責畫面，點擊與 hover 交給清單列上方的 `ClickableRowArea`。
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    func update(keyframes: CharacterLoopKeyframes, side: CGFloat) {
+        guard keyframes != self.keyframes || side != self.side else { return }
+        self.keyframes = keyframes
+        self.side = side
+        needsNewAnimation = true
+        needsLayout = true
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        needsLayout = true
+    }
+
+    // 圖層的大小與上層座標要等版面配置完成才確定，所以在這裡加動畫。
+    // AppKit 有時會移除圖層上的動畫（例如視窗重新建立圖層時），發現不見了就再加回去。
+    override func layout() {
+        super.layout()
+        guard let layer, let keyframes, window != nil, bounds.width > 0 else { return }
+        guard needsNewAnimation || layer.animation(forKey: Self.animationKey) == nil else { return }
+        layer.removeAnimation(forKey: Self.animationKey)
+        layer.add(Self.animation(for: keyframes, side: side, in: layer), forKey: Self.animationKey)
+        needsNewAnimation = false
+    }
+
+    private static func animation(for keyframes: CharacterLoopKeyframes, side: CGFloat, in layer: CALayer) -> CAAnimation {
+        let frames = keyframes.frames
+        let keyTimes = frames.map { NSNumber(value: $0.time / keyframes.period) }
+        let timingFunctions = frames.dropFirst().map { timingFunction(for: $0.curve) }
+
+        var animations: [CAAnimation] = []
+        if frames.contains(where: { $0.pose.rotationDegrees != 0 || $0.pose.lift != 0 }) {
+            let transform = CAKeyframeAnimation(keyPath: "transform")
+            transform.values = frames.map { NSValue(caTransform3D: self.transform(for: $0.pose, side: side, in: layer)) }
+            transform.keyTimes = keyTimes
+            transform.timingFunctions = timingFunctions
+            animations.append(transform)
+        }
+        if frames.contains(where: { $0.pose.opacity != 1 }) {
+            let opacity = CAKeyframeAnimation(keyPath: "opacity")
+            opacity.values = frames.map { $0.pose.opacity }
+            opacity.keyTimes = keyTimes
+            opacity.timingFunctions = timingFunctions
+            animations.append(opacity)
+        }
+
+        let group = CAAnimationGroup()
+        group.animations = animations
+        group.duration = keyframes.period
+        group.repeatCount = .infinity
+        return group
+    }
+
+    /// 以角色底部中央為軸旋轉，再往上抬起。
+    ///
+    /// 圖層的 transform 以 `anchorPoint` 為原點，方向跟著上層圖層的座標系：上層翻轉時 y 軸朝下，
+    /// 所以「底部」「往上」與「順時針」的正負號都要依此換算。
+    private static func transform(for pose: CharacterLoopPose, side: CGFloat, in layer: CALayer) -> CATransform3D {
+        let yDown = layer.superlayer?.contentsAreFlipped() ?? false
+        let bounds = layer.bounds
+        let pivotX = bounds.width / 2 - layer.anchorPoint.x * bounds.width
+        let pivotY = (yDown ? bounds.height : 0) - layer.anchorPoint.y * bounds.height
+        let lift = CGFloat(pose.lift) * side * (yDown ? -1 : 1)
+        let clockwise = CGFloat(pose.rotationDegrees) * .pi / 180
+        let angle = yDown ? clockwise : -clockwise
+
+        var transform = CATransform3DMakeTranslation(pivotX, pivotY + lift, 0)
+        transform = CATransform3DRotate(transform, angle, 0, 0, 1)
+        transform = CATransform3DTranslate(transform, -pivotX, -pivotY, 0)
+        return transform
+    }
+
+    private static func timingFunction(for curve: CharacterLoopCurve) -> CAMediaTimingFunction {
+        switch curve {
+        case .linear: CAMediaTimingFunction(name: .linear)
+        case .easeIn: CAMediaTimingFunction(name: .easeIn)
+        case .easeOut: CAMediaTimingFunction(name: .easeOut)
+        case .easeInOut: CAMediaTimingFunction(name: .easeInEaseOut)
         }
     }
 }
