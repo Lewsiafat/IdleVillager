@@ -57,8 +57,10 @@ struct SessionPopoverView: View {
         .popoverBackground(settings: settings)
         .environment(\.popoverIsVisible, isVisible)
         .background(WindowVisibilityObserver(isVisible: $isVisible))
-        // 重新打開 Popover 時不再顯示上一次的失敗訊息。
-        .onDisappear { focusCoordinator.clearFailure() }
+        // 重新打開 Popover 時不再顯示上一次的失敗訊息。關閉清單不會觸發 onDisappear，所以看視窗是否還可見。
+        .onChange(of: isVisible) { wasVisible, nowVisible in
+            if wasVisible && !nowVisible { focusCoordinator.clearFailure() }
+        }
     }
 
     /// Focus 失敗時顯示在 Popover 頂部的原因；Popover 保持開啟。
@@ -287,9 +289,6 @@ private struct SessionRowView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.popoverIsVisible) private var popoverIsVisible
     @State private var isHovered = false
-    /// 這一列是否已把手指游標 push 進 `NSCursor` 堆疊。`onHover` 事件可能漏發或重複，
-    /// 只依這個旗標在真正轉換時 push 或 pop，確保堆疊不失衡。
-    @State private var hasPushedCursor = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -318,32 +317,18 @@ private struct SessionRowView: View {
                 .padding(.horizontal, 4)
         }
         .contentShape(Rectangle())
-        .onTapGesture { focus() }
-        .onHover { hovering in
-            isHovered = hovering
-            setPointingHandCursor(hovering)
-        }
-        .onDisappear {
-            // 列在 hover 中消失（例如 Popover 關閉或清單更新）時，把游標還原。
-            isHovered = false
-            setPointingHandCursor(false)
+        // 點擊、hover 與手指游標都交給 AppKit 的 view 處理。AppKit 只採用滑鼠底下接收點擊的 view 的游標設定，
+        // 用 SwiftUI 的 onTapGesture 時接收點擊的是 SwiftUI 視窗本身，游標會一直被設回箭頭。
+        .overlay(ClickableRowArea(onClick: focus, onHoverChange: { isHovered = $0 }))
+        .onChange(of: popoverIsVisible) { _, visible in
+            // 關閉 Popover 不會觸發 onDisappear，也不會送出 hover 結束；不重設的話，下次打開時這一列還是 hover 的樣子。
+            if !visible { isHovered = false }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(.isButton)
         .accessibilityHint(L10n.text(.rowFocusHint))
         .accessibilityAction { focus() }
-    }
-
-    /// 依需要 push 或 pop 手指游標；狀態沒有改變時不動作。
-    private func setPointingHandCursor(_ wantsPointingHand: Bool) {
-        guard wantsPointingHand != hasPushedCursor else { return }
-        if wantsPointingHand {
-            NSCursor.pointingHand.push()
-        } else {
-            NSCursor.pop()
-        }
-        hasPushedCursor = wantsPointingHand
     }
 
     /// 成功就關閉 Popover；失敗時原因由 Popover 頂部顯示，不關閉。
@@ -461,6 +446,60 @@ private struct WindowVisibilityObserver: NSViewRepresentable {
         private func report(_ visible: Bool) {
             // 不在版面配置或繪製途中直接改 SwiftUI 狀態，留到下一輪執行。
             DispatchQueue.main.async { [weak self] in self?.onChange?(visible) }
+        }
+    }
+}
+
+/// 可點擊的列的滑鼠處理區：顯示手指游標、回報 hover、在滑鼠放開時觸發點擊。
+///
+/// AppKit 決定游標時，只看滑鼠底下接收點擊的 view，所以這個 view 必須自己接收滑鼠事件，cursor rect 才會生效。
+/// 滑鼠移出或視窗隱藏時，游標由系統自動換回，不需要自己 push 或 pop。
+/// 這個 view 不出現在輔助使用的元素樹裡；VoiceOver 的操作由 SwiftUI 那一層的 `accessibilityAction` 處理。
+private struct ClickableRowArea: NSViewRepresentable {
+    let onClick: () -> Void
+    let onHoverChange: (Bool) -> Void
+
+    func makeNSView(context: Context) -> AreaView { AreaView() }
+
+    // 每次更新都換成最新的回呼，避免握住舊的 View 狀態。
+    func updateNSView(_ nsView: AreaView, context: Context) {
+        nsView.onClick = onClick
+        nsView.onHoverChange = onHoverChange
+    }
+
+    final class AreaView: NSView {
+        var onClick: (() -> Void)?
+        var onHoverChange: ((Bool) -> Void)?
+
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            setAccessibilityElement(false)
+        }
+
+        required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+        // 清單視窗還不是 key window 時，第一下點擊也要生效。
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+        override func resetCursorRects() {
+            addCursorRect(bounds, cursor: .pointingHand)
+        }
+
+        override func updateTrackingAreas() {
+            super.updateTrackingAreas()
+            for area in trackingAreas { removeTrackingArea(area) }
+            addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                           owner: self, userInfo: nil))
+        }
+
+        override func mouseEntered(with event: NSEvent) { onHoverChange?(true) }
+        override func mouseExited(with event: NSEvent) { onHoverChange?(false) }
+
+        // 覆寫 mouseDown 才會收到 mouseUp；放開時滑鼠仍在範圍內才算點擊，和一般按鈕一樣可以移出取消。
+        override func mouseDown(with event: NSEvent) {}
+
+        override func mouseUp(with event: NSEvent) {
+            if bounds.contains(convert(event.locationInWindow, from: nil)) { onClick?() }
         }
     }
 }
