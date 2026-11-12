@@ -28,6 +28,10 @@ struct SessionPopoverView: View {
     @State private var viewModel = SessionPopoverViewModel()
     /// 清單內容量到的實際高度；nil 表示還沒量到（第一次排版前）。
     @State private var listContentHeight: CGFloat?
+    /// Popover 目前是否顯示在畫面上。`MenuBarExtra` 關閉時只把視窗藏起來，不會觸發 `onDisappear`，
+    /// SwiftUI 也不會停掉 `PhaseAnimator`；不停的話隱藏的視窗每一幀都重做版面配置，CPU 持續約 25%。
+    /// 因此改由 `WindowVisibilityObserver` 直接看 AppKit 視窗是否可見。
+    @State private var isVisible = false
     @Environment(FocusCoordinator.self) private var focusCoordinator
     @Environment(AppSettings.self) private var settings
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -51,6 +55,8 @@ struct SessionPopoverView: View {
         .frame(width: Self.width)
         // Translucent or opaque background, decided in Core from the setting and system Reduce Transparency.
         .popoverBackground(settings: settings)
+        .environment(\.popoverIsVisible, isVisible)
+        .background(WindowVisibilityObserver(isVisible: $isVisible))
         // 重新打開 Popover 時不再顯示上一次的失敗訊息。
         .onDisappear { focusCoordinator.clearFailure() }
     }
@@ -279,6 +285,7 @@ private struct SessionRowView: View {
     @Environment(FocusCoordinator.self) private var focusCoordinator
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.popoverIsVisible) private var popoverIsVisible
     @State private var isHovered = false
     /// 這一列是否已把手指游標 push 進 `NSCursor` 堆疊。`onHover` 事件可能漏發或重複，
     /// 只依這個旗標在真正轉換時 push 或 pop，確保堆疊不失衡。
@@ -287,7 +294,7 @@ private struct SessionRowView: View {
     var body: some View {
         HStack(spacing: 8) {
             CharacterView(state: row.state, agentKind: row.agentKind,
-                          animationsEnabled: settings.animationsEnabled)
+                          animationsEnabled: settings.animationsEnabled && popoverIsVisible)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(row.displayName) · \(row.paneLabel)")
                     .lineLimit(1)
@@ -392,6 +399,68 @@ private struct StatusCapsule: View {
         case .yellow: .yellow
         case .red: .red
         case .gray: .gray
+        }
+    }
+}
+
+// 只有 Command Line Tools 時沒有 SwiftUI 的 macro plugin，無法使用 `@Entry`，改用傳統的 EnvironmentKey。
+private struct PopoverIsVisibleKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    /// Popover 是否顯示在畫面上，由 `SessionPopoverView` 設定；角色列在 Popover 關閉時停止循環動畫。
+    var popoverIsVisible: Bool {
+        get { self[PopoverIsVisibleKey.self] }
+        set { self[PopoverIsVisibleKey.self] = newValue }
+    }
+}
+
+/// 回報所在 AppKit 視窗目前是否可見。
+///
+/// `MenuBarExtra`（`.window` 樣式）關閉時只把視窗藏起來，SwiftUI 的 `onDisappear` 不會觸發（2026-11-12 實測），
+/// 因此監聽視窗的遮蔽狀態變化：視窗顯示、隱藏或被完全擋住時，macOS 都會發出 `didChangeOcclusionStateNotification`。
+private struct WindowVisibilityObserver: NSViewRepresentable {
+    @Binding var isVisible: Bool
+
+    func makeNSView(context: Context) -> ObserverView {
+        ObserverView()
+    }
+
+    // SwiftUI 建立 View 後一定會接著呼叫這裡，所以只在這裡設定回呼，讓它總是指向最新的 binding。
+    func updateNSView(_ nsView: ObserverView, context: Context) {
+        nsView.onChange = { visible in
+            if isVisible != visible { isVisible = visible }
+        }
+    }
+
+    final class ObserverView: NSView {
+        var onChange: ((Bool) -> Void)?
+        private var observer: (any NSObjectProtocol)?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            if let observer { NotificationCenter.default.removeObserver(observer) }
+            observer = nil
+            guard let window else {
+                report(false)
+                return
+            }
+            observer = NotificationCenter.default.addObserver(
+                forName: NSWindow.didChangeOcclusionStateNotification, object: window, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.reportCurrent() }
+            }
+            reportCurrent()
+        }
+
+        private func reportCurrent() {
+            report(window?.occlusionState.contains(.visible) ?? false)
+        }
+
+        private func report(_ visible: Bool) {
+            // 不在版面配置或繪製途中直接改 SwiftUI 狀態，留到下一輪執行。
+            DispatchQueue.main.async { [weak self] in self?.onChange?(visible) }
         }
     }
 }
