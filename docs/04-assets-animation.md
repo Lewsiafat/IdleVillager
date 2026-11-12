@@ -4,6 +4,8 @@
 
 建議：**品牌 SVG / 向量資產 + 可重用的道具/效果圖 + SwiftUI 動畫**。專案初始包不附第三方 Logo 或圖片，也不包含程式碼。
 
+實作：角色以 SwiftUI 繪製。持續播放的循環動作（幹活、舉手、躺平）交給 Core Animation 播放，一個週期的關鍵影格由 `IdleVillagerCore` 的 `CharacterLoop.keyframes` 描述；狀態轉換時只播一次的過渡仍用 SwiftUI。改用 Core Animation 的原因是 SwiftUI 的 `PhaseAnimator` 每一幀都要在主執行緒重做整個清單視窗的版面配置，連靜止時段也一樣，清單開著時 CPU 約 10%（#56）。
+
 ## 必須取得的外部品牌素材
 
 | 檔名（預定） | 內容 | 取得要求 | 狀態 |
