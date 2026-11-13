@@ -6,6 +6,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-13
+
 ### Fixed
 - 打開過一次清單之後，App 會持續佔用約 25% 的 CPU：清單關閉後視窗只是被藏起來，角色動畫仍在背景一直播放。現在清單關閉時會停止角色動畫，再打開時恢復。
 - 切換失敗的提示在關閉清單後不會消失，下次打開清單時還會看到舊的提示。現在清單關閉時會清除提示。
@@ -66,7 +68,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
 
-[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.0...v0.2.1
