@@ -113,3 +113,14 @@ struct CharacterMotionTests {
         #expect(parameters.startOpacity == 0.5)
     }
 }
+
+// MARK: 過渡參數的不變條件
+
+struct CharacterTransitionParametersTests {
+    /// 過渡的長度必須大於 0。SwiftUI 的 keyframe 動畫以「經過時間 ÷ 全長」算進度，全長為 0 會算出 NaN，
+    /// 角色的位移與不透明度變成 NaN，AppKit 檢查到 view 高度為 NaN 就會中止程式（issue #55）。
+    @Test(arguments: CharacterTransition.allCases)
+    func transitionDurationIsPositive(transition: CharacterTransition) {
+        #expect(transition.parameters.duration > 0)
+    }
+}
