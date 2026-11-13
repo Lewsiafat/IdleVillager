@@ -196,9 +196,21 @@ private struct CharacterTransitionModifier<Trigger: Equatable>: ViewModifier {
     let side: CGFloat
     let trigger: Trigger
 
+    /// 沒有過渡時使用的參數：不跳、不淡入，長度是很短的非零值。
+    ///
+    /// 長度不能是 0：SwiftUI 以「經過時間 ÷ 全長」算進度，全長為 0 時進度是 NaN，位移與不透明度跟著變成 NaN，
+    /// 清單列裡的 AppKit view 收到高度為 NaN 的 frame 就會讓整個 App 中止（issue #55）。
+    /// 任何狀態改變都會更新 trigger，所以動畫關閉、Reduce Motion，或 Working 轉 Needs Approval 這類
+    /// 沒有過渡的轉換，只要清單曾經打開過，就會踩到這條路。
+    ///
+    /// 也不能在沒有過渡時改成不套 keyframeAnimator：那樣 view 結構會隨過渡有無而切換，
+    /// 狀態改變當下新插入的 animator 不會播放（它只在 trigger 改變時播放），Done 的慶祝跳躍就看不到。
+    private static var noTransition: CharacterTransitionParameters {
+        CharacterTransitionParameters(duration: 0.001, jumpHeight: 0, startOpacity: 1)
+    }
+
     func body(content: Content) -> some View {
-        // transition 為 nil 時參數全為零，keyframe 長度為 0，等同不播放。
-        let parameters = transition?.parameters ?? CharacterTransitionParameters(duration: 0, jumpHeight: 0, startOpacity: 1)
+        let parameters = transition?.parameters ?? Self.noTransition
         content.keyframeAnimator(initialValue: Value(), trigger: trigger) { view, value in
             view
                 .offset(y: value.offsetY)
