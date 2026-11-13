@@ -6,6 +6,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-14
+
 ### Fixed
 - 清單打開過之後，只要有 Agent 的狀態改變（例如從工作中變成等待核准），App 可能整個當掉並從選單列消失。動畫開或關都可能發生，v0.3.2 特別頻繁。現在不會當掉了。
 
@@ -71,7 +73,8 @@ IdleVillager 的所有重要變更都記錄在這個檔案。
 - 打包成 `.app` 後找不到資源 bundle 時會閃退：改用 `ResourceBundleLocator` 依序查找 `Contents/Resources` 等位置，找不到時改畫 Generic 角色。
 - 更新 plugin 後同時出現兩個 App：啟動前會先結束其他路徑的舊版 App。
 
-[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/Lewsiafat/IdleVillager/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/Lewsiafat/IdleVillager/compare/v0.2.1...v0.3.0
