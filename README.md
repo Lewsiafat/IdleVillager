@@ -2,23 +2,39 @@
 
 # IdleVillager
 
-<p align="center"><strong>Your AI Agents at a Glance</strong> — a macOS menu bar status monitor for your AI agent "villagers".</p>
+<p align="center"><strong>Your agents are waiting. You're in another window.</strong><br>
+IdleVillager puts the state of every AI agent in Herdr on the macOS menu bar, where you can see it from any app.</p>
 
-<p align="center"><img src="docs/images/hero.png" alt="IdleVillager menu bar counts and the expanded agent list" width="410"><br>
-<em>Menu bar counts and the expanded agent list.</em></p>
+<p align="center"><img src="docs/images/hero.gif" alt="While working in another window, the menu bar shows an agent waiting for approval; opening the list and clicking the row jumps back to that pane in Herdr" width="800"></p>
 
-**See the counts → find the Workspace / Tab / Pane → jump back to the original session in one click.**
+I run several agents at once in Herdr. Once they have their orders, I switch to another window and get on with something else.
 
-Normally, the menu bar shows minimalist status counts for agents that are working, waiting for you, or idle. Expand it and the details appear as small characters you can recognize by brand, with light animation. Herdr is the primary integration target.
+The trouble is that once another window covers Herdr, I can't see what's going on in there. By the time I remember to switch back, one agent has been stopped for who knows how long, waiting for me to approve something. A few others finished a while ago and nobody noticed.
 
-## Highlights
+If you've played *Age of Empires*, you know this scene: a villager finishes chopping a tree and just stands there, and you're too busy with a battle to notice. Luckily there's an idle villager button in the corner of the screen. It tells you how many villagers have nothing to do, and pressing it jumps the camera straight to one of them.
 
-- **Menu bar:** a count for each state, with simple visual symbols
-- **List:** Workspace / Tab / Pane / Agent hierarchy
-- **Action:** click a session to locate it and switch back to Herdr
-- **Characters:** Claude, Codex, Gemini, and Generic, with light animation
-- **States:** Working, Needs Approval, Done, Idle, Error, Unknown
-- **UI language:** English and Traditional Chinese (Simplified Chinese is not supported). The default is English. To switch, open Settings and change **Language** in the Appearance section; the change takes effect immediately.
+IdleVillager moves that button to the macOS menu bar. The menu bar stays put whichever app you're in, so your agents are always one glance away.
+
+## How it works
+
+**Check the counts.** The menu bar shows a few small icons with numbers: how many agents are working, how many are waiting for you, how many are idle. When an agent starts waiting for approval, the menu bar lights up for about three seconds. No sound, no notification.
+
+**See who it is.** Click to open a list grouped by Workspace, Tab, and Pane, where the agents that need you come first. Each agent is a little villager: the working ones swing a hammer, the waiting ones raise a hand, the idle ones lie down and sleep.
+
+**Click to go back.** Click any row and IdleVillager switches back to Herdr and jumps to that pane. No more flipping through tabs one by one.
+
+<p align="center"><img src="docs/images/popover.png" alt="The IdleVillager list: three workspaces with agents that need approval, are working, done, or idle" width="460"></p>
+
+https://github.com/user-attachments/assets/998ebc78-3a11-4942-b151-3117eeec1519
+
+## A few things I insist on
+
+- There are six states: Working, Needs Approval, Done, Idle, Error, Unknown. Done and Idle are counted separately.
+- If IdleVillager can't tell, it says Unknown. An agent that has been quiet for a while isn't necessarily idle, and I'd rather not guess.
+- When Herdr disconnects, it says disconnected. It won't show 0 agents and let you think everyone has gone home.
+- Everything runs on your Mac. No account, no cloud. It reads session state only, never the conversation.
+- Every state has both an icon and a number, so you never have to rely on color.
+- The interface comes in English and Traditional Chinese (no Simplified Chinese). English is the default. To switch, open Settings and change **Language** in the Appearance section; it takes effect immediately.
 
 ## Install
 
@@ -53,12 +69,9 @@ An update rebuilds the app, then automatically quits the old version and opens t
 
 If you can't see the icon in the menu bar after installing, the menu bar is usually out of space: MacBooks with a notch silently hide menu bar icons that don't fit. Hold ⌘ and drag other rarely used icons out of the menu bar to make room.
 
-<p align="center"><img src="docs/images/demo.gif" alt="Click a session in the list to jump back to it in Herdr" width="800"><br>
-<em>Click a session in the list to jump back to it in Herdr.</em></p>
-
 ## What's new
 
-[v0.3.0](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.0) (2026-11-11) adds a language switch (English / Traditional Chinese) in Settings and makes English the default interface language. If you were seeing the Traditional Chinese interface before, change **Language** in the Appearance section of Settings back to 繁體中文 after updating. See [`CHANGELOG.md`](CHANGELOG.md) for versions and changes.
+[v0.3.3](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.3) (2026-11-14) fixes a crash: once the list had been opened, any agent changing state could take the whole app down and make it vanish from the menu bar. v0.3.2 was hit especially often, so update if you're still on it. Every version's changes are in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Trademarks
 
