@@ -3,7 +3,7 @@
 # IdleVillager
 
 <p align="center"><strong>Agent 在等你，而你在別的視窗。</strong><br>
-把 Herdr 裡每個 AI Agent 的狀態放上 macOS 選單列，切到哪個 App 都看得到。</p>
+IdleVillager 是 <a href="https://herdr.dev">Herdr</a> 的 plugin，把 Herdr 裡每個 AI Agent 的狀態放上 macOS 選單列，切到哪個 App 都看得到。</p>
 
 <p align="center"><img src="docs/images/hero.gif" alt="在別的視窗工作時，從選單列看到有 Agent 在等核准，點開清單再點一下就跳回 Herdr 對應的 pane" width="800"></p>
 
