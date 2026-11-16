@@ -69,6 +69,31 @@ An update rebuilds the app, then automatically quits the old version and opens t
 
 If you can't see the icon in the menu bar after installing, the menu bar is usually out of space: MacBooks with a notch silently hide menu bar icons that don't fit. Hold ⌘ and drag other rarely used icons out of the menu bar to make room.
 
+## Settings
+
+Open the list from the menu bar and click **Settings…** at the bottom, or press ⌘, while the list is open. Changes apply right away, and IdleVillager remembers them the next time it starts.
+
+<p align="center"><img src="docs/images/settings.png" alt="The IdleVillager Settings window: a menu bar preview at the top, then three groups of options named Menu Bar, List &amp; Alerts, and Appearance" width="420"></p>
+
+The **Menu Bar Preview** at the top draws the menu bar the way your current choices would make it look, using demo data.
+
+**Menu Bar**
+
+- **Menu bar mode**: *Counts* (the default) shows an icon and a number for each state. *Few characters* draws one little villager per agent instead, as long as you have three agents or fewer. With four or more it goes back to counts, so the menu bar doesn't overflow.
+- **Always show categories with a count of 0**: off by default, so a state that no agent is in disappears from the menu bar. Turn it on to keep Working, Needs Approval, and Idle visible all the time, even at 0.
+- **Show Done count**: off by default. Finished agents then show up only as a small dot at the end of the menu bar, which Error and Unknown share. Turn it on to give Done its own number.
+
+**List & Alerts**
+
+- **Sort order**: *By priority* (the default) puts whoever needs you most at the top: Needs Approval, then Error, Done, Working, Idle, Unknown. *By Workspace name* sorts workspaces and tabs by name; the agents inside a tab still go by priority. *Fixed order* keeps every row where it is, whatever state it's in.
+- **Play character animations**: on by default. Turn it off and the villagers hold a still pose, the same as when Reduce Motion is on in macOS.
+- **Subtle alerts**: on by default. This is the three-second highlight in the menu bar when one more agent starts waiting for approval. Turn it off and the menu bar never lights up.
+
+**Appearance**
+
+- **Language**: English (the default) or 繁體中文.
+- **Translucent list background**: off by default. Turn it on and the list lets a blurred view of the desktop and the windows behind it show through. If Reduce transparency is on in macOS System Settings, the list stays opaque.
+
 ## What's new
 
 [v0.3.3](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.3) (2026-11-14) fixes a crash: once the list had been opened, any agent changing state could take the whole app down and make it vanish from the menu bar. v0.3.2 was hit especially often, so update if you're still on it. Every version's changes are in [`CHANGELOG.md`](CHANGELOG.md).
