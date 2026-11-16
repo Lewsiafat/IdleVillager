@@ -3,7 +3,7 @@
 # IdleVillager
 
 <p align="center"><strong>Your agents are waiting. You're in another window.</strong><br>
-IdleVillager puts the state of every AI agent in Herdr on the macOS menu bar, where you can see it from any app.</p>
+IdleVillager is a plugin for <a href="https://herdr.dev">Herdr</a>. It puts the state of every AI agent in Herdr on the macOS menu bar, where you can see it from any app.</p>
 
 <p align="center"><img src="docs/images/hero.gif" alt="While working in another window, the menu bar shows an agent waiting for approval; opening the list and clicking the row jumps back to that pane in Herdr" width="800"></p>
 
