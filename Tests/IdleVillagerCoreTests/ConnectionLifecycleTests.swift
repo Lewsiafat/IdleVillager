@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import IdleVillagerCore
+@testable import IdleVillagerCore
 
 // 斷線、重連與零 Agent 的端到端情境：Fake Adapter 推送事件，從摘要模型與清單模型斷言。
 
@@ -110,7 +110,8 @@ struct DisconnectedPresentationTests {
         #expect(summary.items.isEmpty)
         #expect(text == "⚠ 斷線")
         #expect(text.contains { $0.isNumber } == false)
-        #expect(MenuBarSummaryFormatter.symbolName(for: summary) == "exclamationmark.triangle")
+        #expect(MenuBarPresentation(snapshot: store.snapshot, menuBarMode: .counts, isBrandAssetAvailable: { _ in false }).content
+            == .disconnected(symbolName: "exclamationmark.triangle"))
     }
 
     @Test func storeKeepsTheLastListButMarksEverySessionStale() async {
@@ -223,7 +224,11 @@ struct ReconnectionTests {
         let model = SessionListModel(snapshot: store.snapshot)
 
         #expect(menuBarText(store) == "⚒ 1  💤 1")
-        #expect(MenuBarSummaryFormatter.symbolName(for: MenuBarSummary(snapshot: store.snapshot)) == nil)
+        #expect(MenuBarPresentation(snapshot: store.snapshot, menuBarMode: .counts, isBrandAssetAvailable: { _ in false }).content
+            == .counts([
+                MenuBarPresentation.CountCell(state: .working, symbolName: "hammer.fill", count: 1, isHighlighted: false),
+                MenuBarPresentation.CountCell(state: .idle, symbolName: "zzz", count: 1, isHighlighted: false),
+            ], hiddenStatesMarker: nil))
         #expect(allRows(model).map(\.stateText) == ["幹活中", "閒置"])
         #expect(allRows(model).map(\.isStale) == [false, false])
         #expect(model.footer.connectionText == "已連線")
@@ -317,7 +322,8 @@ struct ZeroAgentsTests {
 
         #expect(summary.mode == .zeroAgents)
         #expect(MenuBarSummaryFormatter.text(for: summary) == "0 個 Agent")
-        #expect(MenuBarSummaryFormatter.symbolName(for: summary) == nil)
+        #expect(MenuBarPresentation(snapshot: store.snapshot, menuBarMode: .counts, isBrandAssetAvailable: { _ in false }).content
+            == .zeroAgents(text: "0 個 Agent"))
         #expect(model.agentCount == 0)
         #expect(model.emptyStateText == "目前沒有 Agent Session")
         #expect(model.footer.connectionText == "已連線")

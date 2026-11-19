@@ -2,7 +2,7 @@ import Foundation
 import Observation
 import os
 import Testing
-import IdleVillagerCore
+@testable import IdleVillagerCore
 
 private func session(_ id: String, rawState: String) -> AgentSession {
     AgentSession(
