@@ -137,11 +137,10 @@ struct SortRuleTests {
 
 @MainActor
 struct AnimationSettingTests {
-    /// 從設定與清單列一路推到角色動作，模擬 Popover 列的繪製流程。
-    private func motion(for state: NormalizedState, previous: NormalizedState?, settings: AppSettings) -> CharacterMotion {
-        let presentation = CharacterPresentation(state: state, previousState: previous, reduceMotion: false)
-        return CharacterMotion(pose: presentation.pose, transition: presentation.transition,
-                               reduceMotion: false, animationsEnabled: settings.animationsEnabled)
+    /// 從設定與清單列一路推到角色的播放計畫，模擬 Popover 列的繪製流程。
+    private func motion(for state: NormalizedState, previous: NormalizedState?, settings: AppSettings) -> CharacterPresentation {
+        CharacterPresentation(state: state, previousState: previous, reduceMotion: false,
+                              animationsEnabled: settings.animationsEnabled, isVisible: true)
     }
 
     @Test func turningAnimationsOffLeavesOnlyStaticPoses() async {
@@ -158,7 +157,8 @@ struct AnimationSettingTests {
 
         // 效果等同系統 Reduce Motion。
         #expect(motion(for: row.state, previous: nil, settings: settings)
-                == CharacterMotion(pose: .working, transition: nil, reduceMotion: true, animationsEnabled: true))
+                == CharacterPresentation(state: .working, previousState: nil, reduceMotion: true,
+                                         animationsEnabled: true, isVisible: true))
         #expect(motion(for: row.state, previous: nil, settings: settings).loop == nil)
         #expect(motion(for: .done, previous: row.state, settings: settings).transition == nil)
         #expect(motion(for: .idle, previous: .working, settings: settings).transition == nil)

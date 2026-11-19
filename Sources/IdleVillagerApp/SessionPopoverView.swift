@@ -293,7 +293,7 @@ private struct SessionRowView: View {
     var body: some View {
         HStack(spacing: 8) {
             CharacterView(state: row.state, agentKind: row.agentKind,
-                          animationsEnabled: settings.animationsEnabled && popoverIsVisible)
+                          animationsEnabled: settings.animationsEnabled, isVisible: popoverIsVisible)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(row.displayName) · \(row.paneLabel)")
                     .lineLimit(1)

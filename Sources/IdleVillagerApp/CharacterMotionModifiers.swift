@@ -3,15 +3,16 @@ import QuartzCore
 import SwiftUI
 import IdleVillagerCore
 
-/// 角色動作的實作，完全照 `CharacterMotion` 的純值播放：loop 為 nil 時不加任何動畫，transition 為 nil 時不播過渡。
+/// 角色動作的實作，完全照 `CharacterPresentation` 的播放計畫播放：loop 為 nil 時不加任何循環，
+/// 過渡一律照 `transitionParameters` 播一次（沒有過渡時 Core 給的是看不出變化的那一段）。
 ///
 /// 循環交給 Core Animation 播放（見 `LoopingHostingView`），一個週期的關鍵影格由 Core 的 `CharacterLoop.keyframes` 描述。
 /// 過渡用 `keyframeAnimator`，只在 trigger 改變時播一次。
 extension View {
-    /// 套用 `CharacterMotion`：循環動作加上在 `transitionTrigger` 改變時播一次的過渡。
-    func characterMotion<Trigger: Equatable>(_ motion: CharacterMotion, side: CGFloat, transitionTrigger: Trigger) -> some View {
-        characterLoop(motion.loop, side: side)
-            .characterTransition(motion.transition, side: side, trigger: transitionTrigger)
+    /// 套用播放計畫：循環動作加上在 `transitionTrigger` 改變時播一次的過渡。
+    func characterMotion<Trigger: Equatable>(_ presentation: CharacterPresentation, side: CGFloat, transitionTrigger: Trigger) -> some View {
+        characterLoop(presentation.loop, side: side)
+            .characterTransition(presentation.transitionParameters, side: side, trigger: transitionTrigger)
     }
 
     /// 套用循環動作。`side` 是角色邊長，位移以它的比例換算。
@@ -19,9 +20,9 @@ extension View {
         CharacterLoopView(loop: loop, side: side, content: self)
     }
 
-    /// 在 `trigger` 改變時播放一次 `transition`；transition 為 nil 時不做任何事。
-    func characterTransition<Trigger: Equatable>(_ transition: CharacterTransition?, side: CGFloat, trigger: Trigger) -> some View {
-        modifier(CharacterTransitionModifier(transition: transition, side: side, trigger: trigger))
+    /// 在 `trigger` 改變時照 `parameters` 播放一次過渡。
+    func characterTransition<Trigger: Equatable>(_ parameters: CharacterTransitionParameters, side: CGFloat, trigger: Trigger) -> some View {
+        modifier(CharacterTransitionModifier(parameters: parameters, side: side, trigger: trigger))
     }
 }
 
@@ -185,32 +186,21 @@ private final class LoopingHostingView<Content: View>: NSHostingView<Content> {
     }
 }
 
-/// 一次性過渡：celebrateOnce 跳起再落下；slowToIdle 從半透明緩慢淡入。最後都回到原位、完全不透明。
+/// 一次性過渡：依參數跳起再落下、從半透明淡入，最後都回到原位、完全不透明。
+///
+/// `keyframeAnimator` 必須一直套著，沒有過渡時也一樣（理由見 `CharacterTransitionParameters.noTransition`），
+/// 參數一律來自 Core，這裡不定義任何備援值。
 private struct CharacterTransitionModifier<Trigger: Equatable>: ViewModifier {
     struct Value {
         var offsetY: CGFloat = 0
         var opacity: Double = 1
     }
 
-    let transition: CharacterTransition?
+    let parameters: CharacterTransitionParameters
     let side: CGFloat
     let trigger: Trigger
 
-    /// 沒有過渡時使用的參數：不跳、不淡入，長度是很短的非零值。
-    ///
-    /// 長度不能是 0：SwiftUI 以「經過時間 ÷ 全長」算進度，全長為 0 時進度是 NaN，位移與不透明度跟著變成 NaN，
-    /// 清單列裡的 AppKit view 收到高度為 NaN 的 frame 就會讓整個 App 中止（issue #55）。
-    /// 任何狀態改變都會更新 trigger，所以動畫關閉、Reduce Motion，或 Working 轉 Needs Approval 這類
-    /// 沒有過渡的轉換，只要清單曾經打開過，就會踩到這條路。
-    ///
-    /// 也不能在沒有過渡時改成不套 keyframeAnimator：那樣 view 結構會隨過渡有無而切換，
-    /// 狀態改變當下新插入的 animator 不會播放（它只在 trigger 改變時播放），Done 的慶祝跳躍就看不到。
-    private static var noTransition: CharacterTransitionParameters {
-        CharacterTransitionParameters(duration: 0.001, jumpHeight: 0, startOpacity: 1)
-    }
-
     func body(content: Content) -> some View {
-        let parameters = transition?.parameters ?? Self.noTransition
         content.keyframeAnimator(initialValue: Value(), trigger: trigger) { view, value in
             view
                 .offset(y: value.offsetY)

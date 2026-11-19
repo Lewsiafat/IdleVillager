@@ -40,7 +40,7 @@
 ## 設定
 
 - **App Settings**：使用者偏好設定的可觀察模型（`AppSettings`），包含「固定顯示 0 數量」（`alwaysShowZeroCounts`）、「顯示 Done 小計數」（`showDoneCount`），排序規則（`sortRule`）、動畫開關（`animationsEnabled`）、低干擾提醒（`lowDistractionAlerts`）、半透明背景（`translucentPopoverBackground`），以及選單列模式（`menuBarMode`）。模型只透過 `MenuBarSummary(snapshot:settings:)`、`SessionListModel(snapshot:settings:)` 與 `ApprovalAlertTracker.observe(needsApprovalCount:settings:now:)` 接收設定值，不自行讀取偏好儲存。
-- **動畫開關（Animations Enabled）**：關閉後 Popover 角色只畫靜態姿勢，`CharacterMotion` 的循環與過渡一律為 nil，效果等同系統 Reduce Motion。預設開。
+- **動畫開關（Animations Enabled）**：關閉後 Popover 角色只畫靜態姿勢，`CharacterPresentation` 的循環與過渡一律為 nil，效果等同系統 Reduce Motion。預設開。
 - **低干擾提醒（Low-Distraction Alert）**：設定開啟時，待核准（Needs Approval）數量比上一次觀察**增加**，選單列短暫強調約 3 秒後恢復，不閃爍、不循環、不使用音效或系統通知。兩種模式的選單列都是預先畫好的圖片，因此都改為在產圖時以同一種圓角底色（`menuBarEmphasisBackground`）強調待核准項目：數量模式強調等核准那一格並把圖示與數量改粗體；少量角色模式強調待核准角色並把 ✋ 改粗體（`MenuBarCharacterItem.isHighlighted(during:)`）。底色只是額外提示，狀態仍由圖示表達。強調程度為 `MenuBarAlertEmphasis`（`none` 或 `emphasized`），由 `ApprovalAlertTracker.emphasis(at:)` 依同一個計時決定。數量減少或不變不觸發；設定關閉時永不觸發並清除進行中的強調；第一次觀察只記下基準數量。判斷由純值 `ApprovalAlertTracker` 負責（輸出 `alertUntil`，時間可注入），App 的 `MenuBarAlertModifier` 只負責套用與到期還原。預設開。
 - **半透明背景（Translucent Popover Background）**：設定開啟後，Popover 清單改用半透明背景，透出模糊的桌面與後方視窗（`translucentPopoverBackground`，預設關，也就是維持原本的不透明外觀）。實際採用哪一種背景由純值 `PopoverBackgroundStyle.resolve(translucentEnabled:reduceTransparency:)` 決定，結果是 `opaque` 或 `translucent`：只有使用者開啟、而且系統「降低透明度」（Reduce Transparency）沒有開啟時才是 `translucent`。畫面透過 `AppSettings.popoverBackgroundStyle(reduceTransparency:)` 取得結果，不自行判斷。目前只有開關，沒有透明度滑桿；日後若加入滑桿，透明度會成為同一個判斷函式的另一個輸入。
 - **選單列預覽（Menu Bar Preview）**：設定視窗頂部依目前設定即時畫出的選單列 label，直接重用選單列的畫面，不另寫排版或狀態判定。資料是固定的示範快照（`StoreSnapshot.menuBarPreview(for:)`，取自 `SessionSnapshot.demo`，經與 Session Store 相同的正規化與計數）：數量模式使用完整示範；少量角色模式只取低於少量角色門檻的前幾個 Session，讓預覽確實畫出角色而不是退回數量模式。預覽不做過期判定，也不代表使用者實際的 Agent。
@@ -63,15 +63,14 @@
 ## 小村民角色
 
 - **Agent 種類（Agent Kind）**：`AgentKind` enum，值為 claude、codex、gemini、generic。由 Adapter 的 agentKind 原始字串以 `AgentKind(rawAgentKind:)` 對應，大小寫不敏感、底線與連字號視為相同（例如 `claude-code`、`openai-codex`、`codex-cli`、`gemini-cli`）；無法對應者為 generic。只收常見的明確值，不以 `anthropic`、`openai`、`google` 等廠商前綴猜測。
-- **Character Presentation**：輸入正規化狀態、前一狀態與 Reduce Motion 開關，輸出角色呈現的純值（`CharacterPresentation`），包含姿勢、圖層與可選的過渡。畫面只依它繪製，不自行推論狀態。
+- **Character Presentation**：角色的播放計畫（`CharacterPresentation`），「角色該怎麼動」的判斷都在這裡。輸入正規化狀態、前一狀態、系統 Reduce Motion、使用者的動畫開關（`animationsEnabled`）、角色是否可見（`isVisible`，例如 Popover 是否開著），以及 Agent 種類與品牌素材是否存在；輸出姿勢、圖層、品牌本體、循環動作與過渡。Reduce Motion 開啟、動畫關閉或角色不可見時，沒有循環也沒有過渡，只畫靜態姿勢。選單列的角色一律以動畫關閉建立，不播放動畫。畫面只把它翻譯成動畫，不自行推論狀態，也不自行定義動畫參數；App 層只負責記住前一狀態並交給它。
 - **姿勢（Pose）**：每種正規化狀態恰好對應一種靜態姿勢（`CharacterPose`）：Working 幹活（`working`）、Needs Approval 舉手（`raisingHand`）、Done 交工（`delivering`）、Idle 躺平（`lyingDown`）、Error 警示（`alert`）、Unknown 疑惑（`puzzled`）。每種姿勢都有不依賴動畫的完整靜態版本。
 - **圖層（Layers）**：角色分成本體（body）、手（hands）、腳（feet）、道具（prop）、表情（face）、特效（effect）六層（`CharacterLayers`）。每層以 SF Symbol 名稱或 SwiftUI Shape 描述（`CharacterLayer`），本體一定存在，其他層為 nil 表示該姿勢不畫。Error 與 Unknown 不使用旗子、星光等成功類圖像。
 - **品牌本體（Brand Body）**：角色本體要畫成品牌標誌還是 Generic 小村民（`BrandBody`）。`.asset(name:)` 指向 App resource bundle 內的素材名稱（`claude-logo`、`codex-logo`、`gemini-logo`，對應只定義在 `BrandBody.assetName(for:)`），`.generic` 是圓形的 Generic 本體。由純函式 `BrandBody.resolve(agentKind:isAssetAvailable:)` 決定，結果放在 `CharacterPresentation.brandBody`。品牌本體只辨識 Agent 種類：以原色繪製，不隨狀態改色、不拉伸、不旋轉、不疊表情；狀態只由手、腳、道具與特效表現。素材放置規範見 `Sources/IdleVillagerApp/Resources/Brands/README.md`。
 - **備援（Fallback）**：品牌素材不存在或無法載入時，角色本體自動改用 Generic 小村民，不顯示破圖。generic 種類一律是 Generic 本體。專案不附第三方品牌素材，因此目前所有角色都走備援。
 - **角色細節（Character Detail）**：依角色尺寸決定要畫多少圖層（`CharacterDetail`）。18 pt 以下為 `bodyOnly`，只畫主標誌（本體）；更大為 `full`，畫全部圖層。
-- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現）或系統 Reduce Motion 開啟時沒有過渡。過渡只是描述，動畫由 App 層實作。過渡的動畫參數為 `CharacterTransitionParameters`：`celebrateOnce` 約 0.5 秒跳起再落下一次；`slowToIdle` 約 0.8 秒從半透明淡入躺平姿勢，不跳。
-- **循環動作（Loop）**：姿勢持續播放的低干擾動作（`CharacterLoop`），只描述節奏與幅度（`CharacterLoopParameters`：週期、實際在動的時間、位移比例、擺動角度）。幹活為 `workingBob`（每 1.6 秒平穩上下跳動並擺動）；舉手為 `raisedHandSway`（每 4 秒晃一次，其餘時間靜止；週期不小於 3 秒是「不閃爍」的量化定義）；躺平為 `idleZzz`（每 6 秒浮出一個 Zzz）。交工、警示、疑惑沒有循環：交工只在過渡時跳一次，Error 是靜態警示，Unknown 不需動畫。
-- **Character Motion**：輸入姿勢、過渡、系統 Reduce Motion 與使用者動畫開關（`animationsEnabled`），輸出循環動作與過渡的純值（`CharacterMotion`）。Reduce Motion 開啟或動畫關閉時兩者一律為 nil，畫面只畫靜態姿勢。動畫只在 Popover 的角色上播放，選單列不播放。
+- **過渡（Transition）**：狀態轉換時可選的一次性過渡（`CharacterTransition`，放在 `CharacterPresentation.transition`）。Working 轉 Done 為 `celebrateOnce`（慶祝一次後維持交工姿勢）；其他狀態轉 Idle 為 `slowToIdle`（緩慢過渡）；其他轉換、沒有前一狀態（Session 第一次出現），或 Reduce Motion 開啟、動畫關閉、角色不可見時沒有過渡。過渡只是描述，動畫由 App 層實作。過渡的動畫參數為 `CharacterTransitionParameters`：`celebrateOnce` 約 0.5 秒跳起再落下一次；`slowToIdle` 約 0.8 秒從半透明淡入躺平姿勢，不跳。播放計畫一定給出合法的過渡參數（`CharacterPresentation.transitionParameters`）：沒有過渡時是 `CharacterTransitionParameters.noTransition`，不跳、不淡入、長度非零。App 層的過渡動畫必須一直套著，長度為 0 會讓 App 中止（#55）。
+- **循環動作（Loop）**：姿勢持續播放的低干擾動作（`CharacterLoop`，放在 `CharacterPresentation.loop`），只描述節奏與幅度（`CharacterLoopParameters`：週期、實際在動的時間、位移比例、擺動角度），一個週期的關鍵影格由 `CharacterLoop.keyframes` 描述。幹活為 `workingBob`（每 1.6 秒平穩上下跳動並擺動）；舉手為 `raisedHandSway`（每 4 秒晃一次，其餘時間靜止；週期不小於 3 秒是「不閃爍」的量化定義）；躺平為 `idleZzz`（每 6 秒浮出一個 Zzz）。交工、警示、疑惑沒有循環：交工只在過渡時跳一次，Error 是靜態警示，Unknown 不需動畫。Reduce Motion 開啟、動畫關閉或角色不可見時也沒有循環。
 
 ## 其他
 
