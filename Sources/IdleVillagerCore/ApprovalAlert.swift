@@ -2,8 +2,8 @@ import Foundation
 
 /// 選單列在某個時刻的提醒強調程度，由 `ApprovalAlertTracker.emphasis(at:)` 決定。
 ///
-/// 數量模式下強調為文字加粗與 SF Symbol 跳一次；少量角色模式下為待核准角色加上外框
-/// （見 `MenuBarCharacterItem.isHighlighted(during:)`）。實際繪製由 App 層負責。
+/// 兩種選單列模式的強調方式相同：產圖時替待核准項目加上圓角底色並改粗體。數量模式強調等核准那一格，
+/// 少量角色模式強調待核准角色。哪些項目要強調只由 `MenuBarPresentation.isHighlighted(_:during:)` 決定，實際繪製由 App 層負責。
 public enum MenuBarAlertEmphasis: Hashable, Sendable {
     /// 沒有進行中的提醒，選單列維持原樣。
     case none

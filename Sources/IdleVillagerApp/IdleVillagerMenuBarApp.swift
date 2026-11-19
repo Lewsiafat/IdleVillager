@@ -87,77 +87,74 @@ struct LiveMenuBarLabel: View {
     }
 }
 
-/// 選單列文字，完全由摘要模型決定；畫面不自行推論狀態。因觀察 `AppSettings`，設定改動時即時重繪。
+/// 選單列 label，要畫什麼完全由 `MenuBarPresentation` 決定；這裡只依它排版，不自行推論狀態、組無障礙文字或判斷強調。
+/// 因觀察 `AppSettings`，設定改動時即時重繪。
+///
+/// 提醒強調程度取自 `MenuBarAlertModifier` 設定的 `menuBarAlertEmphasis` 環境值；設定視窗的選單列預覽沒有套用提醒，維持不強調。
 struct MenuBarLabel: View {
     let snapshot: StoreSnapshot
     let settings: AppSettings
 
-    var body: some View {
-        // 少量角色模式且 Session 數量低於門檻時顯示角色；其餘情況（含斷線、0 個、達到或超過門檻）一律回到數量模式。
-        if case .characters(let items) = MenuBarCharacterMode(snapshot: snapshot, settings: settings).display {
-            MenuBarCharactersLabel(items: items)
-        } else {
-            let summary = MenuBarSummary(snapshot: snapshot, settings: settings)
-            Group {
-                // 斷線或重連中只顯示斷線圖示，不顯示任何數字。
-                if let symbolName = MenuBarSummaryFormatter.symbolName(for: summary) {
-                    Image(systemName: symbolName)
-                } else if summary.mode == .normal {
-                    MenuBarCountsLabel(summary: summary)
-                } else {
-                    // 零 Agent 模式維持文字。
-                    Text(MenuBarSummaryFormatter.text(for: summary))
-                }
-            }
-            .accessibilityLabel(accessibilityText(for: summary))
-        }
-    }
+    @Environment(\.menuBarAlertEmphasis) private var emphasis
 
-    private func accessibilityText(for summary: MenuBarSummary) -> String {
-        switch summary.mode {
-        case .disconnected:
-            return L10n.text(snapshot.connectionState == .reconnecting ? .connectionReconnecting : .connectionNotConnected)
-        case .zeroAgents:
-            return L10n.text(.menuBarNoAgentsAccessibility)
-        case .normal:
-            var parts = summary.items.filter(\.isVisible).map {
-                L10n.text(.menuBarStateCountAccessibility, ["state": $0.state.shortText, "count": String($0.count)])
+    var body: some View {
+        let presentation = MenuBarPresentation(
+            snapshot: snapshot,
+            settings: settings,
+            emphasis: emphasis,
+            isBrandAssetAvailable: BrandAssetCatalog.isAvailable
+        )
+        Group {
+            switch presentation.content {
+            case .disconnected(let symbolName):
+                Image(systemName: symbolName)
+            case .zeroAgents(let text):
+                Text(text)
+            case .counts(let cells, let hiddenStatesMarker):
+                MenuBarCountsLabel(
+                    cells: cells,
+                    hiddenStatesMarker: hiddenStatesMarker,
+                    usesTemplateImage: presentation.usesTemplateImage
+                )
+            case .characters(let cells):
+                MenuBarCharactersLabel(cells: cells, usesTemplateImage: presentation.usesTemplateImage)
             }
-            if summary.hasHiddenStates {
-                let showsDone = summary.items.contains { $0.state == .done }
-                parts.append(L10n.text(showsDone ? .menuBarHiddenWithDoneShownAccessibility : .menuBarHiddenAccessibility))
-            }
-            return parts.joined(separator: L10n.text(.clauseSeparator))
         }
+        .accessibilityLabel(presentation.accessibilityText)
     }
 }
 
 /// 數量模式的選單列內容：最左一個 16 pt IdleVillager 選單列標誌（`VillagerSymbolShape`），後面依序是各類別的 SF Symbol 與數量，有隱藏狀態時尾端加小標記。
 ///
-/// 類別、數量與是否顯示完全取自 `MenuBarSummary.items`，這裡不自行計數。
+/// 類別、數量、是否強調與小標記完全取自 `MenuBarPresentation`，這裡不自行計數或判斷。
 /// 與少量角色模式相同，`MenuBarExtra` 的 label 只可靠地呈現單一圖片或文字，所以整排先以 `MenuBarImageRendering`
 /// 畫成 template 圖片，讓系統依選單列外觀自動套用明暗色。無障礙文字由外層 `MenuBarLabel` 提供。
 ///
-/// 低干擾提醒進行中時（`menuBarAlertEmphasis` 為 `.emphasized`），等核准類別加上與角色模式相同的圓角底色並改粗體。
+/// 低干擾提醒進行中時，強調的那一格（等核准）加上與角色模式相同的圓角底色並改粗體。
 struct MenuBarCountsLabel: View {
-    let summary: MenuBarSummary
+    let cells: [MenuBarPresentation.CountCell]
+    let hiddenStatesMarker: String?
+    let usesTemplateImage: Bool
 
     @Environment(\.displayScale) private var displayScale
-    @Environment(\.menuBarAlertEmphasis) private var emphasis
 
     var body: some View {
         Image(nsImage: renderedImage)
     }
 
     private var renderedImage: NSImage {
-        MenuBarImageRendering.image(of: MenuBarCountsRow(summary: summary, emphasis: emphasis), scale: displayScale)
+        MenuBarImageRendering.image(
+            of: MenuBarCountsRow(cells: cells, hiddenStatesMarker: hiddenStatesMarker),
+            scale: displayScale,
+            isTemplate: usesTemplateImage
+        )
     }
 }
 
 /// 實際排版的一排選單列標誌、狀態圖示與數量，只供 `ImageRenderer` 繪製。
 private struct MenuBarCountsRow: View {
-    let summary: MenuBarSummary
-    let emphasis: MenuBarAlertEmphasis
+    let cells: [MenuBarPresentation.CountCell]
+    let hiddenStatesMarker: String?
 
     var body: some View {
         HStack(spacing: 2) {
@@ -167,18 +164,17 @@ private struct MenuBarCountsRow: View {
                 .fill(.primary)
                 .frame(width: IdleVillagerMark.menuBarSize, height: IdleVillagerMark.menuBarSize)
                 .padding(.trailing, IdleVillagerMark.menuBarTrailingGap)
-            ForEach(summary.items.filter(\.isVisible), id: \.state) { item in
-                let highlighted = emphasis == .emphasized && item.state == .needsApproval
+            ForEach(cells) { cell in
                 HStack(spacing: 2) {
-                    Image(systemName: item.state.symbolName)
-                        .font(.system(size: 11, weight: highlighted ? .bold : .semibold))
-                    Text("\(item.count)")
-                        .font(.system(size: 13, weight: highlighted ? .bold : .regular).monospacedDigit())
+                    Image(systemName: cell.symbolName)
+                        .font(.system(size: 11, weight: cell.isHighlighted ? .bold : .semibold))
+                    Text("\(cell.count)")
+                        .font(.system(size: 13, weight: cell.isHighlighted ? .bold : .regular).monospacedDigit())
                 }
-                .menuBarEmphasisBackground(highlighted)
+                .menuBarEmphasisBackground(cell.isHighlighted)
             }
-            if summary.hasHiddenStates {
-                Text(MenuBarSummaryFormatter.hiddenStatesMarker)
+            if let hiddenStatesMarker {
+                Text(hiddenStatesMarker)
                     .font(.system(size: 13))
             }
         }

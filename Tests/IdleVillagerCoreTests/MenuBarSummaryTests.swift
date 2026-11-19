@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import IdleVillagerCore
+@testable import IdleVillagerCore
 
 private func session(
     _ id: String,

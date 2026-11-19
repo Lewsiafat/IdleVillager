@@ -1,7 +1,9 @@
 /// 選單列摘要的純值模型，由 Store 的計數與連線狀態推導；不含任何 Session 名稱。
-public struct MenuBarSummary: Hashable, Sendable {
+///
+/// 這是 `MenuBarPresentation` 的內部實作，App 不直接使用。
+struct MenuBarSummary: Hashable, Sendable {
     /// 摘要的呈現模式。
-    public enum Mode: Hashable, Sendable {
+    enum Mode: Hashable, Sendable {
         /// 已連線且至少有一個 Agent Session，顯示各類別數量。
         case normal
         /// 與 Herdr 斷線或重連中；不輸出任何數字，避免顯示過期的舊數量。
@@ -11,14 +13,14 @@ public struct MenuBarSummary: Hashable, Sendable {
     }
 
     /// 選單列上的一個數量類別。
-    public struct Item: Hashable, Sendable {
-        public var state: NormalizedState
-        public var icon: String
-        public var count: Int
+    struct Item: Hashable, Sendable {
+        var state: NormalizedState
+        var icon: String
+        var count: Int
         /// 這個類別是否出現在選單列上。
-        public var isVisible: Bool
+        var isVisible: Bool
 
-        public init(state: NormalizedState, icon: String, count: Int, isVisible: Bool) {
+        init(state: NormalizedState, icon: String, count: Int, isVisible: Bool) {
             self.state = state
             self.icon = icon
             self.count = count
@@ -26,17 +28,17 @@ public struct MenuBarSummary: Hashable, Sendable {
         }
     }
 
-    public var mode: Mode
+    var mode: Mode
     /// 依固定順序（Working、Needs Approval、Idle）排列的類別；開啟 Done 小計數時在 Idle 之後多一個 Done。
-    public var items: [Item]
+    var items: [Item]
     /// 不在選單列數量中的狀態任一大於 0 時為 true，選單列以小標記提示。
     /// 這些狀態是 Error、Unknown，以及未開啟 Done 小計數時的 Done。
-    public var hasHiddenStates: Bool
+    var hasHiddenStates: Bool
 
     /// - Parameters:
     ///   - alwaysShowZero: 值為 0 的類別也顯示。
     ///   - showDoneCount: 在 Idle 之後加上 Done 小計數 `✓ n`；開啟時 Done 不再算作隱藏狀態。
-    public init(
+    init(
         counts: StateCounts,
         connectionState: ConnectionState,
         alwaysShowZero: Bool = false,
@@ -65,7 +67,7 @@ public struct MenuBarSummary: Hashable, Sendable {
     }
 
     /// 由 Store snapshot 產生摘要。
-    public init(snapshot: StoreSnapshot, alwaysShowZero: Bool = false, showDoneCount: Bool = false) {
+    init(snapshot: StoreSnapshot, alwaysShowZero: Bool = false, showDoneCount: Bool = false) {
         self.init(
             counts: snapshot.counts,
             connectionState: snapshot.connectionState,
@@ -78,7 +80,7 @@ public struct MenuBarSummary: Hashable, Sendable {
 extension MenuBarSummary {
     /// 依使用者設定產生摘要。設定值由呼叫端傳入，摘要本身不讀取偏好儲存。
     @MainActor
-    public init(snapshot: StoreSnapshot, settings: AppSettings) {
+    init(snapshot: StoreSnapshot, settings: AppSettings) {
         self.init(
             snapshot: snapshot,
             alwaysShowZero: settings.alwaysShowZeroCounts,
@@ -87,10 +89,10 @@ extension MenuBarSummary {
     }
 }
 
-/// 把摘要模型轉成選單列文字。
-public enum MenuBarSummaryFormatter {
+/// 把摘要模型轉成選單列文字。`MenuBarPresentation` 的內部實作，App 不直接使用。
+enum MenuBarSummaryFormatter {
     /// 選單列文字，例如 `⚒ 3  ✋ 2  💤 1`。
-    public static func text(for summary: MenuBarSummary) -> String {
+    static func text(for summary: MenuBarSummary) -> String {
         switch summary.mode {
         case .disconnected: return disconnectedText
         case .zeroAgents: return zeroAgentsText
@@ -104,20 +106,15 @@ public enum MenuBarSummaryFormatter {
         return counts.isEmpty ? hiddenStatesMarker : counts + " " + hiddenStatesMarker
     }
 
-    /// 選單列要以 SF Symbol 呈現時的圖示名稱：斷線模式（含重連中）為斷線圖示，其他模式為 nil、改顯示文字。
-    public static func symbolName(for summary: MenuBarSummary) -> String? {
-        summary.mode == .disconnected ? disconnectedSymbolName : nil
-    }
+    /// 斷線模式的 SF Symbol 名稱，與文字版的 `⚠` 同義；`MenuBarPresentation` 的斷線內容使用它。
+    static let disconnectedSymbolName = "exclamationmark.triangle"
 
-    /// 斷線模式的 SF Symbol 名稱，與文字版的 `⚠` 同義。
-    public static let disconnectedSymbolName = "exclamationmark.triangle"
-
-    /// 斷線模式的固定文字，不含任何數字。App 改以 `symbolName(for:)` 的圖示呈現時，這段文字作為無障礙與備援用。
-    public static var disconnectedText: String { L10n.text(.menuBarDisconnected) }
+    /// 斷線模式的固定文字，不含任何數字。App 的選單列改畫斷線圖示，這段文字保留給測試與文字版輸出。
+    static var disconnectedText: String { L10n.text(.menuBarDisconnected) }
 
     /// 零 Agent 模式的固定文字。
-    public static var zeroAgentsText: String { L10n.text(.menuBarZeroAgents) }
+    static var zeroAgentsText: String { L10n.text(.menuBarZeroAgents) }
 
     /// 有隱藏狀態（Error、Unknown，或未顯示小計數的 Done）時接在尾端的小標記。
-    public static let hiddenStatesMarker = "•"
+    static let hiddenStatesMarker = "•"
 }
