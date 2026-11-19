@@ -59,12 +59,13 @@
 - **最後更新文字（Last Updated Text）**：`Footer.lastUpdatedText(now:)` 以注入的當下時間產生相對時間文字，例如「最後更新：3 分鐘前」；未滿 10 秒為「剛剛」，從未成功更新為「尚未成功更新」。
 - **過期提示（Stale Notice）**：斷線或重連中、且曾成功更新過時，Footer 的 `staleNotice` 為「資料可能已過期，以上清單為最後一次成功更新的內容。」；已連線時為 nil。
 - **空狀態（Empty State）**：清單沒有任何列時 `SessionListModel.emptyStateText` 的文字。已連線是零 Agent 狀態「目前沒有 Agent Session」，斷線或重連中是「未連線，沒有可顯示的 Session 資料」，兩者刻意不同；有列時為 nil。
-- **Tab 收合**：使用者可收合 Tab 群組。收合狀態只存在 App 的 `SessionPopoverViewModel`，不在純值模型中，重啟後不保留。
+- **Tab 收合**：使用者可收合 Tab 群組。收合狀態只存在記憶體中的 Popover 生命週期（`PopoverLifecycle.isCollapsed(_:)`、`toggleCollapsed(_:)`，以 `TabID` 識別），不在純值模型中；關閉再打開 Popover 時保留，重啟後不保留。
+- **Popover 生命週期（Popover Lifecycle）**：代表「Popover 開著的期間」的可觀察物件（`PopoverLifecycle`），放在 Core，持有 `FocusCoordinator`。它負責四件事：目前是否可見（`isVisible`）、從可見變成不可見時的清理、點擊一列之後的流程，以及 Tab 收合。還沒收到任何可見性回報時視為不可見，角色的「是否可見」（`CharacterPresentation` 的 `isVisible`）只從這裡取得，沒有預設為可見的環境值。從可見變成不可見時，清除切換失敗提示與 hover 的列（`hoveredRow`），下次打開時不會殘留；不可見時的 hover 回報不採用。點擊一列時（`rowClicked(sessionID:paneID:)`）交給 `FocusCoordinator`，成功回傳 `closePopover` 要求關閉 Popover，失敗回傳 `keepOpen` 並透過 `focusFailure` 公開失敗提示。App 層只留兩個 AppKit adapter：`WindowVisibilityObserver` 回報視窗是否可見（`MenuBarExtra` 關閉時只把視窗藏起來，不會觸發 `onDisappear`），`ClickableRowArea` 回報點擊與 hover；畫面只轉交回報並依它的狀態繪製。不用「Session」命名，因為 Session 專指 Agent Session；不用「Presentation」，因為那是純值的命名。
 
 ## 小村民角色
 
 - **Agent 種類（Agent Kind）**：`AgentKind` enum，值為 claude、codex、gemini、generic。由 Adapter 的 agentKind 原始字串以 `AgentKind(rawAgentKind:)` 對應，大小寫不敏感、底線與連字號視為相同（例如 `claude-code`、`openai-codex`、`codex-cli`、`gemini-cli`）；無法對應者為 generic。只收常見的明確值，不以 `anthropic`、`openai`、`google` 等廠商前綴猜測。
-- **Character Presentation**：角色的播放計畫（`CharacterPresentation`），「角色該怎麼動」的判斷都在這裡。輸入正規化狀態、前一狀態、系統 Reduce Motion、使用者的動畫開關（`animationsEnabled`）、角色是否可見（`isVisible`，例如 Popover 是否開著），以及 Agent 種類與品牌素材是否存在；輸出姿勢、圖層、品牌本體、循環動作與過渡。Reduce Motion 開啟、動畫關閉或角色不可見時，沒有循環也沒有過渡，只畫靜態姿勢。選單列的角色一律以動畫關閉建立，不播放動畫。畫面只把它翻譯成動畫，不自行推論狀態，也不自行定義動畫參數；App 層只負責記住前一狀態並交給它。
+- **Character Presentation**：角色的播放計畫（`CharacterPresentation`），「角色該怎麼動」的判斷都在這裡。輸入正規化狀態、前一狀態、系統 Reduce Motion、使用者的動畫開關（`animationsEnabled`）、角色是否可見（`isVisible`；Popover 的角色取自 Popover 生命週期的 `PopoverLifecycle.isVisible`），以及 Agent 種類與品牌素材是否存在；輸出姿勢、圖層、品牌本體、循環動作與過渡。Reduce Motion 開啟、動畫關閉或角色不可見時，沒有循環也沒有過渡，只畫靜態姿勢。選單列的角色一律以動畫關閉建立，不播放動畫。畫面只把它翻譯成動畫，不自行推論狀態，也不自行定義動畫參數；App 層只負責記住前一狀態並交給它。
 - **姿勢（Pose）**：每種正規化狀態恰好對應一種靜態姿勢（`CharacterPose`）：Working 幹活（`working`）、Needs Approval 舉手（`raisingHand`）、Done 交工（`delivering`）、Idle 躺平（`lyingDown`）、Error 警示（`alert`）、Unknown 疑惑（`puzzled`）。每種姿勢都有不依賴動畫的完整靜態版本。
 - **圖層（Layers）**：角色分成本體（body）、手（hands）、腳（feet）、道具（prop）、表情（face）、特效（effect）六層（`CharacterLayers`）。每層以 SF Symbol 名稱或 SwiftUI Shape 描述（`CharacterLayer`），本體一定存在，其他層為 nil 表示該姿勢不畫。Error 與 Unknown 不使用旗子、星光等成功類圖像。
 - **品牌本體（Brand Body）**：角色本體要畫成品牌標誌還是 Generic 小村民（`BrandBody`）。`.asset(name:)` 指向 App resource bundle 內的素材名稱（`claude-logo`、`codex-logo`、`gemini-logo`，對應只定義在 `BrandBody.assetName(for:)`），`.generic` 是圓形的 Generic 本體。由純函式 `BrandBody.resolve(agentKind:isAssetAvailable:)` 決定，結果放在 `CharacterPresentation.brandBody`。品牌本體只辨識 Agent 種類：以原色繪製，不隨狀態改色、不拉伸、不旋轉、不疊表情；狀態只由手、腳、道具與特效表現。素材放置規範見 `Sources/IdleVillagerApp/Resources/Brands/README.md`。
@@ -80,7 +81,7 @@
 - **重連同步（Reconnect Resync）**：Adapter 送出 `connectionChanged(.connected)` 時，Session Store 重新讀取一次完整快照，以補上斷線期間錯過的變更；讀取成功才轉為 connected 並更新最後成功更新時間，失敗則維持 disconnected、保留上次清單且全部過期。
 - **事件訂閱優先、輪詢備援**：Adapter 取得變更的方式。來源支援事件訂閱時優先訂閱，否則由 Adapter 內部輪詢並合成同樣的事件；選擇與輪詢間隔都封裝在 Adapter 內，Store 以上不感知差異。
 - **Focus**：使用者點擊一列後，把來源對應視窗帶到前景並聚焦到指定 Pane 的動作；結果是成功，或帶明確原因的失敗。尚未驗證的 Fake Adapter 不得回報成功：`FakeHerdrAdapter` 預設失敗原因是 `FocusFailureReason.demoMode`，`FocusFailure.message` 與 Popover 頂部文字都是「示範模式無法切回」，Popover 保持開啟。測試要模擬真實成功或其他失敗時，必須明確傳入 `FocusResult`。
-- **Focus Coordinator**：處理 Focus 流程的可觀察物件（`FocusCoordinator`）。以列的 `AgentSessionID` 與 `PaneID`（不用清單索引）先向 Session Store 的 snapshot 確認目標仍存在且 Pane 相符；不存在就不呼叫 Adapter，直接回傳「目標已不存在」；存在才呼叫 Adapter 的 focus。結果為 `FocusOutcome`（成功，或帶 `FocusFailure` 的失敗）。`FocusFailure.message` 是使用者可讀原因；`FocusFailure.bannerText` 是 Popover 頂部顯示的完整文字（一般失敗為「無法切回：」加上原因，示範模式就是「示範模式無法切回」）。最近一次失敗公開在 `lastFailure` 供 Popover 頂部顯示，成功時清空。
+- **Focus Coordinator**：處理 Focus 流程的可觀察物件（`FocusCoordinator`）。以列的 `AgentSessionID` 與 `PaneID`（不用清單索引）先向 Session Store 的 snapshot 確認目標仍存在且 Pane 相符；不存在就不呼叫 Adapter，直接回傳「目標已不存在」；存在才呼叫 Adapter 的 focus。結果為 `FocusOutcome`（成功，或帶 `FocusFailure` 的失敗）。`FocusFailure.message` 是使用者可讀原因；`FocusFailure.bannerText` 是 Popover 頂部顯示的完整文字（一般失敗為「無法切回：」加上原因，示範模式就是「示範模式無法切回」）。最近一次失敗公開在 `lastFailure`，成功時清空；`lastFailure` 只由它擁有。Popover 生命週期持有它，決定何時呼叫 `focus` 與何時清除失敗提示（Popover 關閉時，或使用者按下提示的關閉按鈕時），畫面透過 `PopoverLifecycle.focusFailure` 取得失敗提示，不直接呼叫 `clearFailure()`。
 - **Adapter**：把外部資料來源（目前是 Herdr）轉成本專案資料模型的元件，介面為 `HerdrAdapter` protocol；`HerdrSocketAdapter` 是真實實作，`FakeHerdrAdapter` 是記憶體內的實作。App 預設使用真實實作，只有設定環境變數 `IDLEVILLAGER_DEMO=1` 時才改用 Fake Adapter 的示範快照；連不上 Herdr 時顯示斷線，不改用示範資料。
 
 ## Herdr 整合
