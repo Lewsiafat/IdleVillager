@@ -50,21 +50,3 @@ public enum CharacterDetail: Hashable, Sendable {
     /// 是否畫本體以外的圖層（手、腳、道具、表情、特效）。
     public var drawsOuterLayers: Bool { self == .full }
 }
-
-extension CharacterPresentation {
-    /// 帶 Agent 種類的角色呈現：姿勢、圖層與過渡和不帶種類時完全相同，只多決定品牌本體。
-    ///
-    /// - Parameters:
-    ///   - agentKind: Agent 種類。
-    ///   - isBrandAssetAvailable: 查詢品牌資源是否存在；不存在時本體備援為 Generic。
-    public init(
-        state: NormalizedState,
-        previousState: NormalizedState?,
-        reduceMotion: Bool,
-        agentKind: AgentKind,
-        isBrandAssetAvailable: (String) -> Bool
-    ) {
-        self.init(state: state, previousState: previousState, reduceMotion: reduceMotion)
-        self.brandBody = BrandBody.resolve(agentKind: agentKind, isAssetAvailable: isBrandAssetAvailable)
-    }
-}

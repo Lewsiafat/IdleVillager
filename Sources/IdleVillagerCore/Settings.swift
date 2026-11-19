@@ -80,7 +80,7 @@ public final class AppSettings {
         didSet { store.set(sortRule.rawValue, forKey: Key.sortRule) }
     }
 
-    /// 是否播放角色動畫。預設開；關閉時效果等同系統 Reduce Motion（見 `CharacterMotion`）。
+    /// 是否播放角色動畫。預設開；關閉時效果等同系統 Reduce Motion（見 `CharacterPresentation`）。
     public var animationsEnabled: Bool {
         didSet { store.set(animationsEnabled, forKey: Key.animationsEnabled) }
     }

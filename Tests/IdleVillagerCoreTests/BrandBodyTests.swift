@@ -48,7 +48,7 @@ struct BrandBodyTests {
     @Test(arguments: NormalizedState.allCases)
     func brandBodyStaysTheSameInEveryState(state: NormalizedState) {
         let presentation = CharacterPresentation(
-            state: state, previousState: .working, reduceMotion: false,
+            state: state, previousState: .working, reduceMotion: false, animationsEnabled: true, isVisible: true,
             agentKind: .claude, isBrandAssetAvailable: { _ in true }
         )
 
@@ -56,25 +56,27 @@ struct BrandBodyTests {
     }
 
     @Test(arguments: NormalizedState.allCases)
-    func brandedPresentationKeepsTheSamePoseLayersAndTransition(state: NormalizedState) {
-        let generic = CharacterPresentation(state: state, previousState: .working, reduceMotion: false)
+    func brandedPresentationKeepsTheSamePoseLayersAndMotion(state: NormalizedState) {
+        let generic = CharacterPresentation(state: state, previousState: .working, reduceMotion: false, animationsEnabled: true, isVisible: true)
         let branded = CharacterPresentation(
-            state: state, previousState: .working, reduceMotion: false,
+            state: state, previousState: .working, reduceMotion: false, animationsEnabled: true, isVisible: true,
             agentKind: .codex, isBrandAssetAvailable: { _ in true }
         )
 
         #expect(branded.pose == generic.pose)
         #expect(branded.layers == generic.layers)
         #expect(branded.transition == generic.transition)
+        #expect(branded.loop == generic.loop)
+        #expect(branded.transitionParameters == generic.transitionParameters)
     }
 
     @Test func presentationWithoutAgentKindHasGenericBody() {
-        #expect(CharacterPresentation(state: .working, previousState: nil, reduceMotion: false).brandBody == .generic)
+        #expect(CharacterPresentation(state: .working, previousState: nil, reduceMotion: false, animationsEnabled: true, isVisible: true).brandBody == .generic)
     }
 
     @Test func presentationWithMissingAssetHasGenericBody() {
         let presentation = CharacterPresentation(
-            state: .idle, previousState: nil, reduceMotion: false,
+            state: .idle, previousState: nil, reduceMotion: false, animationsEnabled: true, isVisible: true,
             agentKind: .gemini, isBrandAssetAvailable: { _ in false }
         )
 
