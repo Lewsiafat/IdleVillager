@@ -5,7 +5,7 @@ import IdleVillagerCore
 @main
 struct IdleVillagerMenuBarApp: App {
     @State private var store: SessionStore
-    @State private var focusCoordinator: FocusCoordinator
+    @State private var popoverLifecycle: PopoverLifecycle
     @State private var settings: AppSettings
 
     init() {
@@ -28,7 +28,9 @@ struct IdleVillagerMenuBarApp: App {
         }
         let store = SessionStore(adapter: adapter)
         _store = State(initialValue: store)
-        _focusCoordinator = State(initialValue: FocusCoordinator(store: store, adapter: adapter))
+        _popoverLifecycle = State(initialValue: PopoverLifecycle(
+            focusCoordinator: FocusCoordinator(store: store, adapter: adapter)
+        ))
         Task { await store.start() }
         // 沒有事件時也要讓久未更新的 Session 轉為過期，定期重新評估。
         Task {
@@ -43,7 +45,7 @@ struct IdleVillagerMenuBarApp: App {
         MenuBarExtra {
             // 在 View 內讀 store.snapshot 才會被 Observation 追蹤；在 Scene 層讀取時，Popover 開著期間不會重繪。
             LiveSessionPopover(store: store)
-                .environment(focusCoordinator)
+                .environment(popoverLifecycle)
                 .environment(settings)
         } label: {
             LiveMenuBarLabel(store: store, settings: settings)

@@ -1,38 +1,16 @@
 import AppKit
-import Observation
 import SwiftUI
 import IdleVillagerCore
 
-/// Popover 的畫面狀態。Tab 收合狀態只存在記憶體中，重啟後不保留。
-@MainActor
-@Observable
-final class SessionPopoverViewModel {
-    private(set) var collapsedTabs: Set<TabID> = []
-
-    func isCollapsed(_ tab: TabID) -> Bool {
-        collapsedTabs.contains(tab)
-    }
-
-    func toggle(_ tab: TabID) {
-        if collapsedTabs.contains(tab) {
-            collapsedTabs.remove(tab)
-        } else {
-            collapsedTabs.insert(tab)
-        }
-    }
-}
-
 /// Popover 內容，完全由 `SessionListModel` 決定；畫面不自行推論狀態或排序。排序規則與動畫開關來自環境中的 `AppSettings`。
+///
+/// 可見性、關閉時的清理、點擊一列之後的流程與 Tab 收合都由環境中的 `PopoverLifecycle` 負責。
+/// 這裡只把 AppKit adapter 的回報轉給它，並依它的狀態繪製。
 struct SessionPopoverView: View {
     let snapshot: StoreSnapshot
-    @State private var viewModel = SessionPopoverViewModel()
     /// 清單內容量到的實際高度；nil 表示還沒量到（第一次排版前）。
     @State private var listContentHeight: CGFloat?
-    /// Popover 目前是否顯示在畫面上。`MenuBarExtra` 關閉時只把視窗藏起來，不會觸發 `onDisappear`，
-    /// SwiftUI 也不會停掉 `PhaseAnimator`；不停的話隱藏的視窗每一幀都重做版面配置，CPU 持續約 25%。
-    /// 因此改由 `WindowVisibilityObserver` 直接看 AppKit 視窗是否可見。
-    @State private var isVisible = false
-    @Environment(FocusCoordinator.self) private var focusCoordinator
+    @Environment(PopoverLifecycle.self) private var lifecycle
     @Environment(AppSettings.self) private var settings
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -55,18 +33,14 @@ struct SessionPopoverView: View {
         .frame(width: Self.width)
         // Translucent or opaque background, decided in Core from the setting and system Reduce Transparency.
         .popoverBackground(settings: settings)
-        .environment(\.popoverIsVisible, isVisible)
-        .background(WindowVisibilityObserver(isVisible: $isVisible))
-        // 重新打開 Popover 時不再顯示上一次的失敗訊息。關閉清單不會觸發 onDisappear，所以看視窗是否還可見。
-        .onChange(of: isVisible) { wasVisible, nowVisible in
-            if wasVisible && !nowVisible { focusCoordinator.clearFailure() }
-        }
+        // `MenuBarExtra` 關閉時只把視窗藏起來，不會觸發 `onDisappear`，因此由 AppKit 視窗回報是否可見。
+        .background(WindowVisibilityObserver(onReport: lifecycle.visibilityChanged))
     }
 
     /// Focus 失敗時顯示在 Popover 頂部的原因；Popover 保持開啟。
     @ViewBuilder
     private var focusFailureBanner: some View {
-        if let failure = focusCoordinator.lastFailure {
+        if let failure = lifecycle.focusFailure {
             HStack(spacing: 6) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
@@ -75,7 +49,7 @@ struct SessionPopoverView: View {
                     .font(.callout)
                 Spacer()
                 Button {
-                    focusCoordinator.clearFailure()
+                    lifecycle.dismissFocusFailure()
                 } label: {
                     Image(systemName: "xmark")
                 }
@@ -117,7 +91,7 @@ struct SessionPopoverView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(model.workspaces) { workspace in
-                        WorkspaceSection(workspace: workspace, viewModel: viewModel)
+                        WorkspaceSection(workspace: workspace)
                     }
                 }
                 .padding(.horizontal, 8)
@@ -196,7 +170,6 @@ struct SessionPopoverView: View {
 /// 一個 Workspace 群組與其底下的 Tab。
 private struct WorkspaceSection: View {
     let workspace: SessionListModel.WorkspaceGroup
-    let viewModel: SessionPopoverViewModel
     @Environment(\.popoverBackgroundStyle) private var backgroundStyle
 
     var body: some View {
@@ -214,7 +187,7 @@ private struct WorkspaceSection: View {
             .accessibilityAddTraits(.isHeader)
 
             ForEach(workspace.tabs) { tab in
-                TabSection(tab: tab, viewModel: viewModel)
+                TabSection(tab: tab)
             }
         }
         .padding(.vertical, 4)
@@ -236,13 +209,13 @@ private struct WorkspaceSection: View {
 /// 一個可收合的 Tab 群組。
 private struct TabSection: View {
     let tab: SessionListModel.TabGroup
-    let viewModel: SessionPopoverViewModel
+    @Environment(PopoverLifecycle.self) private var lifecycle
 
     var body: some View {
-        let collapsed = viewModel.isCollapsed(tab.id)
+        let collapsed = lifecycle.isCollapsed(tab.id)
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                viewModel.toggle(tab.id)
+                lifecycle.toggleCollapsed(tab.id)
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: collapsed ? "chevron.right" : "chevron.down")
@@ -284,16 +257,14 @@ private struct TabSection: View {
 /// 一列 Agent Session：狀態圖示、顯示名稱、Pane 識別與狀態文字。整列可點擊，直接以穩定 ID 觸發 Focus，不需確認。
 private struct SessionRowView: View {
     let row: SessionListModel.Row
-    @Environment(FocusCoordinator.self) private var focusCoordinator
+    @Environment(PopoverLifecycle.self) private var lifecycle
     @Environment(AppSettings.self) private var settings
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.popoverIsVisible) private var popoverIsVisible
-    @State private var isHovered = false
 
     var body: some View {
         HStack(spacing: 8) {
             CharacterView(state: row.state, agentKind: row.agentKind,
-                          animationsEnabled: settings.animationsEnabled, isVisible: popoverIsVisible)
+                          animationsEnabled: settings.animationsEnabled, isVisible: lifecycle.isVisible)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(row.displayName) · \(row.paneLabel)")
                     .lineLimit(1)
@@ -313,17 +284,16 @@ private struct SessionRowView: View {
         .background {
             // hover 時以淡淡的選取色標示目前指到的列。
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(isHovered ? AnyShapeStyle(.selection.opacity(0.25)) : AnyShapeStyle(.clear))
+                .fill(lifecycle.isHovered(row.id) ? AnyShapeStyle(.selection.opacity(0.25)) : AnyShapeStyle(.clear))
                 .padding(.horizontal, 4)
         }
         .contentShape(Rectangle())
         // 點擊、hover 與手指游標都交給 AppKit 的 view 處理。AppKit 只採用滑鼠底下接收點擊的 view 的游標設定，
         // 用 SwiftUI 的 onTapGesture 時接收點擊的是 SwiftUI 視窗本身，游標會一直被設回箭頭。
-        .overlay(ClickableRowArea(onClick: focus, onHoverChange: { isHovered = $0 }))
-        .onChange(of: popoverIsVisible) { _, visible in
-            // 關閉 Popover 不會觸發 onDisappear，也不會送出 hover 結束；不重設的話，下次打開時這一列還是 hover 的樣子。
-            if !visible { isHovered = false }
-        }
+        // 關閉 Popover 不會送出 hover 結束，關閉時由 `PopoverLifecycle` 清除 hover，下次打開時不會殘留。
+        .overlay(ClickableRowArea(onClick: focus, onHoverChange: { [lifecycle, id = row.id] in
+            lifecycle.hoverChanged(sessionID: id, isHovered: $0)
+        }))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityText)
         .accessibilityAddTraits(.isButton)
@@ -331,12 +301,12 @@ private struct SessionRowView: View {
         .accessibilityAction { focus() }
     }
 
-    /// 成功就關閉 Popover；失敗時原因由 Popover 頂部顯示，不關閉。
+    /// 要不要關閉 Popover 由 `PopoverLifecycle` 決定；失敗時原因由 Popover 頂部顯示，不關閉。
     private func focus() {
         let sessionID = row.id
         let paneID = row.paneID
         Task {
-            if await focusCoordinator.focus(sessionID: sessionID, paneID: paneID) == .success {
+            if await lifecycle.rowClicked(sessionID: sessionID, paneID: paneID) == .closePopover {
                 dismiss()
             }
         }
@@ -388,39 +358,32 @@ private struct StatusCapsule: View {
     }
 }
 
-// 只有 Command Line Tools 時沒有 SwiftUI 的 macro plugin，無法使用 `@Entry`，改用傳統的 EnvironmentKey。
-private struct PopoverIsVisibleKey: EnvironmentKey {
-    static let defaultValue = true
-}
-
-extension EnvironmentValues {
-    /// Popover 是否顯示在畫面上，由 `SessionPopoverView` 設定；角色列在 Popover 關閉時停止循環動畫。
-    var popoverIsVisible: Bool {
-        get { self[PopoverIsVisibleKey.self] }
-        set { self[PopoverIsVisibleKey.self] = newValue }
-    }
-}
-
 /// 回報所在 AppKit 視窗目前是否可見。
 ///
 /// `MenuBarExtra`（`.window` 樣式）關閉時只把視窗藏起來，SwiftUI 的 `onDisappear` 不會觸發（2026-11-12 實測），
 /// 因此監聽視窗的遮蔽狀態變化：視窗顯示、隱藏或被完全擋住時，macOS 都會發出 `didChangeOcclusionStateNotification`。
+/// 不隱藏的話 SwiftUI 也不會停掉 `PhaseAnimator`，隱藏的視窗每一幀都重做版面配置，CPU 持續約 25%。
+/// 這裡只回報，關閉時要做的事由 `PopoverLifecycle` 決定。
 private struct WindowVisibilityObserver: NSViewRepresentable {
-    @Binding var isVisible: Bool
+    let onReport: (Bool) -> Void
 
     func makeNSView(context: Context) -> ObserverView {
         ObserverView()
     }
 
-    // SwiftUI 建立 View 後一定會接著呼叫這裡，所以只在這裡設定回呼，讓它總是指向最新的 binding。
+    // SwiftUI 建立 View 後一定會接著呼叫這裡，所以只在這裡設定回呼，讓它總是指向最新的回呼。
     func updateNSView(_ nsView: ObserverView, context: Context) {
-        nsView.onChange = { visible in
-            if isVisible != visible { isVisible = visible }
-        }
+        nsView.onReport = onReport
+    }
+
+    // 介面語言改變時整個 Popover 會重建，舊的 view 離開視窗時會回報不可見。
+    // `PopoverLifecycle` 由新舊 view 共用，先拔掉回呼，避免舊 view 的回報蓋掉新 view 的回報。
+    static func dismantleNSView(_ nsView: ObserverView, coordinator: ()) {
+        nsView.onReport = nil
     }
 
     final class ObserverView: NSView {
-        var onChange: ((Bool) -> Void)?
+        var onReport: ((Bool) -> Void)?
         private var observer: (any NSObjectProtocol)?
 
         override func viewDidMoveToWindow() {
@@ -445,7 +408,7 @@ private struct WindowVisibilityObserver: NSViewRepresentable {
 
         private func report(_ visible: Bool) {
             // 不在版面配置或繪製途中直接改 SwiftUI 狀態，留到下一輪執行。
-            DispatchQueue.main.async { [weak self] in self?.onChange?(visible) }
+            DispatchQueue.main.async { [weak self] in self?.onReport?(visible) }
         }
     }
 }
