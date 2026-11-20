@@ -98,7 +98,7 @@ herdr plugin uninstall idlevillager
 
 ## 最近更新
 
-[v0.3.3](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.3)（2026-11-14）修掉一個當機問題：清單打開過之後，只要有 Agent 的狀態改變，App 可能整個當掉並從選單列消失。v0.3.2 特別容易遇到，還在用的話建議更新。每一版改了什麼都記在 [`CHANGELOG.md`](CHANGELOG.md)。
+[v0.3.4](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.4)（2026-11-20）重寫了這份 README，切換介面語言時也會保留清單的 Tab 收合狀態。前一版 [v0.3.3](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.3)（2026-11-14）修掉一個當機問題：清單打開過之後，只要有 Agent 的狀態改變，App 可能整個當掉並從選單列消失。v0.3.2 特別容易遇到，還在用的話建議更新。每一版改了什麼都記在 [`CHANGELOG.md`](CHANGELOG.md)。
 
 ## 商標
 

@@ -96,7 +96,7 @@ The **Menu Bar Preview** at the top draws the menu bar the way your current choi
 
 ## What's new
 
-[v0.3.3](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.3) (2026-11-14) fixes a crash: once the list had been opened, any agent changing state could take the whole app down and make it vanish from the menu bar. v0.3.2 was hit especially often, so update if you're still on it. Every version's changes are in [`CHANGELOG.md`](CHANGELOG.md).
+[v0.3.4](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.4) (2026-11-20) rewrites this README and keeps the list's collapsed tabs when you switch the interface language. The release before it, [v0.3.3](https://github.com/Lewsiafat/IdleVillager/releases/tag/v0.3.3) (2026-11-14), fixes a crash: once the list had been opened, any agent changing state could take the whole app down and make it vanish from the menu bar. v0.3.2 was hit especially often, so update if you're still on it. Every version's changes are in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Trademarks
 
